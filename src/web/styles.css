@@ -364,7 +364,8 @@ p { margin: 0; }
 
 /* ---------- Tab bar: translucent material, content scrolls under ---------- */
 .tabbar {
-  position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
+  /* --vfix: iOS home-screen viewport shortfall, set in main.tsx (0 everywhere else). */
+  position: fixed; left: 0; right: 0; bottom: calc(-1 * var(--vfix, 0px)); z-index: 10;
   display: grid; grid-template-columns: repeat(5, 1fr);
   padding: 6px max(4px, env(safe-area-inset-left)) calc(4px + env(safe-area-inset-bottom));
   background: var(--chrome);

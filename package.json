@@ -1,6 +1,6 @@
 {
   "name": "opensisakhk",
-  "version": "1.4.1",
+  "version": "1.5.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -37,8 +37,8 @@
     "web-push": "^3.6.7",
     "wrangler": "^4.149.0"
   },
-  "description": "Neoficiální open-source aplikace (PWA) pro SIS SSAKHK: rozvrh, gym, známky",
-  "license": "MIT",
+  "description": "Neoficiální aplikace (PWA) pro SIS SSAKHK: rozvrh, gym, známky, absence, obědy",
+  "license": "SEE LICENSE IN LICENSE",
   "repository": {
     "type": "git",
     "url": "https://github.com/oondraa/OpenSISAKHK"

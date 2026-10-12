@@ -55,8 +55,8 @@ export function Login({ onDone }: { onDone: () => void }) {
         {busy ? "Přihlašuji…" : "Přihlásit se"}
       </button>
       <p className="fineprint">
-        Heslo se ukládá jen zašifrované v tomhle zařízení, nikdy na serveru. Neoficiální open-source aplikace, není
-        spojená se školou.
+        Heslo zůstává zašifrované v tomhle zařízení. Na server se uloží jen se zapnutými notifikacemi. Neoficiální
+        aplikace, není spojená se školou.
       </p>
     </main>
   );

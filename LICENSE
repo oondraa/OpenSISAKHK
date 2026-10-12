@@ -1,21 +1,111 @@
-MIT License
+OpenSISAKHK Personal Use License
+Version 1.0
 
-Copyright (c) 2026 Ondra (oondraa) and OpenSISAKHK contributors
+Copyright (c) 2026 Ondra (oondraa). All rights reserved.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+This license governs OpenSISAKHK, including its source code, the web
+application and its server code, documentation, logos, icons, artwork and the
+"OpenSISAKHK" name (together, the "Software"). The Software is
+source-available, NOT open source. By using, downloading, copying or building
+the Software you agree to these terms. If you do not agree, do not use the
+Software.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+Versions of the Software published before this license took effect were made
+available under the MIT License; this license applies to all later versions.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+1. PERMITTED USE
+
+   You may, free of charge:
+
+   a) use the official instance of the Software (the web application
+      published by the copyright holder) solely for your own private,
+      personal and non-commercial purposes;
+   b) read and study the source code, and build and run it yourself, solely
+      for your own private, personal and non-commercial purposes;
+   c) modify the source code for your own private use, provided that you do
+      not distribute or host the modified version for anyone else.
+
+2. PROHIBITED USE
+
+   Unless you have prior written permission from the copyright holder, you
+   may NOT:
+
+   a) use the Software, or any part or output of it, for any commercial
+      purpose. Commercial purpose includes, without limitation: use by or on
+      behalf of a business, organisation or institution; use in any paid
+      service or product; use where money, advertising revenue, donations,
+      sponsorship or any other benefit is obtained directly or indirectly;
+      and use for providing services to third parties;
+   b) sell, rent, lease, license, sublicense or otherwise charge for the
+      Software or access to it;
+   c) redistribute, publish, re-upload, mirror or share the Software, its
+      source code or builds, whether original or modified, in whole or in
+      part, including on websites, app stores, package managers or file
+      sharing services. Sharing a link to the official repository
+      (https://github.com/oondraa/OpenSISAKHK) is allowed;
+   d) host or operate the Software, original or modified, as a service for
+      anyone other than yourself;
+   e) incorporate the Software, or any part of its source code, into another
+      product, project or service;
+   f) remove, alter or obscure any copyright notice, this license, or the
+      OpenSISAKHK name and branding;
+   g) use the OpenSISAKHK name, logo or branding to identify any other
+      product, service or project, or in a way that suggests endorsement;
+   h) use the source code, assets or outputs of the Software to train,
+      fine-tune or evaluate machine-learning models;
+   i) circumvent any technical limitation of the Software, or use it in
+      breach of the terms of any third-party service it connects to.
+
+3. OWNERSHIP
+
+   The Software is licensed, not sold. The copyright holder retains all
+   right, title and interest in and to the Software, including all
+   intellectual property rights. All rights not expressly granted in this
+   license are reserved.
+
+4. CONTRIBUTIONS
+
+   If you submit any contribution (code, issue, idea or other material) to
+   the official repository, you grant the copyright holder a perpetual,
+   worldwide, irrevocable, royalty-free right to use, modify, sublicense and
+   distribute it as part of the Software under any terms.
+
+5. THIRD-PARTY COMPONENTS AND SERVICES
+
+   The Software includes third-party open-source components and fonts, each
+   of which remains under its own license, listed in THIRD_PARTY_LICENSES.md.
+   Nothing in this license restricts your rights under those licenses with
+   respect to those components alone. The Software is not affiliated with
+   the school, with the authors of its information system (SIS) or with
+   Strava.cz; the services it connects to are subject to their own terms,
+   which you are responsible for following.
+
+6. TERMINATION
+
+   This license terminates automatically and immediately if you breach any of
+   its terms. On termination you must stop using the Software and delete all
+   copies in your possession. Sections 2, 3, 4, 7, 8 and 9 survive
+   termination.
+
+7. NO WARRANTY
+
+   THE SOFTWARE IS PROVIDED "AS IS" AND "AS AVAILABLE", WITHOUT WARRANTY OF
+   ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+   OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
+
+8. LIMITATION OF LIABILITY
+
+   TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT SHALL THE
+   COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+   WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF
+   OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+   SOFTWARE.
+
+9. GOVERNING LAW
+
+   This license is governed by the laws of the Czech Republic. Nothing in
+   this license limits any rights you have as a consumer that cannot be
+   limited by agreement under applicable law.
+
+For commercial licensing or any use not permitted above, contact the
+copyright holder through https://github.com/oondraa.

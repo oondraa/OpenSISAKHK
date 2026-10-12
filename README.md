@@ -5,11 +5,10 @@
   </picture>
 </h1>
 
-[![license](https://img.shields.io/badge/license-MIT-FF5A1F?labelColor=0E0E10&style=flat-square)](LICENSE)
-[![open source](https://img.shields.io/badge/open-source-FF5A1F?labelColor=0E0E10&style=flat-square)](https://github.com/oondraa/OpenSISAKHK)
-[![PWA](https://img.shields.io/badge/PWA-Cloudflare_Workers-FF5A1F?labelColor=0E0E10&style=flat-square)](#nasazení-zdarma)
+[![license](https://img.shields.io/badge/license-personal_use-FF5A1F?labelColor=0E0E10&style=flat-square)](LICENSE)
+[![PWA](https://img.shields.io/badge/PWA-Cloudflare_Workers-FF5A1F?labelColor=0E0E10&style=flat-square)](#technologie)
 
-Neoficiální open-source aplikace pro studenty **SŠ a VOŠ aplikované kybernetiky v Hradci Králové**. Bere data ze
+Neoficiální aplikace pro studenty **SŠ a VOŠ aplikované kybernetiky v Hradci Králové**. Bere data ze
 školního systému [SIS (KybernaIS)](https://sis.ssakhk.cz) a ukazuje je tak, aby se dala používat na telefonu.
 
 > Aplikace není spojená se školou ani s autory SIS. Používáš ji na vlastní zodpovědnost.
@@ -124,6 +123,8 @@ s jiným dnem uprav očekávané hodnoty.
 
 ## Nasazení (zdarma)
 
+Jen pro oficiální instanci. Provozovat vlastní kopii pro ostatní licence nedovoluje (viz [Licence](#licence)).
+
 Pokud máš ve wrangleru přihlášený jiný Cloudflare účet, nejdřív `npx wrangler logout`. Po přihlášení dej `account_id`
 z `npx wrangler whoami` do `wrangler.jsonc`, ať se to omylem nenasadí jinam.
 
@@ -154,4 +155,9 @@ Ikony, wordmark a GitHub social preview generuje `npx tsx scripts/brand.ts` do `
 
 ## Licence
 
-[MIT](LICENSE). Ikona ozubeného kola vychází z [Lucide](https://lucide.dev) (ISC).
+Zdrojový kód je veřejný k nahlédnutí, ale **není open source**. Platí [OpenSISAKHK Personal Use License](LICENSE):
+appku i kód smíš používat jen pro sebe a nekomerčně. Šířit, provozovat pro ostatní nebo komerčně používat je bez
+písemného svolení autora zakázané. Verze před 1.5.0 byly pod licencí MIT.
+
+Cizí knihovny, písma a ikona ozubeného kola (z [Lucide](https://lucide.dev)) mají vlastní licence, viz
+[THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).

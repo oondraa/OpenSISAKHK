@@ -121,7 +121,7 @@ function socialPreview() {
       tag(["ŠKOLNÍ", "INFORMAČNÍ", "SYSTÉM"], 336) +
       tag(["APLIKOVANÉ", "KYBERNETIKY"], 380) +
       tag(["HRADCI", "KRÁLOVÉ"], 424) +
-      foot("open source · rozvrh · známky · gym", "#8F8A81") +
+      foot("rozvrh · známky · absence · gym", "#8F8A81") +
       foot("github.com/oondraa/OpenSISAKHK", EMBER, true),
   );
 }
