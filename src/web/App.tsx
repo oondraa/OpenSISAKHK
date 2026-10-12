@@ -5,14 +5,16 @@ import { Timetable } from "./Timetable";
 import { Gym } from "./Gym";
 import { Grades } from "./Grades";
 import { Settings } from "./Settings";
-import { CalendarIcon, DumbbellIcon, GearIcon, GradesIcon } from "./icons";
+import { Absence } from "./Absence";
+import { AbsenceIcon, CalendarIcon, DumbbellIcon, GearIcon, GradesIcon } from "./icons";
 
-type Tab = "timetable" | "gym" | "grades" | "settings";
+type Tab = "timetable" | "gym" | "grades" | "absence" | "settings";
 
 const TABS: { id: Tab; label: string; icon: ReactNode }[] = [
   { id: "timetable", label: "Rozvrh", icon: <CalendarIcon /> },
   { id: "gym", label: "Gym", icon: <DumbbellIcon /> },
   { id: "grades", label: "Známky", icon: <GradesIcon /> },
+  { id: "absence", label: "Absence", icon: <AbsenceIcon /> },
   { id: "settings", label: "Nastavení", icon: <GearIcon /> },
 ];
 
@@ -54,6 +56,7 @@ export function App() {
         {tab === "timetable" && <Timetable onError={onError} />}
         {tab === "gym" && <Gym onError={onError} />}
         {tab === "grades" && <Grades onError={onError} />}
+        {tab === "absence" && <Absence onError={onError} />}
         {tab === "settings" && (
           <Settings
             onError={onError}

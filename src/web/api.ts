@@ -1,4 +1,4 @@
-import type { Day, Subject } from "../worker/parse";
+import type { Absence, Day, Subject } from "../worker/parse";
 
 export type TimetableDay = Day;
 export interface TimetableResponse {
@@ -29,6 +29,7 @@ export const api = {
   logout: () => call<{ ok: true }>("/logout", { method: "POST" }),
   timetable: (week?: string) => call<TimetableResponse>(`/timetable${week ? `?week=${week}` : ""}`),
   grades: () => call<GradesResponse>("/grades"),
+  absence: () => call<Absence>("/absence"),
   me: () => call<{ name: string | null; hasPhoto: boolean; pushDevices: number }>("/me"),
   schoolWeeks: () => call<{ weeks: { start: string; end: string; week: 1 | 2 }[] }>("/school/weeks"),
   pushKey: () => call<{ key: string }>("/push/key"),

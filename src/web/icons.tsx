@@ -43,6 +43,14 @@ export const UtensilsIcon = ({ size }: { size?: number }) => (
   </Icon>
 );
 
+export const AbsenceIcon = ({ size }: { size?: number }) => (
+  <Icon size={size}>
+    <circle cx="12" cy="12" r="8.5" />
+    <path d="M12 7.5V12l3 2" />
+    <path d="M4.5 4.5l15 15" />
+  </Icon>
+);
+
 export const SunIcon = ({ size }: { size?: number }) => (
   <Icon size={size}>
     <circle cx="12" cy="12" r="4" />

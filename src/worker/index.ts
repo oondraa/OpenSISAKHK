@@ -1,6 +1,6 @@
 import { Hono, type Context } from "hono";
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
-import { parseGrades, parseProfileName, parseTimetable } from "./parse";
+import { parseAbsence, parseGrades, parseProfileName, parseTimetable } from "./parse";
 import { BadCredentials, SessionExpired, get, getBinary, login, timetablePath } from "./sis";
 import { seal, unseal, type Session } from "./session";
 import { SCHOOL_FILES, fetchSchoolImage, schoolWeeks, sha256 } from "./school";
@@ -185,6 +185,14 @@ app.get("/grades", async (c) => {
     return { value: html, changed };
   });
   return c.json({ subjects: parseGrades(html) });
+});
+
+app.get("/absence", async (c) => {
+  const html = await withSis(c, async (s) => {
+    const { html, changed } = await get(s.jar, "/Absent/My");
+    return { value: html, changed };
+  });
+  return c.json(parseAbsence(html));
 });
 
 app.post("/push/subscribe", async (c) => {

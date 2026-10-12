@@ -137,6 +137,80 @@ export function parseGrades(html: string): Subject[] {
   });
 }
 
+export interface AbsenceSubject {
+  subject: string;
+  /** Share of taught lessons missed, in %. */
+  percent: number;
+  taught: number;
+  missed: number;
+  unexcused: number;
+}
+
+export interface MissedLesson {
+  date: string; // YYYY-MM-DD
+  period: number;
+  subject: string;
+  teacher: string;
+  /** SIS cell mark, e.g. "n". */
+  code: string;
+}
+
+export interface Absence {
+  subjects: AbsenceSubject[];
+  total: AbsenceSubject | null;
+  missed: MissedLesson[];
+}
+
+/** Parses `/Absent/My`: the per-subject summary table and the month grids (day × period). */
+export function parseAbsence(html: string): Absence {
+  const root = parse(html);
+  const rows = root.querySelectorAll(".absent-sumarized-table tr").map((tr) => tr.querySelectorAll("td").map(text));
+  const row = (label: string) => rows.find((r) => r[0] === label) ?? [];
+  const num = (s: string | undefined) => {
+    const n = parseFloat((s ?? "").replace("%", "").replace(",", "."));
+    return Number.isFinite(n) ? n : 0;
+  };
+  const header = rows[0] ?? [];
+  const percent = row("Procenta");
+  const taught = row("Počet odučených hodin");
+  const missed = row("Počet zameškaných hodin");
+  const unexcused = row("Počet celkem neomluvených hodin");
+  const all = header.slice(1).map((subject, i) => ({
+    subject,
+    percent: num(percent[i + 1]),
+    taught: num(taught[i + 1]),
+    missed: num(missed[i + 1]),
+    unexcused: num(unexcused[i + 1]),
+  }));
+  const totalIdx = all.findIndex((s) => s.subject === "Celkem");
+  const total = totalIdx >= 0 ? all[totalIdx] : null;
+  if (total) total.percent = total.taught ? Math.round((total.missed / total.taught) * 1000) / 10 : 0;
+
+  const lessons: MissedLesson[] = [];
+  for (const panel of root.querySelectorAll(".absent-tables .panel")) {
+    const year = panel.classList.value.find((c) => c.startsWith("year-"))?.slice(5);
+    const month = panel.classList.value.find((c) => c.startsWith("month-"))?.slice(6);
+    if (!year || !month) continue;
+    for (const tr of panel.querySelectorAll("tr.day")) {
+      const day = tr.classList.value.find((c) => /^day-\d+$/.test(c))?.slice(4);
+      if (!day) continue;
+      for (const td of tr.querySelectorAll("td.hour-absent")) {
+        const period = Number(td.classList.value.find((c) => /^hour-\d+$/.test(c))?.slice(5));
+        const [subject = "", teacher = ""] = (td.getAttribute("title") ?? "").trim().split(/\s+/);
+        lessons.push({
+          date: `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`,
+          period,
+          subject,
+          teacher,
+          code: text(td),
+        });
+      }
+    }
+  }
+  lessons.sort((a, b) => b.date.localeCompare(a.date) || a.period - b.period);
+  return { subjects: all.filter((s) => s.subject !== "Celkem"), total, missed: lessons };
+}
+
 /** Parses `/Account/UserProfile` — only the first and last name are used. */
 export function parseProfileName(html: string): string | null {
   const root = parse(html);

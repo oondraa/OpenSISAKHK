@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { api } from "./api";
 import { PERIODS, readSchoolDay, type Cell } from "../shared/schoolOcr";
 import { DayStrip, Empty, LargeHeader, SkeletonList } from "./ui";
-import { defaultSchoolDay, inMinutes, longDate, minutes, mondayOf, nowMinutesPrague, todayPrague, weekdayIndex } from "./time";
+import { defaultSchoolDay, inMinutes, longDate, minutes, mondayOf, todayPrague, weekdayIndex } from "./time";
 import { useCachedFetch } from "./useFetch";
+import { useNow, useScrollToFocus } from "./hooks";
 import { AlertIcon, CalendarOffIcon, DumbbellIcon } from "./icons";
 
 // Weight room. (T0 is the sports hall; nobody asked for it, but readSchoolDay sees it too.)
@@ -27,23 +28,27 @@ export function Gym({ onError }: { onError: (e: unknown) => boolean }) {
   // Keyed by date too: the same file name shows a different day once the week rolls over.
   const gym = useCachedFetch<Cell[]>(file ? `gym:${file}:${selected}` : null, () => (file ? readGym(file) : Promise.resolve([])), onError);
 
-  const [now, setNow] = useState(nowMinutesPrague);
-  useEffect(() => {
-    const t = setInterval(() => setNow(nowMinutesPrague()), 30_000);
-    return () => clearInterval(t);
-  }, []);
+  const now = useNow();
 
   const live = selected === todayPrague();
   const cells = gym.data ?? [];
   const at = (p: number) => cells.filter((c) => c.period === p);
   const lastPeriod = Math.max(8, ...cells.map((c) => c.period));
   const periods = PERIODS.slice(0, lastPeriod + 1).map(([start, end], p) => ({ p, start, end, occ: at(p) }));
+  // Today: jump to the period that's on now (or next), earlier ones stay above.
+  const focus = live && gym.data ? periods.findIndex((x) => now < minutes(x.end)) : -1;
+  const focusRef = useScrollToFocus(focus > 0);
 
   return (
     <div className="screen">
       <LargeHeader title="Posilovna" subtitle={longDate(selected)} loading={weeks.loading || gym.loading}>
         <DayStrip monday={mondayOf(selected)} selected={selected} onSelect={setSelected} />
       </LargeHeader>
+      {week && !gym.error && (
+        <div className="pinned">
+          {gym.data ? <StatusCard live={live} now={now} periods={periods} loaded /> : <SkeletonList count={1} lines={2} side tall />}
+        </div>
+      )}
       <div className="scroll">
         {weeks.data && !week ? (
           <Empty icon={<CalendarOffIcon size={40} />} title="Mimo rozsah" text="Škola zveřejňuje rozvrh jen na tento a příští týden." />
@@ -51,13 +56,12 @@ export function Gym({ onError }: { onError: (e: unknown) => boolean }) {
           <Empty icon={<AlertIcon size={40} />} title="Rozvrh školy se nepodařilo načíst" />
         ) : (
           <>
-            <StatusCard live={live} now={now} periods={periods} loaded={!!gym.data} />
             {!gym.data ? (
               <SkeletonList count={9} lines={1} />
             ) : (
             <div className="list gym-list">
               {periods.map(({ p, start, end, occ }) => (
-                <div key={p} style={{ "--i": p + 1 } as React.CSSProperties} className={`row gym-row stagger ${live && minutes(start) <= now && now < minutes(end) ? "current" : ""} ${live && minutes(end) <= now ? "past" : ""}`}>
+                <div key={p} ref={p === focus ? (el) => void (focusRef.current = el) : undefined} style={{ "--i": p + 1 } as React.CSSProperties} className={`row gym-row stagger ${live && minutes(start) <= now && now < minutes(end) ? "current" : ""} ${live && minutes(end) <= now ? "past" : ""}`}>
                   <span className="gym-period">
                     <b>{p}.</b>
                     <span>

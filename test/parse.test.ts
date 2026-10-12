@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { extractUserId, gradeToNumber, isLoginPage, parseGrades, parseTimetable } from "../src/worker/parse";
+import { parseAbsence, extractUserId, gradeToNumber, isLoginPage, parseGrades, parseTimetable } from "../src/worker/parse";
 
 // Synthetic fixtures that mirror the markup SIS serves (structure only, no real data).
 const card = (subject: string, time: string, room: string, group: string, teacher: string, extra = "") =>
@@ -72,5 +72,40 @@ describe("helpers", () => {
   it("detects the login page", () => {
     expect(isLoginPage(`<form action="/Account/Login"><input name="Password" type="password" />`)).toBe(true);
     expect(isLoginPage(`<div class="timetable"></div>`)).toBe(false);
+  });
+});
+
+describe("parseAbsence", () => {
+  const html = `<div class="absent-sumarized-table"><table class="table"><tbody>
+    <tr><td></td><td>AGJ</td><td>TEV</td><td>Celkem</td></tr>
+    <tr><td>Procenta</td><td>6.67%</td><td>22.22%</td><td></td></tr>
+    <tr><td>Počet odučených hodin</td><td>15</td><td>9</td><td>167</td></tr>
+    <tr><td>Počet zameškaných hodin</td><td>1</td><td>2</td><td>3</td></tr>
+    <tr><td>Počet celkem neomluvených hodin</td><td>1</td><td>2</td><td>3</td></tr>
+  </tbody></table></div>
+  <div class="absent-tables">
+    <div class="panel panel-default year-2026 month-9"><table class="table"><tbody>
+      <tr class="day day-14"><td class="hour-2 hour" title="ELZ HU"></td><td class="hour-3 hour  hour-absent" title="AGJ SA">n</td></tr>
+    </tbody></table></div>
+    <div class="panel panel-default year-2026 month-10"><table class="table"><tbody>
+      <tr class="day day-1"><td class="hour-5 hour  hour-absent" title="TEV RO">n</td><td class="hour-6 hour  hour-absent" title="TEV RO">n</td></tr>
+    </tbody></table></div>
+  </div>`;
+
+  it("reads the per-subject summary and the total", () => {
+    const a = parseAbsence(html);
+    expect(a.subjects).toEqual([
+      { subject: "AGJ", percent: 6.67, taught: 15, missed: 1, unexcused: 1 },
+      { subject: "TEV", percent: 22.22, taught: 9, missed: 2, unexcused: 2 },
+    ]);
+    expect(a.total).toMatchObject({ taught: 167, missed: 3, unexcused: 3, percent: 1.8 });
+  });
+
+  it("lists missed lessons newest first", () => {
+    expect(parseAbsence(html).missed).toEqual([
+      { date: "2026-10-01", period: 5, subject: "TEV", teacher: "RO", code: "n" },
+      { date: "2026-10-01", period: 6, subject: "TEV", teacher: "RO", code: "n" },
+      { date: "2026-09-14", period: 3, subject: "AGJ", teacher: "SA", code: "n" },
+    ]);
   });
 });
