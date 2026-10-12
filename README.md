@@ -18,7 +18,7 @@ Neoficiální open-source aplikace pro studenty **SŠ a VOŠ aplikované kyberne
 
 | Tab | Co ukazuje |
 | --- | --- |
-| **Rozvrh** | Tvůj osobní rozvrh včetně volitelných předmětů a skupin. Změněné hodiny jsou zvýrazněné. Karta „Teď / Další“, swipe mezi dny, oběd, odkaz na Meet. |
+| **Rozvrh** | Tvůj osobní rozvrh včetně volitelných předmětů a skupin. Změněné hodiny jsou zvýrazněné. Karta „Teď / Další“, swipe mezi dny, oběd (s propojenou Stravou i jaké číslo máš objednané), odkaz na Meet. |
 | **Gym** | Jestli je **posilovna (P0)** teď volná, a po hodinách, která třída tam je. |
 | **Známky** | Známky po předmětech s váhou, typem a komentářem a průměr, který počítá SIS. |
 | **Absence** | Zameškané hodiny po předmětech proti hranici 30–35 % a kolik hodin ještě musíš odchodit (nebo můžeš vynechat) do konce pololetí. |
@@ -83,6 +83,14 @@ Celé je to v [`src/worker/sis.ts`](src/worker/sis.ts), [`src/worker/session.ts`
   *„Zítra (Út 13. 10.): 3. MAT → FYZ LA 211, 5. ELZ: učebna 211 → B13“*. Notifikace je šifrovaná (RFC 8291), takže
   push služba Googlu/Applu obsah nevidí.
 - Změny uvnitř bloků (legenda vpravo na obrázku) se zatím nečtou, změna se pozná jen podle kódu bloku.
+
+## Obědy ze Strava.cz
+
+V Nastavení jde propojit účet školní jídelny (Strava.cz, jídelna `0288`). Strava nemá veřejné API, takže Worker
+používá JSON API, které je za webem app.strava.cz ([`src/worker/strava.ts`](src/worker/strava.ts)). Jméno a heslo do
+Stravy jsou jen ve stejné zašifrované cookie jako přihlášení do SIS, server je neukládá. Při otevření rozvrhu se
+Worker přihlásí, přečte objednávky na příští ~3 týdny, odhlásí se a u oběda ukáže číslo a název jídla, nebo
+„Nemáš objednáno“. Objednává se dál ve Stravě.
 
 ## Notifikace o známkách a absenci
 

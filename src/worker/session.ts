@@ -1,4 +1,5 @@
 import type { Jar } from "./sis";
+import type { StravaCred } from "./strava";
 
 // The session lives only inside this encrypted cookie on the student's device; the server stores none of it
 // (except the sealed login of students who opt in to grade/absence notifications, see migrations/0003).
@@ -7,6 +8,8 @@ export interface Session {
   jar: Jar;
   userId: string;
   cred: { u: string; p: string };
+  /** Canteen login (Strava.cz), only once connected in Settings. Same rules: lives only in this cookie. */
+  strava?: StravaCred;
 }
 
 const enc = new TextEncoder();

@@ -5,6 +5,7 @@ import { BadCredentials, SessionExpired, get, getBinary, login, timetablePath } 
 import { seal, unseal, type Session } from "./session";
 import { SCHOOL_FILES, fetchSchoolImage, schoolWeeks, sha256 } from "./school";
 import { sendPush } from "./push";
+import { CANTEEN, StravaBadCredentials, checkLogin, fetchLunches } from "./strava";
 
 type Bindings = {
   SESSION_SECRET: string;
@@ -23,6 +24,11 @@ const COOKIE = "osis";
 const MAX_AGE = 400 * 24 * 3600; // browsers cap cookies at 400 days; refreshed on every SIS cookie change
 
 const app = new Hono<Env>().basePath("/api");
+
+async function unsealCookie(c: Context<Env>) {
+  const token = getCookie(c, COOKIE);
+  return token ? unseal(token, c.env.SESSION_SECRET) : null;
+}
 
 async function writeSession(c: Context<Env>, s: Session) {
   setCookie(c, COOKIE, await seal(s, c.env.SESSION_SECRET), {
@@ -76,7 +82,9 @@ app.post("/login", async (c) => {
   const { username, password } = await c.req.json<{ username?: string; password?: string }>();
   if (!username || !password) return c.json({ error: "missing_fields" }, 400);
   const { jar, userId } = await login(username, password);
-  const session: Session = { jar, userId, cred: { u: username, p: password } };
+  // Logging in again (new password) keeps a connected Strava account of the same student.
+  const old = await unsealCookie(c);
+  const session: Session = { jar, userId, cred: { u: username, p: password }, strava: old?.userId === userId ? old.strava : undefined };
   await writeSession(c, session);
   c.executionCtx.waitUntil(saveProfile(c.env.DB, session).catch((e) => console.error("profile", e)));
   // Password changed in SIS: keep the background checks of an opted-in student working.
@@ -87,8 +95,7 @@ app.post("/login", async (c) => {
 });
 
 app.post("/logout", async (c) => {
-  const token = getCookie(c, COOKIE);
-  const s = token ? await unseal(token, c.env.SESSION_SECRET) : null;
+  const s = await unsealCookie(c);
   if (s)
     await c.env.DB.batch([
       c.env.DB.prepare("DELETE FROM push_subscriptions WHERE user_id = ?").bind(s.userId),
@@ -185,8 +192,7 @@ app.route("/internal", internal);
 // ---------- authenticated ----------
 
 app.use("/*", async (c, next) => {
-  const token = getCookie(c, COOKIE);
-  const s = token ? await unseal(token, c.env.SESSION_SECRET) : null;
+  const s = await unsealCookie(c);
   if (!s?.cred) return c.json({ error: "unauthenticated" }, 401);
   c.set("session", s);
   await next();
@@ -202,7 +208,42 @@ app.get("/me", async (c) => {
     .bind(userId)
     .first<{ n: number }>();
   const watching = await c.env.DB.prepare("SELECT 1 FROM watchers WHERE user_id = ?").bind(userId).first();
-  return c.json({ name: row?.name ?? null, hasPhoto: !!row?.hasPhoto, pushDevices: push?.n ?? 0, watching: !!watching });
+  return c.json({ name: row?.name ?? null, hasPhoto: !!row?.hasPhoto, pushDevices: push?.n ?? 0, watching: !!watching, strava: !!c.get("session").strava });
+});
+
+// ---------- canteen (Strava.cz) ----------
+
+/** Connects the canteen account: checks the login, then keeps it in the session cookie only. */
+app.post("/strava", async (c) => {
+  const { jmeno, heslo } = await c.req.json<{ jmeno?: string; heslo?: string }>();
+  if (!jmeno || !heslo) return c.json({ error: "missing_fields" }, 400);
+  const strava = { cislo: CANTEEN, jmeno: jmeno.trim(), heslo };
+  try {
+    await checkLogin(strava);
+  } catch (e) {
+    if (e instanceof StravaBadCredentials) return c.json({ error: "strava_bad_credentials" }, 400);
+    throw e;
+  }
+  await writeSession(c, { ...c.get("session"), strava });
+  return c.json({ ok: true });
+});
+
+app.post("/strava/disconnect", async (c) => {
+  await writeSession(c, { ...c.get("session"), strava: undefined });
+  return c.json({ ok: true });
+});
+
+/** Ordered lunches for the next weeks; `connected: false` when no canteen account is linked (or its password changed). */
+app.get("/lunch", async (c) => {
+  const s = c.get("session");
+  if (!s.strava) return c.json({ connected: false, days: [] });
+  try {
+    return c.json({ connected: true, days: await fetchLunches(s.strava) });
+  } catch (e) {
+    if (!(e instanceof StravaBadCredentials)) throw e;
+    await writeSession(c, { ...s, strava: undefined });
+    return c.json({ connected: false, days: [], error: "strava_bad_credentials" });
+  }
 });
 
 /** Opt in/out of background checks for new grades and absences: stores or deletes the sealed SIS login. */

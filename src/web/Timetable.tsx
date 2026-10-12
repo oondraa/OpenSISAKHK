@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { api, cache, type TimetableDay, type TimetableResponse } from "./api";
+import { api, cache, type LunchResponse, type TimetableDay, type TimetableResponse } from "./api";
 import type { Lesson } from "../worker/parse";
+import type { LunchDay } from "../worker/strava";
 import { DayPager, DayStrip, Empty, LargeHeader, SkeletonList } from "./ui";
 import { addDays, defaultSchoolDay, inMinutes, longDate, minutes, mondayOf, nextSchoolDay, nowMinutesPrague, todayPrague, weekdayIndex } from "./time";
 import { useCachedFetch } from "./useFetch";
@@ -28,6 +29,14 @@ export function Timetable({ onError }: { onError: (e: unknown) => boolean }) {
   const now = useNow();
   const { data, loading, error } = useCachedFetch<TimetableResponse>(`timetable:${monday}`, () => api.timetable(monday), onError);
   const days = data?.week === monday ? data.days : [];
+  // Canteen orders (Strava), when connected in Settings. A failure just leaves the plain lunch card.
+  const lunch = useCachedFetch<LunchResponse>("lunch", api.lunch, onError);
+  // Strava lists days from today ~3 weeks ahead; outside that range there's nothing to say.
+  const lunchFor = (date: string) => {
+    const ds = lunch.data?.connected ? lunch.data.days : [];
+    if (!ds.length || date < ds[0].date || date > ds[ds.length - 1].date) return undefined;
+    return ds.find((d) => d.date === date) ?? { date, ordered: null };
+  };
 
   // Without a cached timetable the first guess is today; correct it once this week's lessons arrive.
   useEffect(() => {
@@ -50,7 +59,7 @@ export function Timetable({ onError }: { onError: (e: unknown) => boolean }) {
       <DayPager index={weekdayIndex(selected)} onIndex={(i) => setSelected(addDays(monday, i))}>
         {[0, 1, 2, 3, 4].map((i) => {
           const day = days.find((d) => d.date === addDays(monday, i));
-          if (day) return <DayView key={day.date} day={day} live={day.date === today} now={now} />;
+          if (day) return <DayView key={day.date} day={day} live={day.date === today} now={now} meal={lunchFor(day.date)} />;
           return loading ? <SkeletonList key={i} count={7} side /> : <Empty key={i} icon={<CalendarOffIcon size={40} />} title="Žádná data" />;
         })}
       </DayPager>
@@ -60,7 +69,7 @@ export function Timetable({ onError }: { onError: (e: unknown) => boolean }) {
 
 type Item = { kind: "lesson"; lesson: Lesson; start: string; end: string } | { kind: "lunch"; start: string; end: string };
 
-function DayView({ day, live, now }: { day: TimetableDay; live: boolean; now: number }) {
+function DayView({ day, live, now, meal }: { day: TimetableDay; live: boolean; now: number; meal?: LunchDay }) {
   const items: Item[] = day.lessons.map((lesson) => ({ kind: "lesson" as const, lesson, start: lesson.start, end: lesson.end }));
   if (day.lunch) items.push({ kind: "lunch", ...day.lunch });
   items.sort((a, b) => minutes(a.start) - minutes(b.start));
@@ -85,11 +94,11 @@ function DayView({ day, live, now }: { day: TimetableDay; live: boolean; now: nu
                 <span>{it.end}</span>
               </div>
               <div className="lesson-main">
-                <div className="lesson-subject">Oběd</div>
-                <div className="lesson-teacher">Jídelna</div>
+                <div className="lesson-subject">{meal?.ordered?.label ?? "Oběd"}</div>
+                <div className="lesson-teacher">{meal ? (meal.ordered?.name ?? "Nemáš objednáno") : "Jídelna"}</div>
               </div>
-              <div className="lunch-icon">
-                <UtensilsIcon size={20} />
+              <div className={`lunch-icon ${meal && !meal.ordered ? "none" : ""}`}>
+                {meal?.ordered?.number ? <span className="lunch-number">{meal.ordered.number}</span> : <UtensilsIcon size={20} />}
               </div>
             </div>
           </li>

@@ -16,11 +16,8 @@ const conf = Object.fromEntries(
 );
 
 async function call(path: string, body: unknown) {
-  const res = await fetch(`https://app.strava.cz/api/${path}`, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify(body),
-  });
+  // Like the Strava web app: a JSON body without a content-type header. With one, the API answers 555.
+  const res = await fetch(`https://app.strava.cz/api/${path}`, { method: "POST", body: JSON.stringify(body) });
   return { status: res.status, json: (await res.json().catch(() => null)) as Record<string, unknown> | null };
 }
 

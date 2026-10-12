@@ -187,6 +187,8 @@ export function Settings({ onError, onLogout }: { onError: (e: unknown) => boole
           )}
         </Section>
 
+        <StravaSection connected={me.data?.strava ?? false} onError={onError} />
+
         <Section title="Soukromí">
           <div className="privacy">
             <p>
@@ -225,5 +227,77 @@ export function Settings({ onError, onLogout }: { onError: (e: unknown) => boole
         </p>
       </div>
     </div>
+  );
+}
+
+/** Canteen account (Strava.cz): its login lives only in the encrypted session cookie, like the SIS one. */
+function StravaSection({ connected, onError }: { connected: boolean; onError: (e: unknown) => boolean }) {
+  const [on, setOn] = useState<boolean | null>(null);
+  const [jmeno, setJmeno] = useState("");
+  const [heslo, setHeslo] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+  const isOn = on ?? connected;
+
+  async function connect(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setMsg(null);
+    try {
+      await api.stravaConnect(jmeno, heslo);
+      cache.set("lunch", null); // the timetable reloads lunches with the new account
+      setOn(true);
+      setHeslo("");
+    } catch (err) {
+      if (!onError(err))
+        setMsg((err as Error).message === "strava_bad_credentials" ? "Špatné jméno nebo heslo do Stravy." : "Stravu se nepodařilo propojit.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function disconnect() {
+    setBusy(true);
+    try {
+      await api.stravaDisconnect();
+      cache.set("lunch", null);
+      setOn(false);
+    } catch (err) {
+      onError(err);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Section
+      title="Obědy (Strava)"
+      footer={
+        msg ??
+        (isOn
+          ? "V rozvrhu u oběda uvidíš, co máš objednané. Objednává se dál ve Stravě."
+          : "Propoj účet jídelny a v rozvrhu u oběda uvidíš, jaké číslo máš objednané. Heslo zůstává jen zašifrované v tomhle zařízení.")
+      }
+    >
+      {isOn ? (
+        <>
+          <div className="row">
+            <span className="row-title">Účet jídelny</span>
+            <span className="row-value">Propojeno</span>
+          </div>
+          <button className="row row-button destructive" disabled={busy} onClick={disconnect}>
+            Odpojit Stravu
+          </button>
+        </>
+      ) : (
+        <form onSubmit={connect} className="login-form">
+          <input placeholder="Uživatel ve Stravě" autoComplete="off" autoCapitalize="none" value={jmeno} onChange={(e) => setJmeno(e.target.value)} />
+          <input type="password" placeholder="Heslo do Stravy" autoComplete="off" value={heslo} onChange={(e) => setHeslo(e.target.value)} />
+          <button className="row row-button" type="submit" disabled={busy || !jmeno || !heslo}>
+            {busy ? "Propojuji…" : "Propojit"}
+          </button>
+        </form>
+      )}
+    </Section>
   );
 }

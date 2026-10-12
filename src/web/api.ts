@@ -1,4 +1,5 @@
 import type { Absence, Day, Subject } from "../worker/parse";
+import type { LunchDay } from "../worker/strava";
 
 export type TimetableDay = Day;
 export interface TimetableResponse {
@@ -7,6 +8,12 @@ export interface TimetableResponse {
 }
 export interface GradesResponse {
   subjects: Subject[];
+}
+
+export interface LunchResponse {
+  connected: boolean;
+  days: LunchDay[];
+  error?: string;
 }
 
 export class Unauthorized extends Error {}
@@ -32,7 +39,10 @@ export const api = {
   permanentTimetable: (week: string) => call<TimetableResponse>(`/timetable?week=${week}&static=1`),
   grades: () => call<GradesResponse>("/grades"),
   absence: () => call<Absence>("/absence"),
-  me: () => call<{ name: string | null; hasPhoto: boolean; pushDevices: number; watching: boolean }>("/me"),
+  me: () => call<{ name: string | null; hasPhoto: boolean; pushDevices: number; watching: boolean; strava: boolean }>("/me"),
+  lunch: () => call<LunchResponse>("/lunch"),
+  stravaConnect: (jmeno: string, heslo: string) => post("/strava", { jmeno, heslo }),
+  stravaDisconnect: () => post("/strava/disconnect", {}),
   watch: (on: boolean) => post("/watch", { on }),
   schoolWeeks: () => call<{ weeks: { start: string; end: string; week: 1 | 2 }[] }>("/school/weeks"),
   pushKey: () => call<{ key: string }>("/push/key"),

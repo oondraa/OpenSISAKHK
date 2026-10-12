@@ -198,7 +198,9 @@ p { margin: 0; }
 .lesson-card.lunch { background: color-mix(in srgb, var(--green) 15%, var(--surface)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--green) 35%, transparent); }
 .lesson-card.lunch .lesson-subject { color: color-mix(in srgb, var(--green) 70%, var(--text)); font-weight: 700; }
 .lesson-card.lunch .lesson-teacher { color: color-mix(in srgb, var(--green) 55%, var(--text-2)); }
-.lunch-icon { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 12px; background: var(--green); color: #fff; }
+.lunch-icon { width: 40px; height: 40px; flex: none; display: grid; place-items: center; border-radius: 12px; background: var(--green); color: #fff; }
+.lunch-icon.none { background: var(--fill); color: var(--text-2); }
+.lunch-number { font-family: var(--mono); font-size: 1.25rem; font-weight: 700; }
 .lesson-card.lunch.now { box-shadow: 0 0 0 2px var(--green), var(--shadow); }
 
 /* ---------- Lists (inset grouped) ---------- */
@@ -211,6 +213,8 @@ p { margin: 0; }
 .list > * + *::before, .list > * + * > .row:first-child::before { content: ""; position: absolute; top: 0; left: 16px; right: 0; height: 0.5px; background: var(--separator); }
 .list > * { position: relative; }
 .row-title { font-size: 1.0625rem; }
+.row-value { font-size: 1.0625rem; color: var(--text-2); }
+.login-form .row-button { border-top: 0.5px solid var(--separator); }
 .row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
 .row-button { color: var(--accent-text); font-size: 1.0625rem; justify-content: center; }
 .row-button.destructive { color: var(--danger); font-weight: 500; }
