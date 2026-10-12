@@ -15,7 +15,8 @@ const iso = (d: string) => {
 
 /** Reads which calendar weeks the public images 1/2 currently show. */
 export async function schoolWeeks(): Promise<SchoolWeek[]> {
-  const html = await (await fetch(`${SIS}/TimeTable/School`)).text();
+  // Cached like the images, so a burst of requests to /api/school/weeks doesn't become a burst at SIS.
+  const html = await (await fetch(`${SIS}/TimeTable/School`, { cf: { cacheTtl: 120, cacheEverything: true } })).text();
   return [...html.matchAll(/Týden:\s*\((\d+\.\d+\.\d+)\s*-\s*(\d+\.\d+\.\d+)\)/g)].map((m, i) => ({
     start: iso(m[1]),
     end: iso(m[2]),

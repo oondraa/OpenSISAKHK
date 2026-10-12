@@ -4,7 +4,7 @@ import { absenceStudentId, parseAbsence, parseGrades, parseProfileName, parseTim
 import { BadCredentials, SessionExpired, get, getBinary, login, post, timetablePath } from "./sis";
 import { seal, unseal, type Session } from "./session";
 import { SCHOOL_FILES, fetchSchoolImage, schoolWeeks, sha256 } from "./school";
-import { sendPush } from "./push";
+import { isPushEndpoint, sendPush } from "./push";
 import { CANTEEN, StravaBadCredentials, checkLogin, fetchLunches } from "./strava";
 
 type Bindings = {
@@ -17,13 +17,46 @@ type Bindings = {
   GITHUB_TOKEN?: string;
   GITHUB_REPO: string;
   DB: D1Database;
+  /** Login attempts per IP and per SIS username / student (wrangler.jsonc "ratelimits"). */
+  LOGIN_IP_LIMIT?: RateLimit;
+  LOGIN_USER_LIMIT?: RateLimit;
 };
 type Env = { Bindings: Bindings; Variables: { session: Session } };
 
 const COOKIE = "osis";
 const MAX_AGE = 400 * 24 * 3600; // browsers cap cookies at 400 days; refreshed on every SIS cookie change
 
+const MAX_PUSH_DEVICES = 10;
+
 const app = new Hono<Env>().basePath("/api");
+
+app.use("*", async (c, next) => {
+  // CSRF on top of SameSite=Strict: no state change from another site's page, whatever the content type.
+  if (c.req.method !== "GET" && c.req.method !== "HEAD") {
+    const origin = c.req.header("origin");
+    if (c.req.header("sec-fetch-site") === "cross-site" || (origin && origin !== new URL(c.req.url).origin))
+      return c.json({ error: "forbidden" }, 403);
+  }
+  await next();
+  // API responses are data: never sniffed into HTML, framed or rendered as a page.
+  c.res.headers.set("x-content-type-options", "nosniff");
+  c.res.headers.set("content-security-policy", "default-src 'none'; frame-ancestors 'none'; sandbox");
+  c.res.headers.set("referrer-policy", "no-referrer");
+});
+
+/** True when `key` went over the limit (no binding, e.g. in tests: never). */
+async function overLimit(limiter: RateLimit | undefined, key: string) {
+  return limiter ? !(await limiter.limit({ key })).success : false;
+}
+
+/** Constant-time comparison of two secrets (their hashes, so the lengths match too). */
+async function sameSecret(a: string, b: string) {
+  const enc = new TextEncoder();
+  const [x, y] = await Promise.all([a, b].map(async (s) => new Uint8Array(await crypto.subtle.digest("SHA-256", enc.encode(s)))));
+  let diff = 0;
+  for (let i = 0; i < x.length; i++) diff |= x[i] ^ y[i];
+  return diff === 0;
+}
 
 async function unsealCookie(c: Context<Env>) {
   const token = getCookie(c, COOKIE);
@@ -73,14 +106,20 @@ app.onError((err, c) => {
     return c.json({ error: loggingIn ? "bad_credentials" : "session_expired" }, 401);
   }
   console.error(err);
-  return c.json({ error: "upstream", message: err.message }, 502);
+  // Details stay in the log: database and network errors would tell a client about the internals.
+  return c.json({ error: "upstream" }, 502);
 });
 
 // ---------- public ----------
 
 app.post("/login", async (c) => {
   const { username, password } = await c.req.json<{ username?: string; password?: string }>();
-  if (!username || !password) return c.json({ error: "missing_fields" }, 400);
+  if (typeof username !== "string" || typeof password !== "string" || !username || !password)
+    return c.json({ error: "missing_fields" }, 400);
+  // Without a limit the Worker would be an anonymous proxy for guessing SIS passwords.
+  const ip = c.req.header("cf-connecting-ip") ?? "local";
+  if ((await overLimit(c.env.LOGIN_IP_LIMIT, ip)) || (await overLimit(c.env.LOGIN_USER_LIMIT, `sis:${username.toLowerCase()}`)))
+    return c.json({ error: "rate_limited" }, 429);
   const { jar, userId } = await login(username, password);
   // Logging in again (new password) keeps a connected Strava account of the same student.
   const old = await unsealCookie(c);
@@ -121,8 +160,9 @@ app.get("/push/key", (c) => c.json({ key: c.env.VAPID_PUBLIC_KEY }));
 
 const internal = new Hono<Env>();
 internal.use("/*", async (c, next) => {
-  const token = c.req.header("authorization")?.replace(/^Bearer /, "");
-  if (!c.env.INGEST_TOKEN || token !== c.env.INGEST_TOKEN) return c.json({ error: "forbidden" }, 403);
+  const auth = c.req.header("authorization") ?? "";
+  if (!c.env.INGEST_TOKEN || !auth.startsWith("Bearer ") || !(await sameSecret(auth.slice(7), c.env.INGEST_TOKEN)))
+    return c.json({ error: "forbidden" }, 403);
   await next();
 });
 
@@ -189,7 +229,8 @@ app.get("/me", async (c) => {
 /** Connects the canteen account: checks the login, then keeps it in the session cookie only. */
 app.post("/strava", async (c) => {
   const { jmeno, heslo } = await c.req.json<{ jmeno?: string; heslo?: string }>();
-  if (!jmeno || !heslo) return c.json({ error: "missing_fields" }, 400);
+  if (typeof jmeno !== "string" || typeof heslo !== "string" || !jmeno || !heslo) return c.json({ error: "missing_fields" }, 400);
+  if (await overLimit(c.env.LOGIN_USER_LIMIT, `strava:${c.get("session").userId}`)) return c.json({ error: "rate_limited" }, 429);
   const strava = { cislo: CANTEEN, jmeno: jmeno.trim(), heslo };
   try {
     await checkLogin(strava);
@@ -238,8 +279,10 @@ app.get("/me/photo", async (c) => {
     .bind(c.get("session").userId)
     .first<{ photo: ArrayBuffer | null; photo_type: string | null }>();
   if (!row?.photo) return c.notFound();
+  // Only raster types: an SVG from SIS would run as a page on this origin.
+  const type = /^image\/(jpeg|png|webp|gif)\b/.test(row.photo_type ?? "") ? row.photo_type! : "image/jpeg";
   return new Response(new Uint8Array(row.photo), {
-    headers: { "content-type": row.photo_type ?? "image/jpeg", "cache-control": "private, max-age=86400" },
+    headers: { "content-type": type, "cache-control": "private, max-age=86400" },
   });
 });
 
@@ -275,11 +318,25 @@ app.get("/absence", async (c) => {
 app.post("/push/subscribe", async (c) => {
   const { subscription } = await c.req.json<{ subscription?: { endpoint?: string; keys?: { p256dh?: string; auth?: string } } }>();
   const endpoint = subscription?.endpoint;
-  if (!endpoint || !/^https:\/\//.test(endpoint) || !subscription.keys?.p256dh || !subscription.keys.auth)
+  const { p256dh, auth } = subscription?.keys ?? {};
+  const key = (k: unknown, max: number) => typeof k === "string" && k.length > 0 && k.length <= max;
+  if (typeof endpoint !== "string" || !isPushEndpoint(endpoint) || !key(p256dh, 200) || !key(auth, 100))
     return c.json({ error: "bad_subscription" }, 400);
-  await c.env.DB.prepare("INSERT OR REPLACE INTO push_subscriptions (endpoint, user_id, created, p256dh, auth) VALUES (?, ?, ?, ?, ?)")
-    .bind(endpoint, c.get("session").userId, Date.now(), subscription.keys.p256dh, subscription.keys.auth)
-    .run();
+  const userId = c.get("session").userId;
+  await c.env.DB.batch([
+    c.env.DB.prepare("INSERT OR REPLACE INTO push_subscriptions (endpoint, user_id, created, p256dh, auth) VALUES (?, ?, ?, ?, ?)").bind(
+      endpoint,
+      userId,
+      Date.now(),
+      p256dh,
+      auth,
+    ),
+    // Keeps the newest few devices, so one account can't fill the database.
+    c.env.DB.prepare(
+      `DELETE FROM push_subscriptions WHERE user_id = ?1 AND endpoint NOT IN
+       (SELECT endpoint FROM push_subscriptions WHERE user_id = ?1 ORDER BY created DESC LIMIT ?2)`,
+    ).bind(userId, MAX_PUSH_DEVICES),
+  ]);
   return c.json({ ok: true });
 });
 
@@ -296,8 +353,9 @@ app.post("/push/test", async (c) => {
   const subs = await c.env.DB.prepare("SELECT endpoint FROM push_subscriptions WHERE user_id = ?")
     .bind(c.get("session").userId)
     .all<{ endpoint: string }>();
-  await notifyAll(c.env, subs.results);
-  return c.json({ sent: subs.results.length });
+  const valid = subs.results.filter((s) => isPushEndpoint(s.endpoint));
+  await notifyAll(c.env, valid);
+  return c.json({ sent: valid.length });
 });
 
 // ---------- profile & notifications ----------

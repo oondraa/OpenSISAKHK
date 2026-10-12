@@ -26,6 +26,20 @@ async function vapidJwt(audience: string, privateJwk: string): Promise<string> {
   return `${unsigned}.${b64url(sig)}`;
 }
 
+// The browsers' push services (Chrome & co., Firefox, Safari, Edge). Any other URL would make the Worker POST to
+// wherever a subscriber points it.
+const PUSH_HOSTS = ["fcm.googleapis.com", "updates.push.services.mozilla.com", ".push.apple.com", ".notify.windows.com"];
+
+export function isPushEndpoint(endpoint: string): boolean {
+  if (endpoint.length > 1024) return false;
+  try {
+    const { protocol, hostname } = new URL(endpoint);
+    return protocol === "https:" && PUSH_HOSTS.some((h) => (h.startsWith(".") ? hostname.endsWith(h) : hostname === h));
+  } catch {
+    return false;
+  }
+}
+
 /** Returns false when the subscription is gone and should be deleted. */
 export async function sendPush(endpoint: string, keys: VapidKeys): Promise<boolean> {
   const jwt = await vapidJwt(new URL(endpoint).origin, keys.privateJwk);

@@ -28,6 +28,9 @@ const cookieHeader = (jar: Jar) =>
     .map(([k, v]) => `${k}=${v}`)
     .join("; ");
 
+// Errors may end up in the public GitHub Action logs: no query string (the timetable's has the SIS user id).
+const bare = (path: string) => path.split("?")[0];
+
 async function request(jar: Jar, path: string, init: RequestInit = {}) {
   const res = await fetch(SIS + path, {
     ...init,
@@ -70,9 +73,9 @@ export async function get(jar: Jar, path: string): Promise<{ html: string; chang
   const { res, changed } = await request(jar, path);
   if (res.status >= 300 && res.status < 400) {
     if ((res.headers.get("location") ?? "").includes("/Account/Login")) throw new SessionExpired();
-    throw new Error(`Unexpected redirect from ${path}`);
+    throw new Error(`Unexpected redirect from ${bare(path)}`);
   }
-  if (!res.ok) throw new Error(`SIS ${path} returned ${res.status}`);
+  if (!res.ok) throw new Error(`SIS ${bare(path)} returned ${res.status}`);
   const html = await res.text();
   if (isLoginPage(html)) throw new SessionExpired();
   return { html, changed };
@@ -86,7 +89,7 @@ export async function post(jar: Jar, path: string, form: Record<string, string>)
     headers: { "content-type": "application/x-www-form-urlencoded", "x-requested-with": "XMLHttpRequest" },
   });
   if (res.status >= 300 && res.status < 400) throw new SessionExpired();
-  if (!res.ok) throw new Error(`SIS ${path} returned ${res.status}`);
+  if (!res.ok) throw new Error(`SIS ${bare(path)} returned ${res.status}`);
   const html = await res.text();
   if (isLoginPage(html)) throw new SessionExpired();
   return { html, changed };
@@ -94,9 +97,9 @@ export async function post(jar: Jar, path: string, form: Record<string, string>)
 
 export async function getBinary(jar: Jar, path: string): Promise<{ body: ArrayBuffer; type: string }> {
   const { res } = await request(jar, path);
-  if (!res.ok) throw new Error(`SIS ${path} returned ${res.status}`);
+  if (!res.ok) throw new Error(`SIS ${bare(path)} returned ${res.status}`);
   const type = res.headers.get("content-type") ?? "";
-  if (!type.startsWith("image/")) throw new Error(`SIS ${path} is not an image`);
+  if (!type.startsWith("image/")) throw new Error(`SIS ${bare(path)} is not an image`);
   return { body: await res.arrayBuffer(), type };
 }
 

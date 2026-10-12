@@ -15,7 +15,13 @@ export function Login({ onDone }: { onDone: () => void }) {
       await api.login(username.trim(), password);
       onDone();
     } catch (err) {
-      setError(err instanceof Unauthorized ? "Špatné jméno nebo heslo." : "SIS teď neodpovídá. Zkus to za chvíli.");
+      setError(
+        err instanceof Unauthorized
+          ? "Špatné jméno nebo heslo."
+          : (err as Error).message === "rate_limited"
+            ? "Moc pokusů o přihlášení. Zkus to za minutu."
+            : "SIS teď neodpovídá. Zkus to za chvíli.",
+      );
     } finally {
       setBusy(false);
     }

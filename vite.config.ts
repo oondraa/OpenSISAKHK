@@ -1,4 +1,5 @@
-import { defineConfig } from "vite";
+import { createHash } from "node:crypto";
+import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import { cloudflare } from "@cloudflare/vite-plugin";
 import { VitePWA } from "vite-plugin-pwa";
@@ -6,6 +7,44 @@ import pkg from "./package.json" with { type: "json" };
 
 // Shown in Settings and on the splash. Bump "version" in package.json with every deploy.
 const BUILT = new Intl.DateTimeFormat("cs-CZ", { timeZone: "Europe/Prague", dateStyle: "short", timeStyle: "short" }).format(new Date());
+
+// Security headers of the static app (Workers Static Assets reads _headers). The CSP allows index.html's inline
+// scripts by hash, computed from the built page, so editing them can't silently break it.
+function securityHeaders(): Plugin {
+  return {
+    name: "security-headers",
+    enforce: "post",
+    generateBundle(_, bundle) {
+      const html = bundle["index.html"];
+      if (html?.type !== "asset") return;
+      const hashes = [...String(html.source).matchAll(/<script>([\s\S]*?)<\/script>/g)].map(
+        (m) => `'sha256-${createHash("sha256").update(m[1]).digest("base64")}'`,
+      );
+      const csp = [
+        "default-src 'self'",
+        `script-src 'self' ${hashes.join(" ")}`,
+        "style-src 'self' 'unsafe-inline'",
+        "img-src 'self' data: blob:",
+        "font-src 'self' data:",
+        "connect-src 'self'",
+        "object-src 'none'",
+        "base-uri 'none'",
+        "form-action 'self'",
+        "frame-ancestors 'none'",
+      ].join("; ");
+      const headers = {
+        "Content-Security-Policy": csp,
+        "X-Frame-Options": "DENY",
+        "X-Content-Type-Options": "nosniff",
+        "Referrer-Policy": "no-referrer",
+        "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+        "Strict-Transport-Security": "max-age=31536000",
+      };
+      const source = `/*\n${Object.entries(headers).map(([k, v]) => `  ${k}: ${v}\n`).join("")}`;
+      this.emitFile({ type: "asset", fileName: "_headers", source });
+    },
+  };
+}
 
 export default defineConfig({
   define: {
@@ -42,5 +81,6 @@ export default defineConfig({
         globPatterns: ["**/*.{js,css,html,svg,png,woff2}"],
       },
     }),
+    securityHeaders(),
   ],
 });
