@@ -13,3 +13,6 @@ test/fixtures/*.jpg
 .strava.local
 *.local.json
 *.local.html
+
+# /brag-slim working files (the video itself is brand/promo.mp4)
+brag-output/
