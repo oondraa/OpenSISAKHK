@@ -172,8 +172,9 @@ app.get("/me/photo", async (c) => {
 
 app.get("/timetable", async (c) => {
   const week = weekStart(c.req.query("week"));
+  const permanent = c.req.query("static") === "1";
   const html = await withSis(c, async (s) => {
-    const { html, changed } = await get(s.jar, timetablePath(s.userId, week));
+    const { html, changed } = await get(s.jar, timetablePath(s.userId, week, permanent));
     return { value: html, changed };
   });
   return c.json({ week, days: parseTimetable(html, week) });

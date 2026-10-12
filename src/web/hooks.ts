@@ -21,11 +21,8 @@ export function useScrollToFocus(enabled: boolean) {
     const scroller = el?.closest<HTMLElement>(".page, .scroll");
     if (!enabled || !el || !scroller) return;
     const top = el.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop - 12;
-    if (top <= 0) return;
-    const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    // Let the cards rise in first, then glide to "now" so the motion reads as the list settling.
-    const t = setTimeout(() => scroller.scrollTo({ top, behavior: reduce ? "instant" : "smooth" }), reduce ? 0 : 280);
-    return () => clearTimeout(t);
+    // Jump, don't glide: the list should simply open at "now".
+    if (top > 0) scroller.scrollTo({ top, behavior: "instant" });
   }, [enabled]);
   return target;
 }

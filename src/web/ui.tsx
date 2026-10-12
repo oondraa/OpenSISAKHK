@@ -66,6 +66,7 @@ export function DayStrip({ monday, selected, onSelect }: { monday: string; selec
 export function DayPager({ index, onIndex, children }: { index: number; onIndex: (i: number) => void; children: ReactNode[] }) {
   const ref = useRef<HTMLDivElement>(null);
   const fromScroll = useRef(false);
+  const placed = useRef(false);
 
   useEffect(() => {
     const el = ref.current;
@@ -73,8 +74,10 @@ export function DayPager({ index, onIndex, children }: { index: number; onIndex:
       fromScroll.current = false;
       return;
     }
+    // Opening on Wednesday lands on Wednesday; only taps on the day strip glide.
     const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    el.scrollTo({ left: index * el.clientWidth, behavior: reduce ? "instant" : "smooth" });
+    el.scrollTo({ left: index * el.clientWidth, behavior: reduce || !placed.current ? "instant" : "smooth" });
+    placed.current = true;
   }, [index]);
 
   return (
@@ -172,9 +175,9 @@ export function Skeleton({ lines = 2, side = false, tall = false }: { lines?: nu
 
 export function SkeletonList({ count, ...props }: { count: number; lines?: number; side?: boolean; tall?: boolean }) {
   return (
-    <div className="skeleton-list" role="status" aria-label="Načítání">
+    <div className="skeleton-list stagger" role="status" aria-label="Načítání">
       {Array.from({ length: count }, (_, i) => (
-        <div key={i} className="stagger" style={{ "--i": i } as React.CSSProperties}>
+        <div key={i}>
           <Skeleton {...props} />
         </div>
       ))}

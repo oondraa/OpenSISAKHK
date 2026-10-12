@@ -7,7 +7,21 @@ import "./fonts.css";
 import "./styles.css";
 
 applyTheme(savedTheme());
-registerSW({ immediate: true });
+
+// A new version was downloaded in the background: put the splash back up with "Aktualizace", then reload into it.
+// The flag tells the next page load (index.html) to keep saying so while the new version starts.
+const updateSW = registerSW({
+  immediate: true,
+  onNeedRefresh() {
+    try {
+      sessionStorage.setItem("osis:updating", "1");
+    } catch {
+      /* private mode: the new splash just won't say it */
+    }
+    document.getElementById("splash")?.classList.replace("hide", "again");
+    setTimeout(() => updateSW(true), 400);
+  },
+});
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -24,9 +38,9 @@ function hideSplash() {
   const introEnd = reduce ? 250 : 1500;
   document.querySelector('meta[name="theme-color"]')?.setAttribute("content", "#0e0e10");
   setTimeout(() => {
-    splash.classList.add("hide");
+    splash.classList.remove("note");
+    splash.classList.add("hide"); // stays in the DOM (hidden) so an update can show it again
     applyTheme(savedTheme()); // status bar back to the app's colour
-    setTimeout(() => splash.remove(), 600);
   }, Math.max(0, introEnd - performance.now()));
 }
 hideSplash();

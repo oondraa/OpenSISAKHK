@@ -53,11 +53,11 @@ function DayView({ day, live, now }: { day: TimetableDay; live: boolean; now: nu
   const state = (it: Item) => (!live ? "future" : now >= minutes(it.end) ? "past" : now >= minutes(it.start) ? "now" : "future");
 
   return (
-    <ol className="timeline">
+    <ol className="timeline stagger">
       {items.map((it, i) => {
         const ref = i === focus ? (el: HTMLLIElement | null) => void (focusRef.current = el) : undefined;
         return it.kind === "lunch" ? (
-          <li key={`lunch-${i}`} ref={ref} className="stagger" style={{ "--i": i } as React.CSSProperties}>
+          <li key="lunch" ref={ref}>
             <div className={`lesson-card lunch ${state(it)}`}>
               <div className="lesson-time">
                 <span>{it.start}</span>
@@ -73,7 +73,8 @@ function DayView({ day, live, now }: { day: TimetableDay; live: boolean; now: nu
             </div>
           </li>
         ) : (
-          <LessonCard key={`${it.lesson.id}-${i}`} liRef={ref} index={i} lesson={it.lesson} state={state(it)} />
+          // Keyed by content, not SIS's debug id: a refresh must update cards in place, not remount them.
+          <LessonCard key={`${it.start}-${it.lesson.subject}-${it.lesson.group}`} liRef={ref} lesson={it.lesson} state={state(it)} />
         );
       })}
     </ol>
@@ -105,10 +106,9 @@ function NowCard({ current, next, now }: { current?: Lesson; next?: Lesson; now:
   );
 }
 
-function LessonCard({ lesson: l, state, index, liRef }: {
+function LessonCard({ lesson: l, state, liRef }: {
   lesson: Lesson;
   state: "past" | "now" | "future";
-  index: number;
   liRef?: (el: HTMLLIElement | null) => void;
 }) {
   const body = (
@@ -130,7 +130,7 @@ function LessonCard({ lesson: l, state, index, liRef }: {
   );
   const cls = `lesson-card ${state} ${l.changed ? "changed" : ""}`;
   return (
-    <li ref={liRef} className="stagger" style={{ "--i": index } as React.CSSProperties}>
+    <li ref={liRef}>
       {l.meet ? (
         <a className={cls} href={l.meet} target="_blank" rel="noreferrer" aria-label={`${l.subject}, otevřít Meet`}>
           {body}

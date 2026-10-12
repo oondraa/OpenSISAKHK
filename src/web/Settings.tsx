@@ -5,6 +5,7 @@ import { detectClass } from "./detectClass";
 import { LargeHeader, Section, Segmented, Switch } from "./ui";
 import { savedTheme, setTheme, type Theme } from "./theme";
 import { useCachedFetch } from "./useFetch";
+import { BUILT, VERSION } from "./version";
 
 const b64ToBytes = (b64: string) => Uint8Array.from(atob(b64.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0));
 
@@ -190,7 +191,11 @@ export function Settings({ onError, onLogout }: { onError: (e: unknown) => boole
           </button>
         </Section>
 
-        <p className="list-footer center">OpenSISAKHK · neoficiální aplikace, není spojená se školou</p>
+        <p className="list-footer center">
+          OpenSISAKHK {VERSION} · sestaveno {BUILT}
+          <br />
+          neoficiální aplikace, není spojená se školou
+        </p>
       </div>
     </div>
   );

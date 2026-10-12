@@ -26,7 +26,13 @@
         transition: opacity 380ms ease, transform 520ms cubic-bezier(0.32, 0.72, 0, 1);
         animation: sp-fallback 300ms ease 5s forwards; /* if the app never boots, don't trap the user */
       }
-      #splash.hide { opacity: 0; transform: scale(1.06); pointer-events: none; }
+      #splash.hide { opacity: 0; transform: scale(1.06); pointer-events: none; visibility: hidden; transition: opacity 380ms ease, transform 520ms cubic-bezier(0.32, 0.72, 0, 1), visibility 0s 520ms; }
+      /* Shown again over the running app while an update reloads it. */
+      #splash.again { animation: none; transition: opacity 200ms ease; }
+      .sp-note, .sp-version { position: absolute; left: 0; right: 0; margin: 0; text-align: center; font-family: Sora, system-ui, sans-serif; }
+      .sp-note { top: calc(50% + 3rem); font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(246, 243, 238, 0.7); opacity: 0; transition: opacity 200ms ease; }
+      #splash.note .sp-note, #splash.again .sp-note { opacity: 1; }
+      .sp-version { bottom: calc(env(safe-area-inset-bottom) + 24px); font-size: 0.75rem; color: rgba(246, 243, 238, 0.35); }
       .sp-mark { display: flex; align-items: baseline; font: 800 clamp(2.4rem, 11vw, 3.4rem) / 1 Sora, system-ui, sans-serif; letter-spacing: -0.03em; }
       .sp-sis { color: #ff5a1f; opacity: 0; transform: scale(0.9); animation: sp-in 520ms cubic-bezier(0.32, 0.72, 0, 1) 80ms forwards; }
       /* "Open" makes room by growing its column from 0 while sliding in from the left: SISAKHK glides right to stay centred. */
@@ -47,7 +53,18 @@
       <div class="sp-mark">
         <span class="sp-open"><span><span class="sp-open-text">Open</span></span></span><span class="sp-sis">SISAKHK</span>
       </div>
+      <p class="sp-note">Aktualizace</p>
+      <p class="sp-version">verze %APP_VERSION%</p>
     </div>
+    <script>
+      // main.tsx sets this right before reloading into a new version.
+      try {
+        if (sessionStorage.getItem("osis:updating")) {
+          sessionStorage.removeItem("osis:updating");
+          document.getElementById("splash").classList.add("note");
+        }
+      } catch (e) {}
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/web/main.tsx"></script>
   </body>

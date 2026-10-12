@@ -40,8 +40,8 @@ export function Grades({ onError }: { onError: (e: unknown) => boolean }) {
         )}
         {subjects.length > 0 ? (
           <div className="list">
-            {subjects.map((s, i) => (
-              <div key={s.name} className="stagger" style={{ "--i": i + 1 } as React.CSSProperties}>
+            {subjects.map((s) => (
+              <div key={s.name}>
                 <SubjectRow s={s} open={open === s.name} onToggle={() => setOpen(open === s.name ? null : s.name)} />
               </div>
             ))}

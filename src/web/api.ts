@@ -28,6 +28,8 @@ export const api = {
     }),
   logout: () => call<{ ok: true }>("/logout", { method: "POST" }),
   timetable: (week?: string) => call<TimetableResponse>(`/timetable${week ? `?week=${week}` : ""}`),
+  /** Permanent timetable (no substitutions or cancellations) of the week starting `week`. */
+  permanentTimetable: (week: string) => call<TimetableResponse>(`/timetable?week=${week}&static=1`),
   grades: () => call<GradesResponse>("/grades"),
   absence: () => call<Absence>("/absence"),
   me: () => call<{ name: string | null; hasPhoto: boolean; pushDevices: number }>("/me"),

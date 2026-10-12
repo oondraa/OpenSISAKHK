@@ -61,7 +61,7 @@ export function Gym({ onError }: { onError: (e: unknown) => boolean }) {
             ) : (
             <div className="list gym-list">
               {periods.map(({ p, start, end, occ }) => (
-                <div key={p} ref={p === focus ? (el) => void (focusRef.current = el) : undefined} style={{ "--i": p + 1 } as React.CSSProperties} className={`row gym-row stagger ${live && minutes(start) <= now && now < minutes(end) ? "current" : ""} ${live && minutes(end) <= now ? "past" : ""}`}>
+                <div key={p} ref={p === focus ? (el) => void (focusRef.current = el) : undefined} className={`row gym-row ${live && minutes(start) <= now && now < minutes(end) ? "current" : ""} ${live && minutes(end) <= now ? "past" : ""}`}>
                   <span className="gym-period">
                     <b>{p}.</b>
                     <span>
