@@ -161,8 +161,16 @@ export interface Absence {
   missed: MissedLesson[];
 }
 
-/** Parses `/Absent/My`: the per-subject summary table and the month grids (day × period). */
-export function parseAbsence(html: string): Absence {
+/** SIS id the absence page loads its summary with (`POST /Absent/SumarizedData { StudentID }`). */
+export function absenceStudentId(html: string): string | null {
+  return html.match(/StudentID:\s*(\d+)/)?.[1] ?? null;
+}
+
+/**
+ * Parses `/Absent/My` (the month grids, day × period) and the per-subject summary table. The page itself ships
+ * the summary empty and fills it with `POST /Absent/SumarizedData`, so that response is passed as `summaryHtml`.
+ */
+export function parseAbsence(html: string, summaryHtml = html): Absence {
   const root = parse(html);
 
   const lessons: MissedLesson[] = [];
@@ -188,9 +196,9 @@ export function parseAbsence(html: string): Absence {
   }
   lessons.sort((a, b) => b.date.localeCompare(a.date) || a.period - b.period);
 
-  // Summary table: a header row of subjects, then one row per measure. Rows are found by a keyword of their
-  // label (no diacritics, any case), since the exact wording isn't stable; header cells may be <th>.
-  const rows = root.querySelectorAll(".absent-sumarized-table tr").map((tr) => tr.querySelectorAll("td, th").map(text));
+  // Summary table: a header row of subjects, then one row per measure ("Počet zameškaných hodin", …). Rows are
+  // found by a keyword of their label (no diacritics, any case), in case the wording shifts; headers may be <th>.
+  const rows = parse(summaryHtml).querySelectorAll("tr").map((tr) => tr.querySelectorAll("td, th").map(text));
   const norm = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
   const row = (keyword: string) => rows.find((r) => norm(r[0] ?? "").includes(keyword)) ?? [];
   const num = (s: string | undefined) => {

@@ -1,7 +1,7 @@
 import { Hono, type Context } from "hono";
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
-import { parseAbsence, parseGrades, parseProfileName, parseTimetable } from "./parse";
-import { BadCredentials, SessionExpired, get, getBinary, login, timetablePath } from "./sis";
+import { absenceStudentId, parseAbsence, parseGrades, parseProfileName, parseTimetable } from "./parse";
+import { BadCredentials, SessionExpired, get, getBinary, login, post, timetablePath } from "./sis";
 import { seal, unseal, type Session } from "./session";
 import { SCHOOL_FILES, fetchSchoolImage, schoolWeeks, sha256 } from "./school";
 import { sendPush } from "./push";
@@ -262,11 +262,14 @@ app.get("/grades", async (c) => {
 });
 
 app.get("/absence", async (c) => {
-  const html = await withSis(c, async (s) => {
-    const { html, changed } = await get(s.jar, "/Absent/My");
-    return { value: html, changed };
+  const { page, summary } = await withSis(c, async (s) => {
+    const page = await get(s.jar, "/Absent/My");
+    // The page ships its summary table empty and loads it with this POST.
+    const id = absenceStudentId(page.html);
+    const summary = id ? await post(s.jar, "/Absent/SumarizedData", { StudentID: id }) : { html: "", changed: false };
+    return { value: { page: page.html, summary: summary.html }, changed: page.changed || summary.changed };
   });
-  return c.json(parseAbsence(html));
+  return c.json(parseAbsence(page, summary));
 });
 
 app.post("/push/subscribe", async (c) => {

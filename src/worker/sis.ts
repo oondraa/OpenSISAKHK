@@ -78,6 +78,20 @@ export async function get(jar: Jar, path: string): Promise<{ html: string; chang
   return { html, changed };
 }
 
+/** POST a form to an authenticated endpoint (SIS loads some page parts this way, e.g. the absence summary). */
+export async function post(jar: Jar, path: string, form: Record<string, string>): Promise<{ html: string; changed: boolean }> {
+  const { res, changed } = await request(jar, path, {
+    method: "POST",
+    body: new URLSearchParams(form),
+    headers: { "content-type": "application/x-www-form-urlencoded", "x-requested-with": "XMLHttpRequest" },
+  });
+  if (res.status >= 300 && res.status < 400) throw new SessionExpired();
+  if (!res.ok) throw new Error(`SIS ${path} returned ${res.status}`);
+  const html = await res.text();
+  if (isLoginPage(html)) throw new SessionExpired();
+  return { html, changed };
+}
+
 export async function getBinary(jar: Jar, path: string): Promise<{ body: ArrayBuffer; type: string }> {
   const { res } = await request(jar, path);
   if (!res.ok) throw new Error(`SIS ${path} returned ${res.status}`);
