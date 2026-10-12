@@ -17,7 +17,7 @@ type Bindings = {
   GITHUB_TOKEN?: string;
   GITHUB_REPO: string;
   DB: D1Database;
-  /** Login attempts per IP and per SIS username / student (wrangler.jsonc "ratelimits"). */
+  /** Login attempts per IP; logins per SIS username, canteen logins and test pushes per student (wrangler.jsonc "ratelimits"). */
   LOGIN_IP_LIMIT?: RateLimit;
   LOGIN_USER_LIMIT?: RateLimit;
 };
@@ -350,6 +350,7 @@ app.post("/push/unsubscribe", async (c) => {
 });
 
 app.post("/push/test", async (c) => {
+  if (await overLimit(c.env.LOGIN_USER_LIMIT, `push:${c.get("session").userId}`)) return c.json({ error: "rate_limited" }, 429);
   const subs = await c.env.DB.prepare("SELECT endpoint FROM push_subscriptions WHERE user_id = ?")
     .bind(c.get("session").userId)
     .all<{ endpoint: string }>();

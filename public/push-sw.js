@@ -1,6 +1,17 @@
 // Imported into the generated service worker.
 // Notifications carry an encrypted JSON payload {title, body, tag, url?} (scripts/school-changes.ts, scripts/watch.ts);
 // the test notification from the Worker has no payload.
+
+// Only this app's own pages: even with leaked push keys, a notification can't send anyone to another site.
+function appUrl(url) {
+  try {
+    const u = new URL(url || "/", self.location.origin);
+    return u.origin === self.location.origin ? u.pathname + u.search + u.hash : "/";
+  } catch {
+    return "/";
+  }
+}
+
 self.addEventListener("push", (event) => {
   let data = {};
   try {
@@ -16,14 +27,14 @@ self.addEventListener("push", (event) => {
       badge: "/icon.svg",
       tag: data.tag || "osis",
       renotify: true,
-      data: { url: data.url || "/" },
+      data: { url: appUrl(data.url) },
     }),
   );
 });
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const url = (event.notification.data && event.notification.data.url) || "/";
+  const url = appUrl(event.notification.data && event.notification.data.url);
   event.waitUntil(
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((wins) => {
       const win = wins.find((w) => "focus" in w);
