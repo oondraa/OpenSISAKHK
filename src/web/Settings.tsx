@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react";
 import { api, cache } from "./api";
-import { CLASSES } from "../shared/schoolOcr";
-import { detectClass } from "./detectClass";
 import { LargeHeader, Section, Segmented, Switch } from "./ui";
 import { savedTheme, setTheme, type Theme } from "./theme";
 import { useCachedFetch } from "./useFetch";
@@ -21,19 +19,9 @@ export function Settings({ onError, onLogout }: { onError: (e: unknown) => boole
   const [theme, setThemeState] = useState<Theme>(savedTheme);
   const [push, setPush] = useState<PushState>("busy");
   const [pushMsg, setPushMsg] = useState<string | null>(null);
-  const [cls, setCls] = useState<string | null>(() => cache.get<string>("pushClass"));
   const [watching, setWatching] = useState<boolean | null>(null);
-  const watchOn = watching ?? me.data?.watching ?? false;
-
-  async function toggleWatch(on: boolean) {
-    setWatching(on);
-    try {
-      await api.watch(on);
-    } catch (e) {
-      onError(e);
-      setWatching(!on);
-    }
-  }
+  // One switch for everything: push on this device + background checks of timetable, grades and absence.
+  const notifications = push === "on" && (watching ?? me.data?.watching ?? false);
 
   useEffect(() => {
     if (!("serviceWorker" in navigator) || !("PushManager" in window)) return setPush("unsupported");
@@ -41,47 +29,23 @@ export function Settings({ onError, onLogout }: { onError: (e: unknown) => boole
     currentSubscription().then((s) => setPush(s ? "on" : "off"));
   }, []);
 
-  /** Subscribes (or re-registers with a new class) — the server keeps only class + subject codes. */
-  async function subscribe(chosen: string | null) {
-    const reg = await navigator.serviceWorker.ready;
-    const detected = await detectClass().catch(() => ({ cls: null, subjects: [] as string[] }));
-    const finalCls = chosen ?? detected.cls;
-    if (!finalCls) {
-      setPushMsg("Nepodařilo se poznat tvoji třídu. Vyber ji níž a notifikace se zapnou.");
-      return false;
-    }
-    const sub = (await reg.pushManager.getSubscription()) ??
-      (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToBytes((await api.pushKey()).key) }));
-    await api.pushSubscribe(sub.toJSON(), finalCls, detected.subjects);
-    cache.set("pushClass", finalCls);
-    setCls(finalCls);
-    return true;
-  }
-
-  async function changeClass(next: string) {
-    setCls(next);
-    cache.set("pushClass", next);
-    if (push !== "on" && push !== "off") return;
-    setPush("busy");
-    try {
-      setPush((await subscribe(next)) ? "on" : "off");
-    } catch (e) {
-      onError(e);
-      setPush("off");
-    }
-  }
-
-  async function togglePush(on: boolean) {
+  async function toggleNotifications(on: boolean) {
     setPush("busy");
     setPushMsg(null);
     try {
       const reg = await navigator.serviceWorker.ready;
       if (on) {
         if ((await Notification.requestPermission()) !== "granted") return setPush("denied");
-        setPush((await subscribe(cls)) ? "on" : "off");
+        const sub = (await reg.pushManager.getSubscription()) ??
+          (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToBytes((await api.pushKey()).key) }));
+        await api.pushSubscribe(sub.toJSON());
+        await api.watch(true);
+        setWatching(true);
+        setPush("on");
       } else {
+        await api.watch(false); // no notifications = no reason to keep the stored login
+        setWatching(false);
         const sub = await reg.pushManager.getSubscription();
-        if (watchOn) await toggleWatch(false); // no notifications = no reason to keep the stored login
         if (sub) {
           await api.pushUnsubscribe(sub.endpoint).catch(() => {});
           await sub.unsubscribe();
@@ -90,7 +54,7 @@ export function Settings({ onError, onLogout }: { onError: (e: unknown) => boole
       }
     } catch (e) {
       onError(e);
-      setPush(on ? "off" : "on");
+      setPush((await currentSubscription().catch(() => null)) ? "on" : "off");
       setPushMsg("Nepodařilo se změnit notifikace.");
     }
   }
@@ -145,42 +109,19 @@ export function Settings({ onError, onLogout }: { onError: (e: unknown) => boole
               : push === "denied"
                 ? "Notifikace jsou v prohlížeči zakázané. Povol je v nastavení prohlížeče pro tuhle stránku."
                 : (pushMsg ??
-                  `Když škola přepíše rozvrh (i ve 3 ráno), dostaneš zprávu přesně s tím, co se změnilo u tvé třídy a tvých skupin.${
-                    push === "on"
-                      ? " Se zapnutými známkami a absencí hlídáme i přímo tvůj osobní rozvrh: přes den každých 30 minut a hned, když škola rozvrh přepíše. Kvůli tomu si server uloží tvoje zašifrované přihlášení do SIS. Vypnutím nebo odhlášením se smaže."
-                      : ""
-                  }`)
+                  "Přijde ti zpráva, když se ti změní rozvrh (i když ho škola přepíše ve 3 ráno), přibude známka nebo absence. Aby to server mohl hlídat, i když appku nemáš otevřenou, uloží si tvoje přihlášení do SIS zašifrované. Vypnutím nebo odhlášením se smaže.")
           }
         >
           <div className="row">
-            <span className="row-title">Změny v rozvrhu</span>
+            <span className="row-title">Rozvrh, známky a absence</span>
             <Switch
-              label="Notifikace o změnách v rozvrhu"
-              checked={push === "on"}
+              label="Notifikace o změnách rozvrhu, nových známkách a absenci"
+              checked={notifications}
               disabled={push === "busy" || push === "unsupported" || push === "denied"}
-              onChange={togglePush}
+              onChange={toggleNotifications}
             />
           </div>
-          {(push === "on" || cls) && (
-            <label className="row">
-              <span className="row-title">Třída</span>
-              <select className="select" value={cls ?? ""} onChange={(e) => changeClass(e.target.value)}>
-                {!cls && <option value="">Vyber…</option>}
-                {CLASSES.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-            </label>
-          )}
-          {push === "on" && (
-            <div className="row">
-              <span className="row-title">Známky, absence a můj rozvrh</span>
-              <Switch label="Notifikace o známkách, absenci a změnách mého rozvrhu" checked={watchOn} onChange={toggleWatch} />
-            </div>
-          )}
-          {push === "on" && (
+          {notifications && (
             <button className="row row-button" onClick={() => api.pushTest().catch(onError)}>
               Poslat zkušební notifikaci
             </button>
@@ -193,12 +134,11 @@ export function Settings({ onError, onLogout }: { onError: (e: unknown) => boole
           <div className="privacy">
             <p>
               <b>Co ukládáme:</b> tvoje jméno a profilovou fotku ze SIS, abychom věděli, kdo aplikaci používá a mohli ti
-              ji ukázat tady. U zapnutých notifikací adresu pro doručení, tvoji třídu a zkratky tvých předmětů a skupin
-              (např. AGJ1), aby ti chodily jen tvoje změny.
+              ji ukázat tady. U zapnutých notifikací adresu pro doručení do tohohle zařízení.
             </p>
             <p>
               <b>Heslo:</b> zůstává zašifrované v tomhle zařízení, aby tě aplikace nemusela odhlašovat, když SIS ukončí
-              relaci. Do databáze se dostane jen tehdy, když si zapneš notifikace o známkách a absenci, a to zašifrované.
+              relaci. Do databáze se dostane jen tehdy, když si zapneš notifikace, a to zašifrované.
               Jinak by server nemohl sám zjistit, že ti něco přibylo.
             </p>
             <p>
@@ -224,6 +164,8 @@ export function Settings({ onError, onLogout }: { onError: (e: unknown) => boole
           OpenSISAKHK {VERSION} · sestaveno {BUILT}
           <br />
           neoficiální aplikace, není spojená se školou
+          <br />
+          <span className="diag">{layoutInfo()}</span>
         </p>
       </div>
     </div>
@@ -300,4 +242,16 @@ function StravaSection({ connected, onError }: { connected: boolean; onError: (e
       )}
     </Section>
   );
+}
+
+/** Viewport vs screen and safe-area insets, to tell layout problems on a phone apart (send this line with a screenshot). */
+function layoutInfo() {
+  const probe = document.createElement("div");
+  probe.style.cssText =
+    "position:fixed;visibility:hidden;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)";
+  document.body.appendChild(probe);
+  const { paddingTop, paddingBottom } = getComputedStyle(probe);
+  probe.remove();
+  const mode = matchMedia("(display-mode: standalone)").matches ? "app" : "web";
+  return `${mode} · okno ${innerWidth}×${innerHeight} · displej ${screen.width}×${screen.height} · okraje ${parseInt(paddingTop)}/${parseInt(paddingBottom)}`;
 }

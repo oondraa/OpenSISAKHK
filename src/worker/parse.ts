@@ -164,23 +164,6 @@ export interface Absence {
 /** Parses `/Absent/My`: the per-subject summary table and the month grids (day × period). */
 export function parseAbsence(html: string): Absence {
   const root = parse(html);
-  const rows = root.querySelectorAll(".absent-sumarized-table tr").map((tr) => tr.querySelectorAll("td").map(text));
-  const row = (label: string) => rows.find((r) => r[0] === label) ?? [];
-  const num = (s: string | undefined) => {
-    const n = parseFloat((s ?? "").replace("%", "").replace(",", "."));
-    return Number.isFinite(n) ? n : 0;
-  };
-  const header = rows[0] ?? [];
-  const taught = row("Počet odučených hodin");
-  const missed = row("Počet zameškaných hodin");
-  const unexcused = row("Počet celkem neomluvených hodin");
-  // SIS's own "Procenta" row is left empty for some subjects, so the share is always computed here.
-  const all = header.slice(1).map((subject, i) => {
-    const t = num(taught[i + 1]);
-    const m = num(missed[i + 1]);
-    return { subject, percent: t ? Math.round((m / t) * 1000) / 10 : 0, taught: t, missed: m, unexcused: num(unexcused[i + 1]) };
-  });
-  const total = all.find((s) => s.subject === "Celkem") ?? null;
 
   const lessons: MissedLesson[] = [];
   for (const panel of root.querySelectorAll(".absent-tables .panel")) {
@@ -204,6 +187,32 @@ export function parseAbsence(html: string): Absence {
     }
   }
   lessons.sort((a, b) => b.date.localeCompare(a.date) || a.period - b.period);
+
+  // Summary table: a header row of subjects, then one row per measure. Rows are found by a keyword of their
+  // label (no diacritics, any case), since the exact wording isn't stable; header cells may be <th>.
+  const rows = root.querySelectorAll(".absent-sumarized-table tr").map((tr) => tr.querySelectorAll("td, th").map(text));
+  const norm = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+  const row = (keyword: string) => rows.find((r) => norm(r[0] ?? "").includes(keyword)) ?? [];
+  const num = (s: string | undefined) => {
+    const n = parseFloat((s ?? "").replace("%", "").replace(",", "."));
+    return Number.isFinite(n) ? n : 0;
+  };
+  const header = rows.find((r) => r.includes("Celkem")) ?? rows[0] ?? [];
+  const taught = row("oducen");
+  const missed = row("zamesk");
+  const unexcused = row("neomluv");
+  const sisPercent = row("procent");
+  // Missed lessons straight from the month grids, as a fallback when the summary has no such row.
+  const counted = new Map<string, number>();
+  for (const l of lessons) counted.set(l.subject, (counted.get(l.subject) ?? 0) + 1);
+  const all = header.slice(1).map((subject, i) => {
+    const t = num(taught[i + 1]);
+    const m = missed.length ? num(missed[i + 1]) : subject === "Celkem" ? lessons.length : (counted.get(subject) ?? 0);
+    // Computed rather than read: SIS leaves its "Procenta" cell empty for some subjects.
+    const percent = t ? Math.round((m / t) * 1000) / 10 : num(sisPercent[i + 1]);
+    return { subject, percent, taught: t, missed: m, unexcused: num(unexcused[i + 1]) };
+  });
+  const total = all.find((s) => s.subject === "Celkem") ?? null;
   return { subjects: all.filter((s) => s.subject !== "Celkem"), total, missed: lessons };
 }
 

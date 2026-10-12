@@ -101,6 +101,17 @@ describe("parseAbsence", () => {
     expect(a.total).toMatchObject({ taught: 167, missed: 3, unexcused: 3, percent: 1.8 });
   });
 
+  it("copes with <th> headers, other row wording and a missing count row", () => {
+    const other = html
+      .replace("<tr><td></td><td>AGJ</td><td>TEV</td><td>Celkem</td></tr>", "<tr><th></th><th>AGJ</th><th>TEV</th><th>Celkem</th></tr>")
+      .replace("<td>Počet odučených hodin</td>", "<td>Odučeno hodin</td>")
+      .replace(/<tr><td>Počet zameškaných hodin<\/td>.*?<\/tr>/, "");
+    const a = parseAbsence(other);
+    // TEV: 2 missed (counted from the grid) of 9
+    expect(a.subjects.find((s) => s.subject === "TEV")).toMatchObject({ missed: 2, taught: 9, percent: 22.2 });
+    expect(a.total).toMatchObject({ missed: 3, taught: 167 });
+  });
+
   it("lists missed lessons newest first", () => {
     expect(parseAbsence(html).missed).toEqual([
       { date: "2026-10-01", period: 5, subject: "TEV", teacher: "RO", code: "n" },

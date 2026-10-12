@@ -46,8 +46,7 @@ export const api = {
   watch: (on: boolean) => post("/watch", { on }),
   schoolWeeks: () => call<{ weeks: { start: string; end: string; week: 1 | 2 }[] }>("/school/weeks"),
   pushKey: () => call<{ key: string }>("/push/key"),
-  pushSubscribe: (subscription: PushSubscriptionJSON, cls: string, subjects: string[]) =>
-    post("/push/subscribe", { subscription, cls, subjects }),
+  pushSubscribe: (subscription: PushSubscriptionJSON) => post("/push/subscribe", { subscription }),
   pushUnsubscribe: (endpoint: string) => post("/push/unsubscribe", { endpoint }),
   pushTest: () => call<{ sent: number }>("/push/test", { method: "POST" }),
 };

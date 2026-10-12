@@ -1,8 +1,8 @@
-import { useState } from "react";
-import { api } from "./api";
+import { useEffect, useRef, useState } from "react";
+import { api, cache } from "./api";
 import { PERIODS, readSchoolDay, type Cell } from "../shared/schoolOcr";
 import { DayStrip, Empty, LargeHeader, SkeletonList } from "./ui";
-import { defaultSchoolDay, inMinutes, longDate, minutes, mondayOf, todayPrague, weekdayIndex } from "./time";
+import { defaultSchoolDay, inMinutes, longDate, minutes, mondayOf, nextSchoolDay, nowMinutesPrague, todayPrague, weekdayIndex } from "./time";
 import { useCachedFetch } from "./useFetch";
 import { useNow, useScrollToFocus } from "./hooks";
 import { AlertIcon, CalendarOffIcon, DumbbellIcon } from "./icons";
@@ -20,8 +20,25 @@ async function readGym(file: string): Promise<Cell[]> {
   return readSchoolDay(ctx.getImageData(0, 0, bmp.width, bmp.height)).filter((c) => c.room === ROOM);
 }
 
+const lastPeriodOf = (cells: Cell[]) => Math.max(8, ...cells.map((c) => c.period));
+
+/** Today until its last period is over, then the next school day; decided from cache so it doesn't flip after a paint. */
+function startDay() {
+  const today = todayPrague();
+  const day = defaultSchoolDay();
+  const week = cache.get<{ weeks: { start: string; end: string; week: number }[] }>("school-weeks")?.weeks.find((w) => w.start <= today && today <= w.end);
+  const cells = week && cache.get<Cell[]>(`gym:${DAY_CODES[weekdayIndex(today)]}${week.week}:${today}`);
+  if (day !== today || !cells) return day;
+  return nowMinutesPrague() >= minutes(PERIODS[lastPeriodOf(cells)][1]) ? nextSchoolDay(today) : today;
+}
+
 export function Gym({ onError }: { onError: (e: unknown) => boolean }) {
-  const [selected, setSelected] = useState(defaultSchoolDay);
+  const [selected, setSelectedState] = useState(startDay);
+  const touched = useRef(false);
+  const setSelected = (iso: string) => {
+    touched.current = true;
+    setSelectedState(iso);
+  };
   const weeks = useCachedFetch("school-weeks", api.schoolWeeks, onError);
   const week = weeks.data?.weeks.find((w) => w.start <= selected && selected <= w.end);
   const file = week ? `${DAY_CODES[weekdayIndex(selected)]}${week.week}` : null;
@@ -33,11 +50,17 @@ export function Gym({ onError }: { onError: (e: unknown) => boolean }) {
   const live = selected === todayPrague();
   const cells = gym.data ?? [];
   const at = (p: number) => cells.filter((c) => c.period === p);
-  const lastPeriod = Math.max(8, ...cells.map((c) => c.period));
+  const lastPeriod = lastPeriodOf(cells);
   const periods = PERIODS.slice(0, lastPeriod + 1).map(([start, end], p) => ({ p, start, end, occ: at(p) }));
   // Today: jump to the period that's on now (or next), earlier ones stay above.
   const focus = live && gym.data ? periods.findIndex((x) => now < minutes(x.end)) : -1;
   const focusRef = useScrollToFocus(focus > 0);
+
+  // Once today's last period is over the weight room is free anyway: show the next school day, as the timetable does.
+  const dayOver = live && !!gym.data && now >= minutes(periods[periods.length - 1].end);
+  useEffect(() => {
+    if (dayOver && !touched.current) setSelectedState(nextSchoolDay(selected));
+  }, [dayOver]);
 
   return (
     <div className="screen">

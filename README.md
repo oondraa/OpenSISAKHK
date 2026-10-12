@@ -42,8 +42,8 @@ telefon ──(jméno + heslo, HTTPS)──▶ Cloudflare Worker ──▶ sis.s
    který zná jen server. Cookie je `HttpOnly`, `Secure`, `SameSite=Strict`, takže ji JavaScript na stránce
    nepřečte a jiný web ji nepošle.
 3. **Server si nic z toho neukládá.** Cookie existuje jen v tvém zařízení a server ji při každém požadavku jen
-   rozšifruje v paměti, použije a zapomene. Jediná výjimka je, když si zapneš notifikace o známkách a absenci
-   ([viz níž](#notifikace-o-známkách-a-absenci)).
+   rozšifruje v paměti, použije a zapomene. Jediná výjimka je, když si zapneš notifikace
+   ([viz níž](#notifikace)).
 4. Když SIS relaci po čase ukončí, Worker se přihlásí znovu údaji z cookie. Proto tě aplikace sama neodhlásí.
    Když si heslo v SIS změníš, aplikace tě odhlásí a přihlásíš se znovu.
 5. Odhlášení smaže cookie (a tím i uložené heslo), odběr notifikací a případně uložené přihlášení pro kontrolu známek.
@@ -55,11 +55,10 @@ Celé je to v [`src/worker/sis.ts`](src/worker/sis.ts), [`src/worker/session.ts`
 
 | Ukládá se (databáze D1) | Neukládá se nikde na serveru |
 | --- | --- |
-| Jméno a profilová fotka ze SIS (kdo aplikaci používá) | Heslo (kromě zapnutých notifikací o známkách, viz níž) |
+| Jméno a profilová fotka ze SIS (kdo aplikaci používá) | Heslo (kromě zapnutých notifikací, viz níž) |
 | Kdy ses poprvé a naposledy přihlásil | Známky, rozvrh, absence |
-| U zapnutých notifikací: adresa pro doručení, třída a zkratky tvých předmětů/skupin (např. `AGJ1`, `B06`) | Cookies SIS relace |
-| Otisky a přečtený obsah veřejného rozvrhu školy (pro porovnání změn) | |
-| **Jen u zapnutých notifikací o známkách a absenci:** přihlášení do SIS zašifrované AES-GCM a krátké hashe známek a absencí (z nich se známky vyčíst nedají) | |
+| Otisky obrázků veřejného rozvrhu školy (aby se poznalo, že ho škola přepsala) | Cookies SIS relace |
+| **Jen u zapnutých notifikací:** adresa pro doručení, přihlášení do SIS zašifrované AES-GCM a krátké hashe známek, absencí a hodin rozvrhu (z nich se nic vyčíst nedá) | Přihlášení do Stravy |
 
 ## Jak funguje rozvrh a Gym
 
@@ -68,21 +67,6 @@ Celé je to v [`src/worker/sis.ts`](src/worker/sis.ts), [`src/worker/session.ts`
   (`/TimeTable/{PO,UT,ST,CT,PA}{1,2}.jpg`). Mřížka je na všech obrázcích na stejných pixelech a text je bitmapové
   písmo, takže je čte malé OCR se šablonami znaků ([`src/shared/schoolOcr.ts`](src/shared/schoolOcr.ts)). Běží
   přímo v telefonu přes `<canvas>` a obrázek trvá ~150 ms. Růžové pozadí buňky = změna.
-- **Notifikace o změnách:** škola rozvrh přepisuje hlavně večer a v noci, takže se to hlídá nepřetržitě:
-
-  ```
-  Worker cron (každých 5 min) ── porovná SHA-256 obrázků ──▶ změna? ──▶ spustí GitHub Action
-  GitHub Action ── OCR všech zbývajících dnů ── diff s minulou verzí (D1) ──▶ Web Push každému zvlášť
-  ```
-
-  Worker na free tieru má jen 10 ms CPU, proto OCR a šifrování notifikací dělá
-  [GitHub Action](.github/workflows/school-changes.yml) (u veřejného repa zdarma). Ta je spuštěná do minuty od změny
-  a pro jistotu ještě jednou za hodinu.
-- **Komu co přijde:** při zapnutí notifikací appka porovná tvůj osobní rozvrh s rozvrhem školy a pozná tvoji třídu
-  (dá se změnit ručně) a tvoje skupiny a bloky. Přijdou ti jen změny, které tě týkají, třeba
-  *„Zítra (Út 13. 10.): 3. MAT → FYZ LA 211, 5. ELZ: učebna 211 → B13“*. Notifikace je šifrovaná (RFC 8291), takže
-  push služba Googlu/Applu obsah nevidí.
-- Změny uvnitř bloků (legenda vpravo na obrázku) se zatím nečtou, změna se pozná jen podle kódu bloku.
 
 ## Obědy ze Strava.cz
 
@@ -92,13 +76,22 @@ Stravy jsou jen ve stejné zašifrované cookie jako přihlášení do SIS, serv
 Worker přihlásí, přečte objednávky na příští ~3 týdny, odhlásí se a u oběda ukáže číslo a název jídla, nebo
 „Nemáš objednáno“. Objednává se dál ve Stravě.
 
-## Notifikace o známkách a absenci
+## Notifikace
 
-Server nemá tvoje heslo, takže sám nepozná, že ti přibyla známka. Proto je tahle notifikace **dobrovolná**: když ji
-v Nastavení zapneš, Worker uloží tvoje přihlášení zašifrované do D1. [GitHub Action](.github/workflows/watch.yml) se
-přes den každých 30 minut přihlásí za každého, kdo to má zapnuté, porovná známky a absenci s minulou kontrolou (jen
-přes hashe) a pošle push s tím, co je nové. Vypnutím notifikací nebo odhlášením se přihlášení smaže. Když si změníš
-heslo v SIS, kontrola se vypne a přijde ti o tom zpráva.
+V Nastavení je jeden přepínač: změny tvého rozvrhu, nové známky a nová absence. Server nemá tvoje heslo, takže sám
+nepozná, že se ti něco změnilo. Proto se po zapnutí uloží tvoje přihlášení zašifrované do D1 a
+[GitHub Action](.github/workflows/watch.yml) se za každého, kdo to má zapnuté, přihlásí do SIS, porovná známky,
+absenci a osobní rozvrh (tento a příští týden) s minulou kontrolou (jen přes hashe) a pošle push s tím, co je nové,
+třeba *„Út 13. 10.: 8:00 MAT · 105 · NO, 8:55 odpadá“*.
+
+```
+Worker cron (každých 5 min) ── porovná SHA-256 obrázků rozvrhu školy ──▶ změna? ──▶ spustí Action hned
+GitHub Action (+ každých 30 min přes den) ── přihlásí se za každého ── diff ──▶ Web Push
+```
+
+Škola rozvrh přepisuje hlavně večer a v noci, proto ho Worker hlídá nepřetržitě a Action spustí do pár minut od
+změny. Vypnutím notifikací nebo odhlášením se přihlášení smaže. Když si změníš heslo v SIS, kontrola se vypne a
+přijde ti o tom zpráva. Notifikace je šifrovaná (RFC 8291), takže push služba Googlu/Applu obsah nevidí.
 
 Kontrola běží v GitHub Action, ne ve Workeru (10 ms CPU a 50 dotazů na spuštění by na desítky lidí nestačilo), takže
 Cloudflare skoro nezatěžuje. Logy Action jsou veřejné, proto skript nikdy nevypisuje jména, známky ani adresy.
@@ -148,7 +141,7 @@ npm run deploy                                # → https://opensisakhk.<účet>
 
 Do GitHub repa (*Settings → Secrets and variables → Actions*) přidej `API_URL` (adresa Workeru), `INGEST_TOKEN`,
 `VAPID_PUBLIC_KEY` a `VAPID_PRIVATE_JWK`, stejné hodnoty jako ve Workeru. `GITHUB_TOKEN` ve Workeru je volitelný: bez
-něj Action poběží jen jednou za hodinu.
+něj Action poběží jen každých 30 minut přes den, ne hned po změně rozvrhu.
 
 Všechno se vejde do free tieru Cloudflare (100 000 požadavků denně) a GitHub Actions (veřejné repo).
 

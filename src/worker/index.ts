@@ -117,40 +117,13 @@ app.get("/school/:file{[A-Z]{2}[12]\\.jpg}", async (c) => {
 
 app.get("/push/key", (c) => c.json({ key: c.env.VAPID_PUBLIC_KEY }));
 
-// ---------- internal: used by the GitHub Action (.github/workflows/school-changes.yml) ----------
+// ---------- internal: used by the GitHub Action (.github/workflows/watch.yml) ----------
 
 const internal = new Hono<Env>();
 internal.use("/*", async (c, next) => {
   const token = c.req.header("authorization")?.replace(/^Bearer /, "");
   if (!c.env.INGEST_TOKEN || token !== c.env.INGEST_TOKEN) return c.json({ error: "forbidden" }, 403);
   await next();
-});
-
-internal.get("/state", async (c) => {
-  const days = await c.env.DB.prepare("SELECT date, cells FROM school_days").all<{ date: string; cells: string }>();
-  const subs = await c.env.DB.prepare(
-    // Students with background checks get their own timetable's changes from scripts/watch.ts instead.
-    `SELECT endpoint, p256dh, auth, cls, subjects FROM push_subscriptions
-     WHERE p256dh IS NOT NULL AND cls IS NOT NULL AND user_id NOT IN (SELECT user_id FROM watchers)`,
-  ).all<{ endpoint: string; p256dh: string; auth: string; cls: string; subjects: string }>();
-  return c.json({
-    days: Object.fromEntries(days.results.map((d) => [d.date, JSON.parse(d.cells)])),
-    subscriptions: subs.results.map((s) => ({ ...s, subjects: JSON.parse(s.subjects) as string[] })),
-  });
-});
-
-internal.post("/state", async (c) => {
-  const { days, gone } = await c.req.json<{ days: Record<string, unknown[]>; gone?: string[] }>();
-  const now = Date.now();
-  const today = new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Prague" }).format(new Date());
-  await c.env.DB.batch([
-    ...Object.entries(days).map(([date, cells]) =>
-      c.env.DB.prepare("INSERT OR REPLACE INTO school_days (date, cells, updated) VALUES (?, ?, ?)").bind(date, JSON.stringify(cells), now),
-    ),
-    ...(gone ?? []).map((e) => c.env.DB.prepare("DELETE FROM push_subscriptions WHERE endpoint = ?").bind(e)),
-    c.env.DB.prepare("DELETE FROM school_days WHERE date < ?").bind(today),
-  ]);
-  return c.json({ ok: true });
 });
 
 type Cred = Session["cred"];
@@ -297,21 +270,12 @@ app.get("/absence", async (c) => {
 });
 
 app.post("/push/subscribe", async (c) => {
-  const { subscription, cls, subjects } = await c.req.json<{
-    subscription?: { endpoint?: string; keys?: { p256dh?: string; auth?: string } };
-    cls?: string;
-    subjects?: string[];
-  }>();
+  const { subscription } = await c.req.json<{ subscription?: { endpoint?: string; keys?: { p256dh?: string; auth?: string } } }>();
   const endpoint = subscription?.endpoint;
   if (!endpoint || !/^https:\/\//.test(endpoint) || !subscription.keys?.p256dh || !subscription.keys.auth)
     return c.json({ error: "bad_subscription" }, 400);
-  if (!cls || !/^[A-Z]\d$/.test(cls)) return c.json({ error: "bad_class" }, 400);
-  const cleanSubjects = (subjects ?? []).filter((s) => /^[0-9A-Za-z]{1,8}$/.test(s)).slice(0, 60);
-  await c.env.DB.prepare(
-    `INSERT OR REPLACE INTO push_subscriptions (endpoint, user_id, created, p256dh, auth, cls, subjects)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`,
-  )
-    .bind(endpoint, c.get("session").userId, Date.now(), subscription.keys.p256dh, subscription.keys.auth, cls, JSON.stringify(cleanSubjects))
+  await c.env.DB.prepare("INSERT OR REPLACE INTO push_subscriptions (endpoint, user_id, created, p256dh, auth) VALUES (?, ?, ?, ?, ?)")
+    .bind(endpoint, c.get("session").userId, Date.now(), subscription.keys.p256dh, subscription.keys.auth)
     .run();
   return c.json({ ok: true });
 });
@@ -357,7 +321,7 @@ async function notifyAll(env: Bindings, subs: { endpoint: string }[]) {
     await env.DB.batch(gone.map((e) => env.DB.prepare("DELETE FROM push_subscriptions WHERE endpoint = ?").bind(e)));
 }
 
-/** Cron: cheap check whether SIS rewrote any remaining day; if so, wake the GitHub Action that reads and diffs it. */
+/** Cron: cheap check whether SIS rewrote any remaining day; if so, wake the GitHub Action (watch.yml) right away. */
 async function checkSchoolImages(env: Bindings) {
   const prague = new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Prague" }).format(new Date());
   const weeks = await schoolWeeks();

@@ -12,3 +12,4 @@ test/fixtures/*.jpg
 # Strava probe (scripts/strava-probe.ts)
 .strava.local
 *.local.json
+*.local.html
