@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { api, type TimetableDay, type TimetableResponse } from "./api";
 import type { Lesson } from "../worker/parse";
-import { DayPager, DayStrip, Empty, LargeHeader } from "./ui";
+import { DayPager, DayStrip, Empty, LargeHeader, SkeletonList } from "./ui";
 import { addDays, defaultSchoolDay, inMinutes, longDate, minutes, mondayOf, nowMinutesPrague, todayPrague, weekdayIndex } from "./time";
 import { useCachedFetch } from "./useFetch";
 import { CalendarOffIcon, SunIcon, UtensilsIcon } from "./icons";
@@ -26,7 +26,8 @@ export function Timetable({ onError }: { onError: (e: unknown) => boolean }) {
       <DayPager index={weekdayIndex(selected)} onIndex={(i) => setSelected(addDays(monday, i))}>
         {[0, 1, 2, 3, 4].map((i) => {
           const day = days.find((d) => d.date === addDays(monday, i));
-          return day ? <DayView key={day.date} day={day} live={isCurrentWeek && day.date === todayPrague()} /> : loading ? null : <Empty key={i} icon={<CalendarOffIcon size={40} />} title="Žádná data" />;
+          if (day) return <DayView key={day.date} day={day} live={isCurrentWeek && day.date === todayPrague()} />;
+          return loading ? <SkeletonList key={i} count={7} side /> : <Empty key={i} icon={<CalendarOffIcon size={40} />} title="Žádná data" />;
         })}
       </DayPager>
     </div>
@@ -56,7 +57,11 @@ function DayView({ day, live }: { day: TimetableDay; live: boolean }) {
 
   return (
     <div className="day-view">
-      {live && (current || next) && <NowCard current={current} next={next} now={now} />}
+      {live && (current || next) && (
+        <div className="stagger">
+          <NowCard current={current} next={next} now={now} />
+        </div>
+      )}
       {changes > 0 && (
         <p className="change-note">
           <span className="dot" /> {changes === 1 ? "1 změněná hodina" : changes < 5 ? `${changes} změněné hodiny` : `${changes} změněných hodin`}
@@ -65,7 +70,7 @@ function DayView({ day, live }: { day: TimetableDay; live: boolean }) {
       <ol className="timeline">
         {items.map((it, i) =>
           it.kind === "lunch" ? (
-            <li key={`lunch-${i}`}>
+            <li key={`lunch-${i}`} className="stagger" style={{ "--i": i + 1 } as React.CSSProperties}>
               <div className={`lesson-card lunch ${live && now >= minutes(it.end) ? "past" : ""}`}>
                 <div className="lesson-time">
                   <span>{it.start}</span>
@@ -83,6 +88,7 @@ function DayView({ day, live }: { day: TimetableDay; live: boolean }) {
           ) : (
             <LessonCard
               key={`${it.lesson.id}-${i}`}
+              index={i + 1}
               lesson={it.lesson}
               state={!live ? "future" : now >= minutes(it.lesson.end) ? "past" : it.lesson === current ? "now" : "future"}
             />
@@ -116,7 +122,7 @@ function NowCard({ current, next, now }: { current?: Lesson; next?: Lesson; now:
   );
 }
 
-function LessonCard({ lesson: l, state }: { lesson: Lesson; state: "past" | "now" | "future" }) {
+function LessonCard({ lesson: l, state, index }: { lesson: Lesson; state: "past" | "now" | "future"; index: number }) {
   const body = (
     <>
       <div className="lesson-time">
@@ -136,7 +142,7 @@ function LessonCard({ lesson: l, state }: { lesson: Lesson; state: "past" | "now
   );
   const cls = `lesson-card ${state} ${l.changed ? "changed" : ""}`;
   return (
-    <li>
+    <li className="stagger" style={{ "--i": index } as React.CSSProperties}>
       {l.meet ? (
         <a className={cls} href={l.meet} target="_blank" rel="noreferrer" aria-label={`${l.subject}, otevřít Meet`}>
           {body}

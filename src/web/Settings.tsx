@@ -88,7 +88,7 @@ export function Settings({ onError, onLogout }: { onError: (e: unknown) => boole
     <div className="screen">
       <LargeHeader title="Nastavení" />
       <div className="scroll">
-        <div className="profile-card">
+        <div className="profile-card stagger">
           {me.data?.hasPhoto ? (
             <img className="avatar" src="/api/me/photo" alt="" />
           ) : (

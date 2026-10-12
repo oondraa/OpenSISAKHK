@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "./api";
 import { PERIODS, readSchoolDay, type Cell } from "../shared/schoolOcr";
-import { DayStrip, Empty, LargeHeader } from "./ui";
+import { DayStrip, Empty, LargeHeader, SkeletonList } from "./ui";
 import { defaultSchoolDay, inMinutes, longDate, minutes, mondayOf, nowMinutesPrague, todayPrague, weekdayIndex } from "./time";
 import { useCachedFetch } from "./useFetch";
 import { AlertIcon, CalendarOffIcon, DumbbellIcon } from "./icons";
@@ -52,9 +52,12 @@ export function Gym({ onError }: { onError: (e: unknown) => boolean }) {
         ) : (
           <>
             <StatusCard live={live} now={now} periods={periods} loaded={!!gym.data} />
+            {!gym.data ? (
+              <SkeletonList count={9} lines={1} />
+            ) : (
             <div className="list gym-list">
               {periods.map(({ p, start, end, occ }) => (
-                <div key={p} className={`row gym-row ${live && minutes(start) <= now && now < minutes(end) ? "current" : ""} ${live && minutes(end) <= now ? "past" : ""}`}>
+                <div key={p} style={{ "--i": p + 1 } as React.CSSProperties} className={`row gym-row stagger ${live && minutes(start) <= now && now < minutes(end) ? "current" : ""} ${live && minutes(end) <= now ? "past" : ""}`}>
                   <span className="gym-period">
                     <b>{p}.</b>
                     <span>
@@ -72,6 +75,7 @@ export function Gym({ onError }: { onError: (e: unknown) => boolean }) {
                 </div>
               ))}
             </div>
+            )}
             <p className="list-footer">Podle veřejného rozvrhu školy. Kroužky a akce mimo rozvrh tu nejsou.</p>
           </>
         )}
@@ -107,7 +111,7 @@ function StatusCard({ live, now, periods, loaded }: {
   }
 
   return (
-    <div className={`gym-status ${state}`}>
+    <div className={`gym-status stagger ${state}`}>
       <span className="gym-status-icon">
         <DumbbellIcon size={28} />
       </span>

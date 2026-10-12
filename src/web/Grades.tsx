@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { api, type GradesResponse } from "./api";
 import type { Subject } from "../worker/parse";
-import { Chevron, Empty, LargeHeader } from "./ui";
+import { Chevron, Empty, LargeHeader, SkeletonList } from "./ui";
 import { useCachedFetch } from "./useFetch";
 import { BookIcon } from "./icons";
 
@@ -27,7 +27,7 @@ export function Grades({ onError }: { onError: (e: unknown) => boolean }) {
       <div className="scroll">
         {error && <p className="banner">Známky se nepodařilo obnovit. Zobrazuji poslední uložené.</p>}
         {overall !== null && (
-          <div className="summary-card">
+          <div className="summary-card stagger">
             <div>
               <p className="eyebrow">Průměr ze všech předmětů</p>
               <p className={`summary-value ${tone(overall)}`}>{overall.toFixed(2)}</p>
@@ -40,12 +40,16 @@ export function Grades({ onError }: { onError: (e: unknown) => boolean }) {
         )}
         {subjects.length > 0 ? (
           <div className="list">
-            {subjects.map((s) => (
-              <SubjectRow key={s.name} s={s} open={open === s.name} onToggle={() => setOpen(open === s.name ? null : s.name)} />
+            {subjects.map((s, i) => (
+              <div key={s.name} className="stagger" style={{ "--i": i + 1 } as React.CSSProperties}>
+                <SubjectRow s={s} open={open === s.name} onToggle={() => setOpen(open === s.name ? null : s.name)} />
+              </div>
             ))}
           </div>
+        ) : loading ? (
+          <SkeletonList count={8} side />
         ) : (
-          !loading && <Empty icon={<BookIcon size={40} />} title="Zatím žádné známky" />
+          <Empty icon={<BookIcon size={40} />} title="Zatím žádné známky" />
         )}
         <p className="list-footer">Průměr počítá SIS a má jen informativní charakter.</p>
       </div>

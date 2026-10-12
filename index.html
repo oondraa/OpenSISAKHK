@@ -3,16 +3,51 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#f6f3ee" />
+    <meta name="theme-color" content="#0e0e10" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="icon" href="/icon.svg" type="image/svg+xml" />
     <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="preload" href="/fonts/sora-latin.woff2" as="font" type="font/woff2" crossorigin />
     <title>OpenSISAKHK</title>
+    <!-- Splash lives here, not in React, so it paints on the very first frame. main.tsx removes it. -->
+    <style>
+      @font-face {
+        font-family: "Sora";
+        font-weight: 300 800;
+        font-display: block;
+        src: url("/fonts/sora-latin.woff2") format("woff2");
+        unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+      }
+      html, body { margin: 0; background: #0e0e10; }
+      #splash {
+        position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; background: #0e0e10;
+        transition: opacity 380ms ease, transform 520ms cubic-bezier(0.32, 0.72, 0, 1);
+        animation: sp-fallback 300ms ease 5s forwards; /* if the app never boots, don't trap the user */
+      }
+      #splash.hide { opacity: 0; transform: scale(1.06); pointer-events: none; }
+      .sp-mark { display: flex; align-items: baseline; font: 800 clamp(2.4rem, 11vw, 3.4rem) / 1 Sora, system-ui, sans-serif; letter-spacing: -0.03em; }
+      .sp-sis { color: #ff5a1f; opacity: 0; transform: scale(0.9); animation: sp-in 520ms cubic-bezier(0.32, 0.72, 0, 1) 80ms forwards; }
+      /* "Open" makes room by growing its column from 0 while sliding in from the left: SISAKHK glides right to stay centred. */
+      .sp-open { display: grid; grid-template-columns: 0fr; animation: sp-grow 720ms cubic-bezier(0.32, 0.72, 0, 1) 520ms forwards; }
+      .sp-open > span { overflow: hidden; min-width: 0; }
+      .sp-open-text { display: inline-block; font-weight: 300; color: #f6f3ee; padding-right: 0.02em; transform: translateX(-105%); animation: sp-slide 720ms cubic-bezier(0.32, 0.72, 0, 1) 520ms forwards; }
+      @keyframes sp-in { to { opacity: 1; transform: none; } }
+      @keyframes sp-grow { to { grid-template-columns: 1fr; } }
+      @keyframes sp-slide { to { transform: none; } }
+      @keyframes sp-fallback { to { opacity: 0; visibility: hidden; } }
+      @media (prefers-reduced-motion: reduce) {
+        .sp-sis, .sp-open, .sp-open-text { animation: none; opacity: 1; transform: none; grid-template-columns: 1fr; }
+      }
+    </style>
   </head>
   <body>
+    <div id="splash" aria-hidden="true">
+      <div class="sp-mark">
+        <span class="sp-open"><span><span class="sp-open-text">Open</span></span></span><span class="sp-sis">SISAKHK</span>
+      </div>
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/web/main.tsx"></script>
   </body>

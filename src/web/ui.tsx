@@ -26,12 +26,15 @@ export function LargeHeader({ title, subtitle, accessory, loading, children }: {
 /** Mon–Fri strip for the week of `monday`; arrows move whole weeks. */
 export function DayStrip({ monday, selected, onSelect }: { monday: string; selected: string; onSelect: (iso: string) => void }) {
   const today = todayPrague();
+  const index = [0, 1, 2, 3, 4].findIndex((i) => addDays(monday, i) === selected);
   return (
     <div className="day-strip">
       <button className="week-arrow" aria-label="Předchozí týden" onClick={() => onSelect(addDays(selected, -7))}>
         <Chevron dir="left" />
       </button>
       <div className="day-strip-days" role="tablist">
+        {/* One pill that slides between days instead of five that blink on and off. */}
+        {index >= 0 && <span className="day-thumb" aria-hidden="true" style={{ "--i": index } as React.CSSProperties} />}
         {[0, 1, 2, 3, 4].map((i) => {
           const iso = addDays(monday, i);
           const active = iso === selected;
@@ -148,6 +151,33 @@ export function Empty({ icon, title, text }: { icon: ReactNode; title: string; t
       <div className="empty-icon">{icon}</div>
       <p className="empty-title">{title}</p>
       {text && <p className="empty-text">{text}</p>}
+    </div>
+  );
+}
+
+/** Placeholder card with a shimmer, shaped like the content that is loading. */
+export function Skeleton({ lines = 2, side = false, tall = false }: { lines?: number; side?: boolean; tall?: boolean }) {
+  return (
+    <div className={`skeleton ${tall ? "tall" : ""}`} aria-hidden="true">
+      {side && <span className="sk-block" />}
+      <span className="sk-lines">
+        {Array.from({ length: lines }, (_, i) => (
+          <span key={i} className="sk-line" style={{ width: `${[62, 38, 50][i % 3]}%` }} />
+        ))}
+      </span>
+      {side && <span className="sk-chip" />}
+    </div>
+  );
+}
+
+export function SkeletonList({ count, ...props }: { count: number; lines?: number; side?: boolean; tall?: boolean }) {
+  return (
+    <div className="skeleton-list" role="status" aria-label="Načítání">
+      {Array.from({ length: count }, (_, i) => (
+        <div key={i} className="stagger" style={{ "--i": i } as React.CSSProperties}>
+          <Skeleton {...props} />
+        </div>
+      ))}
     </div>
   );
 }
