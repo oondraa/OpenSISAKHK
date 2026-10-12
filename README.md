@@ -12,7 +12,7 @@ Neoficiální open-source aplikace pro studenty **SŠ a VOŠ aplikované kyberne
 | **Rozvrh** | Tvůj osobní rozvrh včetně volitelných předmětů a skupin. Změněné hodiny jsou zvýrazněné. Karta „Teď / Další“, swipe mezi dny, oběd, odkaz na Meet. |
 | **Gym** | Jestli je **posilovna (P0)** teď volná, a po hodinách, která třída tam je. |
 | **Známky** | Známky po předmětech s váhou, typem a komentářem a průměr, který počítá SIS. |
-| **Nastavení** | Push notifikace o změnách rozvrhu, světlý/tmavý režim, informace o tom, co se ukládá, a odhlášení. |
+| **Nastavení** | Push notifikace o změnách rozvrhu tvé třídy, světlý/tmavý režim, informace o tom, co se ukládá, a odhlášení. |
 
 Je to PWA: na telefonu ji přidáš na plochu (Android: *Nainstalovat aplikaci*, iPhone: *Sdílet → Přidat na plochu*)
 a chová se jako normální aplikace, i offline s posledními načtenými daty.
@@ -46,8 +46,8 @@ Celé je to v [`src/worker/sis.ts`](src/worker/sis.ts), [`src/worker/session.ts`
 | --- | --- |
 | Jméno a profilová fotka ze SIS (kdo aplikaci používá) | Heslo |
 | Kdy ses poprvé a naposledy přihlásil | Známky, rozvrh, absence |
-| Adresa pro doručení notifikací (jen když je zapneš) | Cookies SIS relace |
-| Otisky (SHA-256) veřejných obrázků rozvrhu školy | |
+| U zapnutých notifikací: adresa pro doručení, třída a zkratky tvých předmětů/skupin (např. `AGJ1`, `B06`) | Cookies SIS relace |
+| Otisky a přečtený obsah veřejného rozvrhu školy (pro porovnání změn) | |
 
 ## Jak funguje rozvrh a Gym
 
@@ -56,8 +56,21 @@ Celé je to v [`src/worker/sis.ts`](src/worker/sis.ts), [`src/worker/session.ts`
   (`/TimeTable/{PO,UT,ST,CT,PA}{1,2}.jpg`). Mřížka je na všech obrázcích na stejných pixelech a text je bitmapové
   písmo, takže je čte malé OCR se šablonami znaků ([`src/shared/schoolOcr.ts`](src/shared/schoolOcr.ts)). Běží
   přímo v telefonu přes `<canvas>` a obrázek trvá ~150 ms. Růžové pozadí buňky = změna.
-- **Notifikace:** cron ve Workeru každých 10 minut porovná otisky obrázků na zbytek tohoto a příštího týdne. Když se
-  některý změní (škola rozvrh přepisuje hlavně v noci), pošle Web Push všem, kdo mají notifikace zapnuté.
+- **Notifikace o změnách:** škola rozvrh přepisuje hlavně večer a v noci, takže se to hlídá nepřetržitě:
+
+  ```
+  Worker cron (každých 5 min) ── porovná SHA-256 obrázků ──▶ změna? ──▶ spustí GitHub Action
+  GitHub Action ── OCR všech zbývajících dnů ── diff s minulou verzí (D1) ──▶ Web Push každému zvlášť
+  ```
+
+  Worker na free tieru má jen 10 ms CPU, proto OCR a šifrování notifikací dělá
+  [GitHub Action](.github/workflows/school-changes.yml) (u veřejného repa zdarma). Ta je spuštěná do minuty od změny
+  a pro jistotu ještě jednou za hodinu.
+- **Komu co přijde:** při zapnutí notifikací appka porovná tvůj osobní rozvrh s rozvrhem školy a pozná tvoji třídu
+  (dá se změnit ručně) a tvoje skupiny a bloky. Přijdou ti jen změny, které tě týkají, třeba
+  *„Zítra (Út 13. 10.): 3. MAT → FYZ LA 211, 5. ELZ: učebna 211 → B13“*. Notifikace je šifrovaná (RFC 8291), takže
+  push služba Googlu/Applu obsah nevidí.
+- Změny uvnitř bloků (legenda vpravo na obrázku) se zatím nečtou, změna se pozná jen podle kódu bloku.
 
 ## Technologie
 
@@ -87,17 +100,26 @@ s jiným dnem uprav očekávané hodnoty.
 
 ## Nasazení (zdarma)
 
+Pokud máš ve wrangleru přihlášený jiný Cloudflare účet, nejdřív `npx wrangler logout`. Po přihlášení dej `account_id`
+z `npx wrangler whoami` do `wrangler.jsonc`, ať se to omylem nenasadí jinam.
+
 ```bash
 npx wrangler login
 npx wrangler d1 create opensisakhk            # id zkopíruj do wrangler.jsonc → database_id
 npx wrangler d1 migrations apply opensisakhk --remote
-npx wrangler secret put SESSION_SECRET
-npx wrangler secret put VAPID_PUBLIC_KEY
+npx wrangler secret put SESSION_SECRET        # openssl rand -hex 32
+npx wrangler secret put VAPID_PUBLIC_KEY      # npx tsx scripts/vapid.ts
 npx wrangler secret put VAPID_PRIVATE_JWK
+npx wrangler secret put INGEST_TOKEN          # openssl rand -hex 32
+npx wrangler secret put GITHUB_TOKEN          # fine-grained token: jen tohle repo, Contents: Read and write
 npm run deploy                                # → https://opensisakhk.<účet>.workers.dev
 ```
 
-Všechno se vejde do free tieru Cloudflare (100 000 požadavků denně).
+Do GitHub repa (*Settings → Secrets and variables → Actions*) přidej `API_URL` (adresa Workeru), `INGEST_TOKEN`,
+`VAPID_PUBLIC_KEY` a `VAPID_PRIVATE_JWK`, stejné hodnoty jako ve Workeru. `GITHUB_TOKEN` ve Workeru je volitelný: bez
+něj Action poběží jen jednou za hodinu.
+
+Všechno se vejde do free tieru Cloudflare (100 000 požadavků denně) a GitHub Actions (veřejné repo).
 
 ## Licence
 

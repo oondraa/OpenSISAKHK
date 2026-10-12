@@ -32,7 +32,8 @@ export const api = {
   me: () => call<{ name: string | null; hasPhoto: boolean; pushDevices: number }>("/me"),
   schoolWeeks: () => call<{ weeks: { start: string; end: string; week: 1 | 2 }[] }>("/school/weeks"),
   pushKey: () => call<{ key: string }>("/push/key"),
-  pushSubscribe: (endpoint: string) => post("/push/subscribe", { endpoint }),
+  pushSubscribe: (subscription: PushSubscriptionJSON, cls: string, subjects: string[]) =>
+    post("/push/subscribe", { subscription, cls, subjects }),
   pushUnsubscribe: (endpoint: string) => post("/push/unsubscribe", { endpoint }),
   pushTest: () => call<{ sent: number }>("/push/test", { method: "POST" }),
 };

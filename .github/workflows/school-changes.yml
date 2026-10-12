@@ -1,0 +1,36 @@
+# Reads the public school timetable, diffs it and sends targeted push notifications.
+# Triggered by the Worker's 5-minute cron as soon as an image changes (repository_dispatch),
+# plus an hourly fallback in case that dispatch ever fails.
+name: School timetable changes
+
+on:
+  repository_dispatch:
+    types: [school-changed]
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: school-changes
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  diff-and-notify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx tsx scripts/school-changes.ts
+        env:
+          API_URL: ${{ secrets.API_URL }}
+          INGEST_TOKEN: ${{ secrets.INGEST_TOKEN }}
+          VAPID_PUBLIC_KEY: ${{ secrets.VAPID_PUBLIC_KEY }}
+          VAPID_PRIVATE_JWK: ${{ secrets.VAPID_PRIVATE_JWK }}

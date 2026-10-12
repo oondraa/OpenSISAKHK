@@ -17,6 +17,7 @@
     }
   ],
   // Watch the public school timetable for rewrites (SIS reshuffles it late at night).
-  "triggers": { "crons": ["*/10 * * * *"] },
+  "triggers": { "crons": ["*/5 * * * *"] },
+  "vars": { "GITHUB_REPO": "oondraa/OpenSISAKHK" },
   "observability": { "enabled": true }
 }

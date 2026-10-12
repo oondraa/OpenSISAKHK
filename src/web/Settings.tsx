@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
-import { api } from "./api";
+import { api, cache } from "./api";
+import { CLASSES } from "../shared/schoolOcr";
+import { detectClass } from "./detectClass";
 import { LargeHeader, Section, Segmented, Switch } from "./ui";
 import { savedTheme, setTheme, type Theme } from "./theme";
 import { useCachedFetch } from "./useFetch";
@@ -18,12 +20,43 @@ export function Settings({ onError, onLogout }: { onError: (e: unknown) => boole
   const [theme, setThemeState] = useState<Theme>(savedTheme);
   const [push, setPush] = useState<PushState>("busy");
   const [pushMsg, setPushMsg] = useState<string | null>(null);
+  const [cls, setCls] = useState<string | null>(() => cache.get<string>("pushClass"));
 
   useEffect(() => {
     if (!("serviceWorker" in navigator) || !("PushManager" in window)) return setPush("unsupported");
     if (Notification.permission === "denied") return setPush("denied");
     currentSubscription().then((s) => setPush(s ? "on" : "off"));
   }, []);
+
+  /** Subscribes (or re-registers with a new class) — the server keeps only class + subject codes. */
+  async function subscribe(chosen: string | null) {
+    const reg = await navigator.serviceWorker.ready;
+    const detected = await detectClass().catch(() => ({ cls: null, subjects: [] as string[] }));
+    const finalCls = chosen ?? detected.cls;
+    if (!finalCls) {
+      setPushMsg("Nepodařilo se poznat tvoji třídu. Vyber ji níž a notifikace se zapnou.");
+      return false;
+    }
+    const sub = (await reg.pushManager.getSubscription()) ??
+      (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToBytes((await api.pushKey()).key) }));
+    await api.pushSubscribe(sub.toJSON(), finalCls, detected.subjects);
+    cache.set("pushClass", finalCls);
+    setCls(finalCls);
+    return true;
+  }
+
+  async function changeClass(next: string) {
+    setCls(next);
+    cache.set("pushClass", next);
+    if (push !== "on" && push !== "off") return;
+    setPush("busy");
+    try {
+      setPush((await subscribe(next)) ? "on" : "off");
+    } catch (e) {
+      onError(e);
+      setPush("off");
+    }
+  }
 
   async function togglePush(on: boolean) {
     setPush("busy");
@@ -32,10 +65,7 @@ export function Settings({ onError, onLogout }: { onError: (e: unknown) => boole
       const reg = await navigator.serviceWorker.ready;
       if (on) {
         if ((await Notification.requestPermission()) !== "granted") return setPush("denied");
-        const { key } = await api.pushKey();
-        const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToBytes(key) });
-        await api.pushSubscribe(sub.endpoint);
-        setPush("on");
+        setPush((await subscribe(cls)) ? "on" : "off");
       } else {
         const sub = await reg.pushManager.getSubscription();
         if (sub) {
@@ -100,7 +130,8 @@ export function Settings({ onError, onLogout }: { onError: (e: unknown) => boole
                 : "Tento prohlížeč push notifikace nepodporuje."
               : push === "denied"
                 ? "Notifikace jsou v prohlížeči zakázané. Povol je v nastavení prohlížeče pro tuhle stránku."
-                : (pushMsg ?? "Pošleme upozornění, když škola přepíše rozvrh na tento nebo příští týden.")
+                : (pushMsg ??
+                  "Když škola přepíše rozvrh (i ve 3 ráno), dostaneš zprávu přesně s tím, co se změnilo u tvé třídy a tvých skupin.")
           }
         >
           <div className="row">
@@ -112,6 +143,19 @@ export function Settings({ onError, onLogout }: { onError: (e: unknown) => boole
               onChange={togglePush}
             />
           </div>
+          {(push === "on" || cls) && (
+            <label className="row">
+              <span className="row-title">Třída</span>
+              <select className="select" value={cls ?? ""} onChange={(e) => changeClass(e.target.value)}>
+                {!cls && <option value="">Vyber…</option>}
+                {CLASSES.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
           {push === "on" && (
             <button className="row row-button" onClick={() => api.pushTest().catch(onError)}>
               Poslat zkušební notifikaci
@@ -123,7 +167,8 @@ export function Settings({ onError, onLogout }: { onError: (e: unknown) => boole
           <div className="privacy">
             <p>
               <b>Co ukládáme:</b> tvoje jméno a profilovou fotku ze SIS, abychom věděli, kdo aplikaci používá a mohli ti
-              ji ukázat tady. U zapnutých notifikací adresu pro doručení upozornění.
+              ji ukázat tady. U zapnutých notifikací adresu pro doručení, tvoji třídu a zkratky tvých předmětů a skupin
+              (např. AGJ1), aby ti chodily jen tvoje změny.
             </p>
             <p>
               <b>Co neukládáme:</b> heslo. Nikdy nepřijde do žádné databáze. Zůstává jen zašifrované v tomhle zařízení,

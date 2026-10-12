@@ -194,6 +194,8 @@ p { margin: 0; }
 .chevron { width: 18px; height: 18px; flex: none; fill: none; stroke: var(--text-3); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; transition: transform 300ms var(--ease-spring); }
 
 /* ---------- Controls ---------- */
+.select { font: inherit; font-size: 1.0625rem; color: var(--text-2); background: transparent; border: 0; text-align: right; padding: 4px 0; cursor: pointer; }
+.select:focus-visible { outline: 2px solid var(--accent); }
 .switch { width: 51px; height: 31px; flex: none; border-radius: 99px; background: var(--fill); position: relative; transition: background-color 250ms ease; }
 .switch[aria-checked="true"] { background: var(--green); }
 .switch-knob { position: absolute; top: 2px; left: 2px; width: 27px; height: 27px; border-radius: 50%; background: #fff; box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15), 0 1px 1px rgba(0, 0, 0, 0.16); transition: transform 350ms var(--ease-spring), width 200ms var(--ease-spring); }
