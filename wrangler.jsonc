@@ -1,6 +1,8 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "opensisakhk",
+  // henryaisoft@gmail.com account. Pinned so a wrangler login to another account cannot deploy elsewhere.
+  "account_id": "43b0670039d0868f68ab4dd61e923ae3",
   "main": "src/worker/index.ts",
   "compatibility_date": "2026-10-01",
   "assets": {
@@ -11,8 +13,7 @@
     {
       "binding": "DB",
       "database_name": "opensisakhk",
-      // Replace with the id printed by `npx wrangler d1 create opensisakhk` before deploying.
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_id": "462ae1f5-9002-4628-a342-cdcb68065591",
       "migrations_dir": "migrations"
     }
   ],
