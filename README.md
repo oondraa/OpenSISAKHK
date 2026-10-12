@@ -16,7 +16,9 @@ Rozvrh, který ví, co máš teď. Absence, která tě varuje dřív, než je po
   <img alt="Zdarma" src="https://img.shields.io/badge/zdarma-0E0E10?style=for-the-badge">
 </p>
 
-![OpenSISAKHK](brand/social-preview.png)
+<a href="brand/promo.mp4"><img alt="Ukázka OpenSISAKHK: rozvrh se změnami a obědem, volná posilovna, hlídání absence" src="brand/promo.gif" width="100%"></a>
+
+<sub>Celé video se zvukem (21 s): [promo.mp4](brand/promo.mp4)</sub>
 
 ---
 
