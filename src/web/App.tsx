@@ -21,7 +21,11 @@ const TABS: { id: Tab; label: string; icon: ReactNode }[] = [
 export function App() {
   // The session cookie is HttpOnly, so "logged in" is remembered locally and corrected by the first 401.
   const [loggedIn, setLoggedIn] = useState(() => cache.get<boolean>("loggedIn") ?? false);
-  const [tab, setTab] = useState<Tab>("timetable");
+  // Notifications open the app on their tab (/?tab=grades).
+  const [tab, setTab] = useState<Tab>(() => {
+    const t = new URLSearchParams(location.search).get("tab");
+    return TABS.some((x) => x.id === t) ? (t as Tab) : "timetable";
+  });
 
   const signOut = useCallback(() => {
     const theme = cache.get("theme");

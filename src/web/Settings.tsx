@@ -22,6 +22,18 @@ export function Settings({ onError, onLogout }: { onError: (e: unknown) => boole
   const [push, setPush] = useState<PushState>("busy");
   const [pushMsg, setPushMsg] = useState<string | null>(null);
   const [cls, setCls] = useState<string | null>(() => cache.get<string>("pushClass"));
+  const [watching, setWatching] = useState<boolean | null>(null);
+  const watchOn = watching ?? me.data?.watching ?? false;
+
+  async function toggleWatch(on: boolean) {
+    setWatching(on);
+    try {
+      await api.watch(on);
+    } catch (e) {
+      onError(e);
+      setWatching(!on);
+    }
+  }
 
   useEffect(() => {
     if (!("serviceWorker" in navigator) || !("PushManager" in window)) return setPush("unsupported");
@@ -69,6 +81,7 @@ export function Settings({ onError, onLogout }: { onError: (e: unknown) => boole
         setPush((await subscribe(cls)) ? "on" : "off");
       } else {
         const sub = await reg.pushManager.getSubscription();
+        if (watchOn) await toggleWatch(false); // no notifications = no reason to keep the stored login
         if (sub) {
           await api.pushUnsubscribe(sub.endpoint).catch(() => {});
           await sub.unsubscribe();
@@ -132,7 +145,11 @@ export function Settings({ onError, onLogout }: { onError: (e: unknown) => boole
               : push === "denied"
                 ? "Notifikace jsou v prohlížeči zakázané. Povol je v nastavení prohlížeče pro tuhle stránku."
                 : (pushMsg ??
-                  "Když škola přepíše rozvrh (i ve 3 ráno), dostaneš zprávu přesně s tím, co se změnilo u tvé třídy a tvých skupin.")
+                  `Když škola přepíše rozvrh (i ve 3 ráno), dostaneš zprávu přesně s tím, co se změnilo u tvé třídy a tvých skupin.${
+                    push === "on"
+                      ? " Známky a absenci kontrolujeme přes den každých 30 minut. Kvůli tomu si server uloží tvoje zašifrované přihlášení do SIS. Vypnutím nebo odhlášením se smaže."
+                      : ""
+                  }`)
           }
         >
           <div className="row">
@@ -158,6 +175,12 @@ export function Settings({ onError, onLogout }: { onError: (e: unknown) => boole
             </label>
           )}
           {push === "on" && (
+            <div className="row">
+              <span className="row-title">Nové známky a absence</span>
+              <Switch label="Notifikace o nových známkách a absenci" checked={watchOn} onChange={toggleWatch} />
+            </div>
+          )}
+          {push === "on" && (
             <button className="row row-button" onClick={() => api.pushTest().catch(onError)}>
               Poslat zkušební notifikaci
             </button>
@@ -172,12 +195,16 @@ export function Settings({ onError, onLogout }: { onError: (e: unknown) => boole
               (např. AGJ1), aby ti chodily jen tvoje změny.
             </p>
             <p>
-              <b>Co neukládáme:</b> heslo. Nikdy nepřijde do žádné databáze. Zůstává jen zašifrované v tomhle zařízení,
-              aby tě aplikace nemusela odhlašovat, když SIS ukončí relaci. Známky, rozvrh ani absence se na serveru
-              neukládají.
+              <b>Heslo:</b> zůstává zašifrované v tomhle zařízení, aby tě aplikace nemusela odhlašovat, když SIS ukončí
+              relaci. Do databáze se dostane jen tehdy, když si zapneš notifikace o známkách a absenci, a to zašifrované.
+              Jinak by server nemohl sám zjistit, že ti něco přibylo.
             </p>
             <p>
-              Odhlášením se z tohoto zařízení smaže i uložené heslo a odběr notifikací.{" "}
+              <b>Co neukládáme:</b> známky, rozvrh ani absenci. U notifikací o známkách si server pamatuje jen krátké
+              otisky (hashe), podle kterých pozná, co je nové. Samotné známky z nich nevyčte.
+            </p>
+            <p>
+              Odhlášením se smaže uložené heslo i odběr notifikací.{" "}
               <a href="https://github.com/oondraa/OpenSISAKHK" target="_blank" rel="noreferrer">
                 Zdrojový kód je veřejný.
               </a>

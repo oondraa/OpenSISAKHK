@@ -1,6 +1,7 @@
 import type { Jar } from "./sis";
 
-// Everything lives only inside this encrypted cookie on the student's device; the server stores none of it.
+// The session lives only inside this encrypted cookie on the student's device; the server stores none of it
+// (except the sealed login of students who opt in to grade/absence notifications, see migrations/0003).
 // The credentials are kept so an expired SIS session can be renewed silently instead of logging the user out.
 export interface Session {
   jar: Jar;
@@ -22,16 +23,16 @@ const b64url = (buf: Uint8Array) =>
 const fromB64url = (s: string) =>
   Uint8Array.from(atob(s.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0));
 
-export async function seal(session: Session, secret: string): Promise<string> {
+export async function seal<T = Session>(value: T, secret: string): Promise<string> {
   const iv = crypto.getRandomValues(new Uint8Array(12));
-  const data = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, await key(secret), enc.encode(JSON.stringify(session)));
+  const data = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, await key(secret), enc.encode(JSON.stringify(value)));
   const out = new Uint8Array(iv.length + data.byteLength);
   out.set(iv);
   out.set(new Uint8Array(data), iv.length);
   return b64url(out);
 }
 
-export async function unseal(token: string, secret: string): Promise<Session | null> {
+export async function unseal<T = Session>(token: string, secret: string): Promise<T | null> {
   try {
     const buf = fromB64url(token);
     const data = await crypto.subtle.decrypt({ name: "AES-GCM", iv: buf.slice(0, 12) }, await key(secret), buf.slice(12));

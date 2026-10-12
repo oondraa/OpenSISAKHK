@@ -79,13 +79,21 @@ app.post("/login", async (c) => {
   const session: Session = { jar, userId, cred: { u: username, p: password } };
   await writeSession(c, session);
   c.executionCtx.waitUntil(saveProfile(c.env.DB, session).catch((e) => console.error("profile", e)));
+  // Password changed in SIS: keep the background checks of an opted-in student working.
+  await c.env.DB.prepare("UPDATE watchers SET cred = ? WHERE user_id = ?")
+    .bind(await seal(session.cred, c.env.SESSION_SECRET), userId)
+    .run();
   return c.json({ ok: true });
 });
 
 app.post("/logout", async (c) => {
   const token = getCookie(c, COOKIE);
   const s = token ? await unseal(token, c.env.SESSION_SECRET) : null;
-  if (s) await c.env.DB.prepare("DELETE FROM push_subscriptions WHERE user_id = ?").bind(s.userId).run();
+  if (s)
+    await c.env.DB.batch([
+      c.env.DB.prepare("DELETE FROM push_subscriptions WHERE user_id = ?").bind(s.userId),
+      c.env.DB.prepare("DELETE FROM watchers WHERE user_id = ?").bind(s.userId),
+    ]);
   deleteCookie(c, COOKIE, { path: "/api" });
   return c.json({ ok: true });
 });
@@ -136,6 +144,40 @@ internal.post("/state", async (c) => {
   return c.json({ ok: true });
 });
 
+type Cred = Session["cred"];
+
+/** Opted-in students with at least one push subscription, with their login unsealed for scripts/watch.ts. */
+internal.get("/watchers", async (c) => {
+  const rows = await c.env.DB.prepare(
+    `SELECT w.user_id, w.cred, w.seen, s.endpoint, s.p256dh, s.auth FROM watchers w
+     JOIN push_subscriptions s ON s.user_id = w.user_id WHERE s.p256dh IS NOT NULL`,
+  ).all<{ user_id: string; cred: string; seen: string | null; endpoint: string; p256dh: string; auth: string }>();
+  const byUser = new Map<string, { userId: string; cred: Cred | null; seen: unknown; subscriptions: { endpoint: string; p256dh: string; auth: string }[] }>();
+  for (const r of rows.results) {
+    let w = byUser.get(r.user_id);
+    if (!w) {
+      w = { userId: r.user_id, cred: await unseal<Cred>(r.cred, c.env.SESSION_SECRET), seen: r.seen ? JSON.parse(r.seen) : null, subscriptions: [] };
+      byUser.set(r.user_id, w);
+    }
+    w.subscriptions.push({ endpoint: r.endpoint, p256dh: r.p256dh, auth: r.auth });
+  }
+  return c.json({ watchers: [...byUser.values()].filter((w) => w.cred) });
+});
+
+internal.post("/watchers", async (c) => {
+  const { seen, drop, gone } = await c.req.json<{ seen?: Record<string, unknown>; drop?: string[]; gone?: string[] }>();
+  const now = Date.now();
+  const writes = [
+    ...Object.entries(seen ?? {}).map(([id, s]) =>
+      c.env.DB.prepare("UPDATE watchers SET seen = ?, checked = ? WHERE user_id = ?").bind(JSON.stringify(s), now, id),
+    ),
+    ...(drop ?? []).map((id) => c.env.DB.prepare("DELETE FROM watchers WHERE user_id = ?").bind(id)),
+    ...(gone ?? []).map((e) => c.env.DB.prepare("DELETE FROM push_subscriptions WHERE endpoint = ?").bind(e)),
+  ];
+  if (writes.length) await c.env.DB.batch(writes);
+  return c.json({ ok: true });
+});
+
 app.route("/internal", internal);
 
 // ---------- authenticated ----------
@@ -157,7 +199,22 @@ app.get("/me", async (c) => {
   const push = await c.env.DB.prepare("SELECT COUNT(*) AS n FROM push_subscriptions WHERE user_id = ?")
     .bind(userId)
     .first<{ n: number }>();
-  return c.json({ name: row?.name ?? null, hasPhoto: !!row?.hasPhoto, pushDevices: push?.n ?? 0 });
+  const watching = await c.env.DB.prepare("SELECT 1 FROM watchers WHERE user_id = ?").bind(userId).first();
+  return c.json({ name: row?.name ?? null, hasPhoto: !!row?.hasPhoto, pushDevices: push?.n ?? 0, watching: !!watching });
+});
+
+/** Opt in/out of background checks for new grades and absences: stores or deletes the sealed SIS login. */
+app.post("/watch", async (c) => {
+  const { on } = await c.req.json<{ on?: boolean }>();
+  const s = c.get("session");
+  if (on)
+    await c.env.DB.prepare(
+      "INSERT INTO watchers (user_id, cred, created) VALUES (?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET cred = excluded.cred",
+    )
+      .bind(s.userId, await seal(s.cred, c.env.SESSION_SECRET), Date.now())
+      .run();
+  else await c.env.DB.prepare("DELETE FROM watchers WHERE user_id = ?").bind(s.userId).run();
+  return c.json({ ok: true });
 });
 
 app.get("/me/photo", async (c) => {

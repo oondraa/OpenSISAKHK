@@ -32,7 +32,8 @@ export const api = {
   permanentTimetable: (week: string) => call<TimetableResponse>(`/timetable?week=${week}&static=1`),
   grades: () => call<GradesResponse>("/grades"),
   absence: () => call<Absence>("/absence"),
-  me: () => call<{ name: string | null; hasPhoto: boolean; pushDevices: number }>("/me"),
+  me: () => call<{ name: string | null; hasPhoto: boolean; pushDevices: number; watching: boolean }>("/me"),
+  watch: (on: boolean) => post("/watch", { on }),
   schoolWeeks: () => call<{ weeks: { start: string; end: string; week: 1 | 2 }[] }>("/school/weeks"),
   pushKey: () => call<{ key: string }>("/push/key"),
   pushSubscribe: (subscription: PushSubscriptionJSON, cls: string, subjects: string[]) =>

@@ -1,5 +1,5 @@
 // Imported into the generated service worker.
-// Change notifications carry an encrypted JSON payload {title, body, tag} (scripts/school-changes.ts);
+// Notifications carry an encrypted JSON payload {title, body, tag, url?} (scripts/school-changes.ts, scripts/watch.ts);
 // the test notification from the Worker has no payload.
 self.addEventListener("push", (event) => {
   let data = {};
@@ -27,7 +27,9 @@ self.addEventListener("notificationclick", (event) => {
   event.waitUntil(
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((wins) => {
       const win = wins.find((w) => "focus" in w);
-      return win ? win.focus() : self.clients.openWindow(url);
+      if (!win) return self.clients.openWindow(url);
+      // An open app jumps to the notification's tab (e.g. /?tab=grades).
+      return (url === "/" ? Promise.resolve(win) : win.navigate(url).catch(() => win)).then((w) => (w || win).focus());
     }),
   );
 });

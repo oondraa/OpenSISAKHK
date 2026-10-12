@@ -21,7 +21,8 @@ Neoficiální open-source aplikace pro studenty **SŠ a VOŠ aplikované kyberne
 | **Rozvrh** | Tvůj osobní rozvrh včetně volitelných předmětů a skupin. Změněné hodiny jsou zvýrazněné. Karta „Teď / Další“, swipe mezi dny, oběd, odkaz na Meet. |
 | **Gym** | Jestli je **posilovna (P0)** teď volná, a po hodinách, která třída tam je. |
 | **Známky** | Známky po předmětech s váhou, typem a komentářem a průměr, který počítá SIS. |
-| **Nastavení** | Push notifikace o změnách rozvrhu tvé třídy, světlý/tmavý režim, informace o tom, co se ukládá, a odhlášení. |
+| **Absence** | Zameškané hodiny po předmětech proti hranici 30–35 % a kolik hodin ještě musíš odchodit (nebo můžeš vynechat) do konce pololetí. |
+| **Nastavení** | Push notifikace o změnách rozvrhu, nových známkách a absenci, světlý/tmavý režim, informace o tom, co se ukládá, verze a odhlášení. |
 
 Je to PWA: na telefonu ji přidáš na plochu (Android: *Nainstalovat aplikaci*, iPhone: *Sdílet → Přidat na plochu*)
 a chová se jako normální aplikace, i offline s posledními načtenými daty.
@@ -41,10 +42,11 @@ telefon ──(jméno + heslo, HTTPS)──▶ Cloudflare Worker ──▶ sis.s
    který zná jen server. Cookie je `HttpOnly`, `Secure`, `SameSite=Strict`, takže ji JavaScript na stránce
    nepřečte a jiný web ji nepošle.
 3. **Server si nic z toho neukládá.** Cookie existuje jen v tvém zařízení a server ji při každém požadavku jen
-   rozšifruje v paměti, použije a zapomene.
+   rozšifruje v paměti, použije a zapomene. Jediná výjimka je, když si zapneš notifikace o známkách a absenci
+   ([viz níž](#notifikace-o-známkách-a-absenci)).
 4. Když SIS relaci po čase ukončí, Worker se přihlásí znovu údaji z cookie. Proto tě aplikace sama neodhlásí.
    Když si heslo v SIS změníš, aplikace tě odhlásí a přihlásíš se znovu.
-5. Odhlášení smaže cookie (a tím i uložené heslo) a odběr notifikací.
+5. Odhlášení smaže cookie (a tím i uložené heslo), odběr notifikací a případně uložené přihlášení pro kontrolu známek.
 
 Celé je to v [`src/worker/sis.ts`](src/worker/sis.ts), [`src/worker/session.ts`](src/worker/session.ts) a
 [`src/worker/index.ts`](src/worker/index.ts).
@@ -53,10 +55,11 @@ Celé je to v [`src/worker/sis.ts`](src/worker/sis.ts), [`src/worker/session.ts`
 
 | Ukládá se (databáze D1) | Neukládá se nikde na serveru |
 | --- | --- |
-| Jméno a profilová fotka ze SIS (kdo aplikaci používá) | Heslo |
+| Jméno a profilová fotka ze SIS (kdo aplikaci používá) | Heslo (kromě zapnutých notifikací o známkách, viz níž) |
 | Kdy ses poprvé a naposledy přihlásil | Známky, rozvrh, absence |
 | U zapnutých notifikací: adresa pro doručení, třída a zkratky tvých předmětů/skupin (např. `AGJ1`, `B06`) | Cookies SIS relace |
 | Otisky a přečtený obsah veřejného rozvrhu školy (pro porovnání změn) | |
+| **Jen u zapnutých notifikací o známkách a absenci:** přihlášení do SIS zašifrované AES-GCM a krátké hashe známek a absencí (z nich se známky vyčíst nedají) | |
 
 ## Jak funguje rozvrh a Gym
 
@@ -80,6 +83,17 @@ Celé je to v [`src/worker/sis.ts`](src/worker/sis.ts), [`src/worker/session.ts`
   *„Zítra (Út 13. 10.): 3. MAT → FYZ LA 211, 5. ELZ: učebna 211 → B13“*. Notifikace je šifrovaná (RFC 8291), takže
   push služba Googlu/Applu obsah nevidí.
 - Změny uvnitř bloků (legenda vpravo na obrázku) se zatím nečtou, změna se pozná jen podle kódu bloku.
+
+## Notifikace o známkách a absenci
+
+Server nemá tvoje heslo, takže sám nepozná, že ti přibyla známka. Proto je tahle notifikace **dobrovolná**: když ji
+v Nastavení zapneš, Worker uloží tvoje přihlášení zašifrované do D1. [GitHub Action](.github/workflows/watch.yml) se
+přes den každých 30 minut přihlásí za každého, kdo to má zapnuté, porovná známky a absenci s minulou kontrolou (jen
+přes hashe) a pošle push s tím, co je nové. Vypnutím notifikací nebo odhlášením se přihlášení smaže. Když si změníš
+heslo v SIS, kontrola se vypne a přijde ti o tom zpráva.
+
+Kontrola běží v GitHub Action, ne ve Workeru (10 ms CPU a 50 dotazů na spuštění by na desítky lidí nestačilo), takže
+Cloudflare skoro nezatěžuje. Logy Action jsou veřejné, proto skript nikdy nevypisuje jména, známky ani adresy.
 
 ## Technologie
 
