@@ -1,4 +1,13 @@
-# OpenSISAKHK
+<h1>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="brand/wordmark-dark.svg">
+    <img alt="OpenSISAKHK" src="brand/wordmark-light.svg" height="56">
+  </picture>
+</h1>
+
+[![license](https://img.shields.io/badge/license-MIT-FF5A1F?labelColor=0E0E10&style=flat-square)](LICENSE)
+[![open source](https://img.shields.io/badge/open-source-FF5A1F?labelColor=0E0E10&style=flat-square)](https://github.com/oondraa/OpenSISAKHK)
+[![PWA](https://img.shields.io/badge/PWA-Cloudflare_Workers-FF5A1F?labelColor=0E0E10&style=flat-square)](#nasazení-zdarma)
 
 Neoficiální open-source aplikace pro studenty **SŠ a VOŠ aplikované kybernetiky v Hradci Králové**. Bere data ze
 školního systému [SIS (KybernaIS)](https://sis.ssakhk.cz) a ukazuje je tak, aby se dala používat na telefonu.
@@ -120,6 +129,13 @@ Do GitHub repa (*Settings → Secrets and variables → Actions*) přidej `API_U
 něj Action poběží jen jednou za hodinu.
 
 Všechno se vejde do free tieru Cloudflare (100 000 požadavků denně) a GitHub Actions (veřejné repo).
+
+## Brand
+
+Barvy Ember `#FF5A1F`, Ember tmavá `#D9440F`, Ink `#0E0E10`, Paper `#F6F3EE`. Písma
+[Sora](https://fonts.google.com/specimen/Sora) (logo, nadpisy, UI) a
+[JetBrains Mono](https://www.jetbrains.com/lp/mono/) (časy, učebny, čísla), obě pod SIL OFL 1.1.
+Ikony, wordmark a GitHub social preview generuje `npx tsx scripts/brand.ts` do `public/` a `brand/`.
 
 ## Licence
 

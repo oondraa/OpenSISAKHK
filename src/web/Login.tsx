@@ -24,7 +24,10 @@ export function Login({ onDone }: { onDone: () => void }) {
   return (
     <main className="login">
       <img src="/icon.svg" alt="" className="login-icon" />
-      <h1 className="large-title">OpenSISAKHK</h1>
+      <h1 className="wordmark">
+        <span>Open</span>
+        <span>SISAKHK</span>
+      </h1>
       <p className="login-sub">Rozvrh, známky a volná posilovna. Přihlas se stejně jako do školního SIS.</p>
       <form onSubmit={submit} className="list login-form">
         <input

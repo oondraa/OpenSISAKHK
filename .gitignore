@@ -7,3 +7,4 @@ dist/
 test/fixtures/*.jpg
 .agents/
 .claude/skills/
+*.zip

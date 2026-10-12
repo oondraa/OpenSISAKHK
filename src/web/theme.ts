@@ -7,7 +7,7 @@ export function applyTheme(theme: Theme) {
   if (theme === "system") root.removeAttribute("data-theme");
   else root.setAttribute("data-theme", theme);
   const dark = theme === "dark" || (theme === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
-  document.querySelector('meta[name="theme-color"]:not([media])')?.setAttribute("content", dark ? "#000000" : "#f2f2f7");
+  document.querySelector('meta[name="theme-color"]:not([media])')?.setAttribute("content", dark ? "#0e0e10" : "#f6f3ee");
 }
 
 export const savedTheme = (): Theme => cache.get<Theme>("theme") ?? "system";
