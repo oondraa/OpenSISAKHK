@@ -1,0 +1,3 @@
+SESSION_SECRET=change-me-to-a-long-random-string
+VAPID_PUBLIC_KEY=
+VAPID_PRIVATE_JWK=
