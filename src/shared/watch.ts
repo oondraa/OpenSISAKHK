@@ -1,9 +1,39 @@
-import type { Absence, MissedLesson, Subject } from "../worker/parse";
+import type { Absence, Day, Lesson, MissedLesson, Subject } from "../worker/parse";
 
 /** What the server remembers between checks: short hashes only, so the database never holds grades. */
 export interface Seen {
   g: string[];
   a: string[];
+  /** Personal timetable: date → lesson start → hash of the lesson. Missing in rows saved before it existed. */
+  t?: Record<string, Record<string, string>>;
+}
+
+export interface TimetableChange {
+  date: string;
+  start: string;
+  /** The lesson now in that slot, or null when it was cancelled. */
+  lesson: Lesson | null;
+}
+
+/**
+ * Compares the personal timetable (this and next week, from `today` on) with the last check. Only days
+ * that were already seen are compared: a week that just came into view has nothing to differ from.
+ */
+export async function compareTimetable(seen: Seen["t"], days: Day[], today: string) {
+  const next: NonNullable<Seen["t"]> = {};
+  const changes: TimetableChange[] = [];
+  for (const d of days) {
+    if (d.date < today) continue;
+    const slots: Record<string, string> = {};
+    // The "changed" flag is left out: SIS drops it again the next day without anything changing.
+    for (const l of d.lessons) slots[l.start] = await hash([l.subject, l.room, l.teacher, l.group].join("|"));
+    next[d.date] = slots;
+    const before = seen?.[d.date];
+    if (!before) continue;
+    for (const l of d.lessons) if (before[l.start] !== slots[l.start]) changes.push({ date: d.date, start: l.start, lesson: l });
+    for (const start of Object.keys(before)) if (!(start in slots)) changes.push({ date: d.date, start, lesson: null });
+  }
+  return { next, changes };
 }
 
 export interface NewGrade {
@@ -69,4 +99,16 @@ export function absenceMessage(missed: MissedLesson[]) {
     tag: "absence",
     url: "/?tab=absence",
   };
+}
+
+export function timetableMessage(changes: TimetableChange[], today: string) {
+  const byDate = new Map<string, TimetableChange[]>();
+  for (const c of changes) byDate.set(c.date, [...(byDate.get(c.date) ?? []), c]);
+  const toMin = (t: string) => Number(t.split(":")[0]) * 60 + Number(t.split(":")[1]);
+  const item = (c: TimetableChange) =>
+    c.lesson ? `${c.start} ${[c.lesson.subject, c.lesson.room, c.lesson.teacher].filter(Boolean).join(" · ")}` : `${c.start} odpadá`;
+  const lines = [...byDate]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, cs]) => `${date === today ? "Dnes" : day(date)}: ${cs.sort((a, b) => toMin(a.start) - toMin(b.start)).map(item).join(", ")}`);
+  return { title: "Změna rozvrhu", body: lines.join("\n"), tag: "timetable", url: "/?tab=timetable" };
 }

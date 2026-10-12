@@ -32,6 +32,12 @@ export function defaultSchoolDay() {
   return wd < 5 ? t : addDays(t, 7 - wd);
 }
 
+/** The weekday after `iso` (Friday → Monday). */
+export function nextSchoolDay(iso: string) {
+  const wd = weekdayIndex(iso);
+  return addDays(iso, wd >= 4 ? 7 - wd : 1);
+}
+
 export const minutes = (t: string) => {
   const [h, m] = t.split(":").map(Number);
   return h * 60 + m;

@@ -122,7 +122,9 @@ internal.use("/*", async (c, next) => {
 internal.get("/state", async (c) => {
   const days = await c.env.DB.prepare("SELECT date, cells FROM school_days").all<{ date: string; cells: string }>();
   const subs = await c.env.DB.prepare(
-    "SELECT endpoint, p256dh, auth, cls, subjects FROM push_subscriptions WHERE p256dh IS NOT NULL AND cls IS NOT NULL",
+    // Students with background checks get their own timetable's changes from scripts/watch.ts instead.
+    `SELECT endpoint, p256dh, auth, cls, subjects FROM push_subscriptions
+     WHERE p256dh IS NOT NULL AND cls IS NOT NULL AND user_id NOT IN (SELECT user_id FROM watchers)`,
   ).all<{ endpoint: string; p256dh: string; auth: string; cls: string; subjects: string }>();
   return c.json({
     days: Object.fromEntries(days.results.map((d) => [d.date, JSON.parse(d.cells)])),

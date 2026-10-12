@@ -36,7 +36,10 @@ function useRemaining(onError: (e: unknown) => boolean) {
 export function Absence({ onError }: { onError: (e: unknown) => boolean }) {
   const { data, loading, error } = useCachedFetch<AbsenceData>("absence", api.absence, onError);
   const remaining = useRemaining(onError);
-  const subjects = [...(data?.subjects ?? [])].sort((a, b) => b.percent - a.percent || a.subject.localeCompare(b.subject));
+  // Subjects without a single missed lesson are left out: nobody needs to read "0 %" twenty times.
+  const subjects = (data?.subjects ?? [])
+    .filter((s) => s.missed > 0)
+    .sort((a, b) => b.percent - a.percent || a.subject.localeCompare(b.subject));
   const total = data?.total;
   const over = subjects.filter((s) => s.percent >= LIMIT);
   const close = subjects.filter((s) => level(s.percent) === "mid");
@@ -87,12 +90,15 @@ export function Absence({ onError }: { onError: (e: unknown) => boolean }) {
             ) : null}
 
             <h2 className="list-title">Podle předmětů</h2>
-            <div className="list">
-              {subjects.map((s) => (
-                <SubjectRow key={s.subject} s={s} p={plan(s, remaining ? (remaining.get(s.subject) ?? null) : null)} />
-              ))}
-            </div>
+            {subjects.length > 0 && (
+              <div className="list">
+                {subjects.map((s) => (
+                  <SubjectRow key={s.subject} s={s} p={plan(s, remaining ? (remaining.get(s.subject) ?? null) : null)} />
+                ))}
+              </div>
+            )}
             <p className="list-footer">
+              {subjects.length ? "Předměty bez absence nezobrazuju. " : "V žádném předmětu zatím nemáš absenci. "}
               Procenta jsou ze všech odučených hodin, omluvených i neomluvených. Svislá čára je hranice {LIMIT} %. Zbývající
               hodiny jsou odhad podle stálého rozvrhu do konce pololetí ({shortDate(semesterEnd(todayPrague()))}), bez
               suplování a akcí.

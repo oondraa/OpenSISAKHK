@@ -36,11 +36,10 @@ function hideSplash() {
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
   // "Open" finishes sliding in at ~1.25 s after navigation start; hold a beat so it reads.
   const introEnd = reduce ? 250 : 1500;
-  document.querySelector('meta[name="theme-color"]')?.setAttribute("content", "#0e0e10");
+  // The splash already uses the app's theme (index.html), so the status bar colour stays as applyTheme set it.
   setTimeout(() => {
     splash.classList.remove("note");
     splash.classList.add("hide"); // stays in the DOM (hidden) so an update can show it again
-    applyTheme(savedTheme()); // status bar back to the app's colour
   }, Math.max(0, introEnd - performance.now()));
 }
 hideSplash();

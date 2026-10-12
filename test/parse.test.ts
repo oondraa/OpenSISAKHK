@@ -78,7 +78,7 @@ describe("helpers", () => {
 describe("parseAbsence", () => {
   const html = `<div class="absent-sumarized-table"><table class="table"><tbody>
     <tr><td></td><td>AGJ</td><td>TEV</td><td>Celkem</td></tr>
-    <tr><td>Procenta</td><td>6.67%</td><td>22.22%</td><td></td></tr>
+    <tr><td>Procenta</td><td>6.67%</td><td></td><td></td></tr>
     <tr><td>Počet odučených hodin</td><td>15</td><td>9</td><td>167</td></tr>
     <tr><td>Počet zameškaných hodin</td><td>1</td><td>2</td><td>3</td></tr>
     <tr><td>Počet celkem neomluvených hodin</td><td>1</td><td>2</td><td>3</td></tr>
@@ -95,8 +95,8 @@ describe("parseAbsence", () => {
   it("reads the per-subject summary and the total", () => {
     const a = parseAbsence(html);
     expect(a.subjects).toEqual([
-      { subject: "AGJ", percent: 6.67, taught: 15, missed: 1, unexcused: 1 },
-      { subject: "TEV", percent: 22.22, taught: 9, missed: 2, unexcused: 2 },
+      { subject: "AGJ", percent: 6.7, taught: 15, missed: 1, unexcused: 1 },
+      { subject: "TEV", percent: 22.2, taught: 9, missed: 2, unexcused: 2 },
     ]);
     expect(a.total).toMatchObject({ taught: 167, missed: 3, unexcused: 3, percent: 1.8 });
   });

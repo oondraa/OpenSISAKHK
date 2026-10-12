@@ -1,12 +1,17 @@
-// Run by .github/workflows/watch.yml every 30 minutes during the day: for each student who switched on
-// grade/absence notifications, logs in to SIS, compares grades and absences with the last check and
-// pushes what's new. Runs here, not in the Worker: the free Worker has 10 ms CPU and 50 subrequests.
+// Run by .github/workflows/watch.yml every 30 minutes during the day and whenever the school timetable
+// changes: for each student who switched it on, logs in to SIS, compares grades, absences and their own
+// timetable (this and next week) with the last check and pushes what's new. Runs here, not in the Worker:
+// the free Worker has 10 ms CPU and 50 subrequests.
 //
 // Env: API_URL, INGEST_TOKEN, VAPID_PUBLIC_KEY, VAPID_PRIVATE_JWK
-import { absenceMessage, compare, gradesMessage, type Seen } from "../src/shared/watch";
-import { parseAbsence, parseGrades } from "../src/worker/parse";
-import { BadCredentials, get, login } from "../src/worker/sis";
+import { absenceMessage, compare, compareTimetable, gradesMessage, timetableMessage, type Seen } from "../src/shared/watch";
+import { parseAbsence, parseGrades, parseTimetable } from "../src/worker/parse";
+import { BadCredentials, get, login, timetablePath } from "../src/worker/sis";
+import { addDays, mondayOf, todayPrague } from "../src/web/time";
 import { getInternal, postInternal, sendPush, type PushTarget } from "./action";
+
+const today = todayPrague();
+const monday = mondayOf(today);
 
 interface Watcher {
   userId: string;
@@ -33,13 +38,17 @@ async function notify(w: Watcher, payload: Parameters<typeof sendPush>[1]) {
 
 async function check(w: Watcher) {
   try {
-    const { jar } = await login(w.cred.u, w.cred.p);
+    const { jar, userId } = await login(w.cred.u, w.cred.p);
     const grades = parseGrades((await get(jar, "/Classification/Student")).html);
     const absence = parseAbsence((await get(jar, "/Absent/My")).html);
+    const days = [];
+    for (const week of [monday, addDays(monday, 7)]) days.push(...parseTimetable((await get(jar, timetablePath(userId, week))).html, week));
     const r = await compare(w.seen, grades, absence);
+    const t = await compareTimetable(w.seen?.t, days, today);
+    if (t.changes.length) await notify(w, timetableMessage(t.changes, today));
     if (r.grades.length) await notify(w, gradesMessage(r.grades));
     if (r.missed.length) await notify(w, absenceMessage(r.missed));
-    seen[w.userId] = r.next;
+    seen[w.userId] = { ...r.next, t: t.next };
     checked++;
   } catch (e) {
     if (e instanceof BadCredentials) {

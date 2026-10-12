@@ -1,19 +1,40 @@
-import { useState } from "react";
-import { api, type TimetableDay, type TimetableResponse } from "./api";
+import { useEffect, useRef, useState } from "react";
+import { api, cache, type TimetableDay, type TimetableResponse } from "./api";
 import type { Lesson } from "../worker/parse";
 import { DayPager, DayStrip, Empty, LargeHeader, SkeletonList } from "./ui";
-import { addDays, defaultSchoolDay, inMinutes, longDate, minutes, mondayOf, todayPrague, weekdayIndex } from "./time";
+import { addDays, defaultSchoolDay, inMinutes, longDate, minutes, mondayOf, nextSchoolDay, nowMinutesPrague, todayPrague, weekdayIndex } from "./time";
 import { useCachedFetch } from "./useFetch";
 import { useNow, useScrollToFocus } from "./hooks";
 import { CalendarOffIcon, SunIcon, UtensilsIcon } from "./icons";
 
+/** Today until its last lesson is over, then the next school day: nobody opens the app to see what already was. */
+function startDay(days: TimetableDay[] | undefined) {
+  const today = todayPrague();
+  const day = defaultSchoolDay();
+  const lessons = days?.find((d) => d.date === today)?.lessons ?? [];
+  if (day !== today || !lessons.length) return day;
+  return nowMinutesPrague() >= Math.max(...lessons.map((l) => minutes(l.end))) ? nextSchoolDay(today) : today;
+}
+
 export function Timetable({ onError }: { onError: (e: unknown) => boolean }) {
-  const [selected, setSelected] = useState(defaultSchoolDay);
+  const [selected, setSelectedState] = useState(() => startDay(cache.get<TimetableResponse>(`timetable:${mondayOf(todayPrague())}`)?.days));
+  const touched = useRef(false);
+  const setSelected = (iso: string) => {
+    touched.current = true;
+    setSelectedState(iso);
+  };
   const monday = mondayOf(selected);
   const today = todayPrague();
   const now = useNow();
   const { data, loading, error } = useCachedFetch<TimetableResponse>(`timetable:${monday}`, () => api.timetable(monday), onError);
   const days = data?.week === monday ? data.days : [];
+
+  // Without a cached timetable the first guess is today; correct it once this week's lessons arrive.
+  useEffect(() => {
+    if (touched.current || data?.week !== mondayOf(today)) return;
+    const day = startDay(data.days);
+    if (day !== selected) setSelectedState(day);
+  }, [data]);
 
   const todayDay = selected === today ? days.find((d) => d.date === today) : undefined;
   const current = todayDay?.lessons.find((l) => minutes(l.start) <= now && now < minutes(l.end));

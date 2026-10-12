@@ -8,3 +8,7 @@ test/fixtures/*.jpg
 .agents/
 .claude/skills/
 *.zip
+
+# Strava probe (scripts/strava-probe.ts)
+.strava.local
+*.local.json

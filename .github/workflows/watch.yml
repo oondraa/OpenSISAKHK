@@ -1,8 +1,11 @@
-# Checks new grades and absences of students who switched it on and sends them a push (scripts/watch.ts).
-# Every 30 minutes, 4:00–20:30 UTC (Prague: 6:00–22:30 in summer, 5:00–21:30 in winter).
-name: Grades and absence
+# Checks grades, absences and the personal timetable of students who switched it on and pushes what's new
+# (scripts/watch.ts). Every 30 minutes, 4:00–20:30 UTC (Prague: 6:00–22:30 in summer, 5:00–21:30 in winter),
+# and right away when the Worker's cron sees the school timetable change (also at night).
+name: Grades, absence and timetable
 
 on:
+  repository_dispatch:
+    types: [school-changed]
   schedule:
     - cron: "*/30 4-20 * * *"
   workflow_dispatch:

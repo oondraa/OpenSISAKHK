@@ -147,7 +147,7 @@ export function Settings({ onError, onLogout }: { onError: (e: unknown) => boole
                 : (pushMsg ??
                   `Když škola přepíše rozvrh (i ve 3 ráno), dostaneš zprávu přesně s tím, co se změnilo u tvé třídy a tvých skupin.${
                     push === "on"
-                      ? " Známky a absenci kontrolujeme přes den každých 30 minut. Kvůli tomu si server uloží tvoje zašifrované přihlášení do SIS. Vypnutím nebo odhlášením se smaže."
+                      ? " Se zapnutými známkami a absencí hlídáme i přímo tvůj osobní rozvrh: přes den každých 30 minut a hned, když škola rozvrh přepíše. Kvůli tomu si server uloží tvoje zašifrované přihlášení do SIS. Vypnutím nebo odhlášením se smaže."
                       : ""
                   }`)
           }
@@ -176,8 +176,8 @@ export function Settings({ onError, onLogout }: { onError: (e: unknown) => boole
           )}
           {push === "on" && (
             <div className="row">
-              <span className="row-title">Nové známky a absence</span>
-              <Switch label="Notifikace o nových známkách a absenci" checked={watchOn} onChange={toggleWatch} />
+              <span className="row-title">Známky, absence a můj rozvrh</span>
+              <Switch label="Notifikace o známkách, absenci a změnách mého rozvrhu" checked={watchOn} onChange={toggleWatch} />
             </div>
           )}
           {push === "on" && (

@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactNode } from "react";
+import { useLayoutEffect, useRef, type ReactNode } from "react";
 import { addDays, todayPrague, WEEKDAYS } from "./time";
 
 export function LargeHeader({ title, subtitle, accessory, loading, children }: {
@@ -67,27 +67,38 @@ export function DayPager({ index, onIndex, children }: { index: number; onIndex:
   const ref = useRef<HTMLDivElement>(null);
   const fromScroll = useRef(false);
   const placed = useRef(false);
+  // Page a tap is gliding to: scroll events on the way (passing Tuesday on the way to Friday) are ignored.
+  const gliding = useRef<number | null>(null);
 
-  useEffect(() => {
+  // Layout effect: the first paint already shows the right day instead of Monday jumping to it.
+  useLayoutEffect(() => {
     const el = ref.current;
     if (!el || fromScroll.current) {
       fromScroll.current = false;
       return;
     }
-    // Opening on Wednesday lands on Wednesday; only taps on the day strip glide.
-    const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    el.scrollTo({ left: index * el.clientWidth, behavior: reduce || !placed.current ? "instant" : "smooth" });
+    const left = index * el.clientWidth;
+    const glide = placed.current && !matchMedia("(prefers-reduced-motion: reduce)").matches;
     placed.current = true;
+    if (Math.abs(el.scrollLeft - left) < 2) return;
+    gliding.current = glide ? index : null;
+    el.scrollTo({ left, behavior: glide ? "smooth" : "instant" });
   }, [index]);
 
   return (
     <div
       ref={ref}
       className="pager"
+      onPointerDown={() => (gliding.current = null)} // a finger takes over from the glide
       onScroll={(e) => {
         const el = e.currentTarget;
         const i = Math.round(el.scrollLeft / el.clientWidth);
-        if (i !== index && Math.abs(el.scrollLeft - i * el.clientWidth) < 2) {
+        if (Math.abs(el.scrollLeft - i * el.clientWidth) >= 2) return;
+        if (gliding.current !== null) {
+          if (i === gliding.current) gliding.current = null;
+          return;
+        }
+        if (i !== index) {
           fromScroll.current = true;
           onIndex(i);
         }

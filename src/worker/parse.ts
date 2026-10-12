@@ -171,20 +171,16 @@ export function parseAbsence(html: string): Absence {
     return Number.isFinite(n) ? n : 0;
   };
   const header = rows[0] ?? [];
-  const percent = row("Procenta");
   const taught = row("Počet odučených hodin");
   const missed = row("Počet zameškaných hodin");
   const unexcused = row("Počet celkem neomluvených hodin");
-  const all = header.slice(1).map((subject, i) => ({
-    subject,
-    percent: num(percent[i + 1]),
-    taught: num(taught[i + 1]),
-    missed: num(missed[i + 1]),
-    unexcused: num(unexcused[i + 1]),
-  }));
-  const totalIdx = all.findIndex((s) => s.subject === "Celkem");
-  const total = totalIdx >= 0 ? all[totalIdx] : null;
-  if (total) total.percent = total.taught ? Math.round((total.missed / total.taught) * 1000) / 10 : 0;
+  // SIS's own "Procenta" row is left empty for some subjects, so the share is always computed here.
+  const all = header.slice(1).map((subject, i) => {
+    const t = num(taught[i + 1]);
+    const m = num(missed[i + 1]);
+    return { subject, percent: t ? Math.round((m / t) * 1000) / 10 : 0, taught: t, missed: m, unexcused: num(unexcused[i + 1]) };
+  });
+  const total = all.find((s) => s.subject === "Celkem") ?? null;
 
   const lessons: MissedLesson[] = [];
   for (const panel of root.querySelectorAll(".absent-tables .panel")) {

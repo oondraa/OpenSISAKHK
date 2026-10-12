@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { nowMinutesPrague } from "./time";
 
 export function useNow() {
@@ -16,12 +16,12 @@ export function useNow() {
  */
 export function useScrollToFocus(enabled: boolean) {
   const target = useRef<HTMLElement | null>(null);
-  useEffect(() => {
+  // Layout effect: placed before the first paint, so the list doesn't show 8:00 and then jump to "now".
+  useLayoutEffect(() => {
     const el = target.current;
     const scroller = el?.closest<HTMLElement>(".page, .scroll");
     if (!enabled || !el || !scroller) return;
     const top = el.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop - 12;
-    // Jump, don't glide: the list should simply open at "now".
     if (top > 0) scroller.scrollTo({ top, behavior: "instant" });
   }, [enabled]);
   return target;
