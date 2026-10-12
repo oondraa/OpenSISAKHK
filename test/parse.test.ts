@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cancelledLessons, extractUserId, gradeToNumber, isLoginPage, parseGrades, parseTimetable } from "../src/worker/parse";
+import { extractUserId, gradeToNumber, isLoginPage, parseGrades, parseTimetable } from "../src/worker/parse";
 
 // Synthetic fixtures that mirror the markup SIS serves (structure only, no real data).
 const card = (subject: string, time: string, room: string, group: string, teacher: string, extra = "") =>
@@ -37,16 +37,6 @@ describe("parseTimetable", () => {
 
   it("derives lunch time from card position", () => {
     expect(actual[0].lunch).toEqual({ start: "12:23", end: "12:52" });
-  });
-
-  it("finds lessons dropped from the permanent timetable", () => {
-    const permanent = parseTimetable(
-      timetable(card("ELZ", "7:50 - 8:35", "211", "", "HU") + card("MAT", "9:45 - 10:30", "202", "", "TI")),
-      "2026-10-12",
-    );
-    const cancelled = cancelledLessons(actual, permanent);
-    expect(cancelled.get("2026-10-12")?.map((l) => l.subject)).toEqual(["MAT"]);
-    expect(cancelled.has("2026-10-13")).toBe(false);
   });
 });
 

@@ -174,7 +174,9 @@ p { margin: 0; }
 .lesson-card.cancelled .lesson-subject { text-decoration: line-through; }
 .tag { font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.02em; padding: 2px 7px; border-radius: 99px; background: var(--fill); color: var(--text-2); }
 .tag-accent { background: var(--accent); color: var(--on-accent); }
-.timeline-lunch { display: flex; justify-content: space-between; padding: 4px 16px; font-size: 0.875rem; color: var(--text-2); font-variant-numeric: tabular-nums; }
+.lesson-card.lunch { background: var(--surface-2); box-shadow: none; }
+.lesson-card.lunch .lesson-subject { font-weight: 500; color: var(--text-2); }
+.lunch-icon { display: grid; place-items: center; color: var(--text-2); padding: 6px 8px; }
 
 /* ---------- Lists (inset grouped) ---------- */
 .list-section { margin-top: 4px; }
@@ -214,36 +216,35 @@ p { margin: 0; }
 .primary { width: 100%; padding: 16px; border-radius: 14px; background: var(--accent); color: var(--on-accent); font-weight: 600; font-size: 1.0625rem; }
 .primary:disabled { opacity: 0.4; }
 
+/* ---------- Icons ---------- */
+.icon { width: 24px; height: 24px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
 /* ---------- Empty ---------- */
 .empty { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 56px 24px; gap: 4px; }
-.empty-icon { font-size: 2.5rem; margin-bottom: 8px; }
+.empty-icon { color: var(--text-3); margin-bottom: 8px; }
 .empty-title { font-size: 1.0625rem; font-weight: 600; }
 .empty-text { font-size: 0.9375rem; color: var(--text-2); max-width: 280px; }
 
 /* ---------- Gym ---------- */
-.room-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.room-card { display: flex; flex-direction: column; gap: 2px; padding: 16px; border-radius: 20px; background: var(--surface); box-shadow: var(--shadow); }
-.room-icon { font-size: 1.75rem; margin-bottom: 6px; }
-.room-name { font-size: 0.8125rem; font-weight: 600; color: var(--text-2); }
-.room-state { font-size: 1.25rem; font-weight: 700; letter-spacing: -0.015em; }
-.room-who { font-size: 0.875rem; color: var(--text-2); }
-.room-card.free .room-state { color: var(--green); }
-.room-card.busy .room-state { color: var(--red); }
-
-.gym-table { margin-top: 20px; background: var(--surface); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
-.gym-row { display: grid; grid-template-columns: 5.2rem 1fr 1fr; gap: 8px; align-items: center; padding: 8px 12px 8px 16px; position: relative; }
-.gym-row + .gym-row::before { content: ""; position: absolute; top: 0; left: 16px; right: 0; height: 0.5px; background: var(--separator); }
-.gym-head { padding-top: 12px; padding-bottom: 10px; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-2); }
-.gym-period { font-size: 0.875rem; font-variant-numeric: tabular-nums; color: var(--text-2); }
-.gym-period b { color: var(--text); font-weight: 600; }
+.gym-status { display: flex; align-items: center; gap: 14px; padding: 18px; border-radius: 20px; background: var(--surface); box-shadow: var(--shadow); margin-bottom: 16px; }
+.gym-status-icon { width: 52px; height: 52px; flex: none; display: grid; place-items: center; border-radius: 16px; background: var(--fill); color: var(--text-2); }
+.gym-status.free .gym-status-icon { background: color-mix(in srgb, var(--green) 16%, transparent); color: var(--green); }
+.gym-status.busy .gym-status-icon { background: color-mix(in srgb, var(--red) 16%, transparent); color: var(--red); }
+.gym-status-title { font-size: 1.375rem; font-weight: 700; letter-spacing: -0.015em; }
+.gym-status.free .gym-status-title { color: var(--green); }
+.gym-status.busy .gym-status-title { color: var(--red); }
+.gym-status-detail { font-size: 0.9375rem; color: var(--text-2); margin-top: 1px; }
+.gym-row { min-height: 52px; }
 .gym-row.current { background: var(--accent-fill); }
 .gym-row.past { opacity: 0.45; }
-.gym-slot { display: flex; flex-direction: column; gap: 2px; padding: 7px 10px; border-radius: 10px; font-size: 0.875rem; min-height: 36px; justify-content: center; }
-.gym-slot.free { background: color-mix(in srgb, var(--green) 12%, transparent); }
-.gym-slot.busy { background: color-mix(in srgb, var(--red) 12%, transparent); }
-.gym-slot.changed { box-shadow: inset 0 0 0 1.5px var(--accent); }
-.gym-free { color: var(--green); font-weight: 600; }
-.gym-occ b { font-weight: 700; }
+.gym-period { display: flex; align-items: baseline; gap: 10px; font-variant-numeric: tabular-nums; }
+.gym-period b { width: 1.6rem; font-weight: 600; }
+.gym-period span { color: var(--text-2); font-size: 0.9375rem; }
+.pill-status { display: inline-flex; align-items: baseline; gap: 6px; padding: 6px 12px; border-radius: 99px; font-size: 0.9375rem; font-weight: 600; }
+.pill-status small { font-size: 0.8125rem; font-weight: 500; opacity: 0.8; }
+.pill-status.free { color: var(--green); background: color-mix(in srgb, var(--green) 13%, transparent); }
+.pill-status.busy { color: var(--red); background: color-mix(in srgb, var(--red) 13%, transparent); }
+.pill-status.changed { box-shadow: inset 0 0 0 1.5px var(--accent); }
 
 /* ---------- Grades ---------- */
 .summary-card { display: flex; justify-content: space-between; align-items: flex-end; padding: 18px; border-radius: 20px; background: var(--surface); box-shadow: var(--shadow); margin-bottom: 16px; }
@@ -301,9 +302,9 @@ p { margin: 0; }
   border-top: 0.5px solid var(--chrome-edge);
 }
 .tabbar button { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 4px 0; font-size: 0.6875rem; font-weight: 500; letter-spacing: 0.01em; color: var(--text-2); }
-.tabbar svg { width: 27px; height: 27px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.tabbar .icon { width: 27px; height: 27px; }
 .tabbar .active { color: var(--accent); }
-.tabbar .active svg { stroke-width: 2.2; }
+.tabbar .active .icon { stroke-width: 2.1; }
 
 /* ---------- Accessibility ---------- */
 @media (prefers-reduced-motion: reduce) {

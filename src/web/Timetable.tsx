@@ -4,6 +4,7 @@ import type { Lesson } from "../worker/parse";
 import { DayPager, DayStrip, Empty, LargeHeader } from "./ui";
 import { addDays, defaultSchoolDay, inMinutes, longDate, minutes, mondayOf, nowMinutesPrague, todayPrague, weekdayIndex } from "./time";
 import { useCachedFetch } from "./useFetch";
+import { CalendarOffIcon, SunIcon, UtensilsIcon } from "./icons";
 
 export function Timetable({ onError }: { onError: (e: unknown) => boolean }) {
   const [selected, setSelected] = useState(defaultSchoolDay);
@@ -25,7 +26,7 @@ export function Timetable({ onError }: { onError: (e: unknown) => boolean }) {
       <DayPager index={weekdayIndex(selected)} onIndex={(i) => setSelected(addDays(monday, i))}>
         {[0, 1, 2, 3, 4].map((i) => {
           const day = days.find((d) => d.date === addDays(monday, i));
-          return day ? <DayView key={day.date} day={day} live={isCurrentWeek && day.date === todayPrague()} /> : loading ? null : <Empty key={i} icon="📭" title="Žádná data" />;
+          return day ? <DayView key={day.date} day={day} live={isCurrentWeek && day.date === todayPrague()} /> : loading ? null : <Empty key={i} icon={<CalendarOffIcon size={40} />} title="Žádná data" />;
         })}
       </DayPager>
     </div>
@@ -42,7 +43,7 @@ function DayView({ day, live }: { day: TimetableDay; live: boolean }) {
     return () => clearInterval(t);
   }, [live]);
 
-  if (!day.lessons.length) return <Empty icon="🌤️" title="Volno" text="Tenhle den nemáš žádnou hodinu." />;
+  if (!day.lessons.length) return <Empty icon={<SunIcon size={40} />} title="Volno" text="Tenhle den nemáš žádnou hodinu." />;
 
   const items: Item[] = day.lessons.map((lesson) => ({ kind: "lesson" as const, lesson }));
   if (day.lunch) items.push({ kind: "lunch", ...day.lunch });
@@ -51,24 +52,33 @@ function DayView({ day, live }: { day: TimetableDay; live: boolean }) {
 
   const current = live ? day.lessons.find((l) => minutes(l.start) <= now && now < minutes(l.end)) : undefined;
   const next = live ? day.lessons.find((l) => minutes(l.start) > now) : undefined;
-  const changes = day.lessons.filter((l) => l.changed).length + day.cancelled.length;
+  const changes = day.lessons.filter((l) => l.changed).length;
 
   return (
     <div className="day-view">
       {live && (current || next) && <NowCard current={current} next={next} now={now} />}
       {changes > 0 && (
         <p className="change-note">
-          <span className="dot" /> {changes === 1 ? "1 změna" : changes < 5 ? `${changes} změny` : `${changes} změn`} oproti stálému rozvrhu
+          <span className="dot" /> {changes === 1 ? "1 změněná hodina" : changes < 5 ? `${changes} změněné hodiny` : `${changes} změněných hodin`}
         </p>
       )}
       <ol className="timeline">
         {items.map((it, i) =>
           it.kind === "lunch" ? (
-            <li key={`lunch-${i}`} className="timeline-lunch">
-              <span>🍽️ Oběd</span>
-              <span>
-                {it.start}–{it.end}
-              </span>
+            <li key={`lunch-${i}`}>
+              <div className={`lesson-card lunch ${live && now >= minutes(it.end) ? "past" : ""}`}>
+                <div className="lesson-time">
+                  <span>{it.start}</span>
+                  <span>{it.end}</span>
+                </div>
+                <div className="lesson-main">
+                  <div className="lesson-subject">Oběd</div>
+                  <div className="lesson-teacher">Přestávka na jídlo</div>
+                </div>
+                <div className="lesson-room lunch-icon">
+                  <UtensilsIcon size={20} />
+                </div>
+              </div>
             </li>
           ) : (
             <LessonCard
@@ -79,16 +89,6 @@ function DayView({ day, live }: { day: TimetableDay; live: boolean }) {
           ),
         )}
       </ol>
-      {day.cancelled.length > 0 && (
-        <>
-          <h2 className="list-title">Odpadá</h2>
-          <ol className="timeline">
-            {day.cancelled.map((l, i) => (
-              <LessonCard key={`c-${i}`} lesson={l} state="cancelled" />
-            ))}
-          </ol>
-        </>
-      )}
     </div>
   );
 }
@@ -116,7 +116,7 @@ function NowCard({ current, next, now }: { current?: Lesson; next?: Lesson; now:
   );
 }
 
-function LessonCard({ lesson: l, state }: { lesson: Lesson; state: "past" | "now" | "future" | "cancelled" }) {
+function LessonCard({ lesson: l, state }: { lesson: Lesson; state: "past" | "now" | "future" }) {
   const body = (
     <>
       <div className="lesson-time">
@@ -137,7 +137,7 @@ function LessonCard({ lesson: l, state }: { lesson: Lesson; state: "past" | "now
   const cls = `lesson-card ${state} ${l.changed ? "changed" : ""}`;
   return (
     <li>
-      {l.meet && state !== "cancelled" ? (
+      {l.meet ? (
         <a className={cls} href={l.meet} target="_blank" rel="noreferrer" aria-label={`${l.subject}, otevřít Meet`}>
           {body}
         </a>

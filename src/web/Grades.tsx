@@ -3,6 +3,7 @@ import { api, type GradesResponse } from "./api";
 import type { Subject } from "../worker/parse";
 import { Chevron, Empty, LargeHeader } from "./ui";
 import { useCachedFetch } from "./useFetch";
+import { BookIcon } from "./icons";
 
 function tone(n: number | null) {
   if (n === null) return "neutral";
@@ -44,7 +45,7 @@ export function Grades({ onError }: { onError: (e: unknown) => boolean }) {
             ))}
           </div>
         ) : (
-          !loading && <Empty icon="📚" title="Zatím žádné známky" />
+          !loading && <Empty icon={<BookIcon size={40} />} title="Zatím žádné známky" />
         )}
         <p className="list-footer">Průměr počítá SIS a má jen informativní charakter.</p>
       </div>

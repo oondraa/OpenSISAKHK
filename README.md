@@ -9,8 +9,8 @@ Neoficiální open-source aplikace pro studenty **SŠ a VOŠ aplikované kyberne
 
 | Tab | Co ukazuje |
 | --- | --- |
-| **Rozvrh** | Tvůj osobní rozvrh včetně volitelných předmětů a skupin. Změněné hodiny jsou zvýrazněné, hodiny, které oproti stálému rozvrhu odpadly, jsou v sekci *Odpadá*. Karta „Teď / Další“, swipe mezi dny, oběd, odkaz na Meet. |
-| **Gym** | Obsazenost **tělocvičny (T0)** a **posilovny (P0)** po hodinách: kdo tam je (třída, učitel), nebo že je volno. |
+| **Rozvrh** | Tvůj osobní rozvrh včetně volitelných předmětů a skupin. Změněné hodiny jsou zvýrazněné. Karta „Teď / Další“, swipe mezi dny, oběd, odkaz na Meet. |
+| **Gym** | Jestli je **posilovna (P0)** teď volná, a po hodinách, která třída tam je. |
 | **Známky** | Známky po předmětech s váhou, typem a komentářem a průměr, který počítá SIS. |
 | **Nastavení** | Push notifikace o změnách rozvrhu, světlý/tmavý režim, informace o tom, co se ukládá, a odhlášení. |
 
@@ -51,8 +51,7 @@ Celé je to v [`src/worker/sis.ts`](src/worker/sis.ts), [`src/worker/session.ts`
 
 ## Jak funguje rozvrh a Gym
 
-- **Osobní rozvrh** se čte z `/TimeTable/PersonalNew` ve dvou variantách: aktuální a stálý. Z jejich porovnání vznikne
-  seznam odpadlých hodin. Změněné hodiny SIS sám označuje.
+- **Osobní rozvrh** se čte z `/TimeTable/PersonalNew`. Změněné hodiny SIS sám označuje.
 - **Gym** používá veřejný rozvrh celé školy, který SIS zveřejňuje jen jako obrázky
   (`/TimeTable/{PO,UT,ST,CT,PA}{1,2}.jpg`). Mřížka je na všech obrázcích na stejných pixelech a text je bitmapové
   písmo, takže je čte malé OCR se šablonami znaků ([`src/shared/schoolOcr.ts`](src/shared/schoolOcr.ts)). Běží
@@ -102,4 +101,4 @@ Všechno se vejde do free tieru Cloudflare (100 000 požadavků denně).
 
 ## Licence
 
-[MIT](LICENSE)
+[MIT](LICENSE). Ikona ozubeného kola vychází z [Lucide](https://lucide.dev) (ISC).

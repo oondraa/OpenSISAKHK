@@ -86,9 +86,9 @@ export async function getBinary(jar: Jar, path: string): Promise<{ body: ArrayBu
   return { body: await res.arrayBuffer(), type };
 }
 
-export function timetablePath(userId: string, weekStart: string, permanent: boolean) {
+export function timetablePath(userId: string, weekStart: string) {
   const q = new URLSearchParams({
-    static: String(permanent),
+    static: "false", // true = the permanent timetable without substitutions
     partial: "true",
     date: `${weekStart}T00:00:00`,
     userid: userId,

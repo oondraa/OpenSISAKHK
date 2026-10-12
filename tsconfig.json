@@ -9,7 +9,7 @@
     "skipLibCheck": true,
     "noEmit": true,
     "isolatedModules": true,
-    "types": ["@cloudflare/workers-types", "vite/client", "vite-plugin-pwa/client"]
+    "types": ["@cloudflare/workers-types", "vite/client", "vite-plugin-pwa/client", "node"]
   },
   "include": ["src", "test", "vite.config.ts", "vitest.config.ts"]
 }

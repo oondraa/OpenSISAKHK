@@ -96,19 +96,6 @@ export function parseTimetable(html: string, weekStart: string): Day[] {
   return days;
 }
 
-/** Lessons present in the permanent timetable but missing from the actual one (same start + subject). */
-export function cancelledLessons(actual: Day[], permanent: Day[]): Map<string, Lesson[]> {
-  const out = new Map<string, Lesson[]>();
-  for (const p of permanent) {
-    const a = actual.find((d) => d.date === p.date);
-    const missing = p.lessons.filter(
-      (l) => !a?.lessons.some((x) => x.start === l.start && x.subject === l.subject && x.group === l.group),
-    );
-    if (missing.length) out.set(p.date, missing);
-  }
-  return out;
-}
-
 export function extractUserId(html: string): string | null {
   return html.match(/userid:\s*(\d+)/)?.[1] ?? null;
 }

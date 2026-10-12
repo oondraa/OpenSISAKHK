@@ -1,6 +1,6 @@
 import { Hono, type Context } from "hono";
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
-import { cancelledLessons, parseGrades, parseProfileName, parseTimetable } from "./parse";
+import { parseGrades, parseProfileName, parseTimetable } from "./parse";
 import { BadCredentials, SessionExpired, get, getBinary, login, timetablePath } from "./sis";
 import { seal, unseal, type Session } from "./session";
 import { SCHOOL_FILES, fetchSchoolImage, schoolWeeks, sha256 } from "./school";
@@ -131,13 +131,11 @@ app.get("/me/photo", async (c) => {
 
 app.get("/timetable", async (c) => {
   const week = weekStart(c.req.query("week"));
-  const [actual, permanent] = await withSis(c, async (s) => {
-    const r = await Promise.all([get(s.jar, timetablePath(s.userId, week, false)), get(s.jar, timetablePath(s.userId, week, true))]);
-    return { value: r, changed: r.some((x) => x.changed) };
+  const html = await withSis(c, async (s) => {
+    const { html, changed } = await get(s.jar, timetablePath(s.userId, week));
+    return { value: html, changed };
   });
-  const days = parseTimetable(actual.html, week);
-  const cancelled = cancelledLessons(days, parseTimetable(permanent.html, week));
-  return c.json({ week, days: days.map((d) => ({ ...d, cancelled: cancelled.get(d.date) ?? [] })) });
+  return c.json({ week, days: parseTimetable(html, week) });
 });
 
 app.get("/grades", async (c) => {

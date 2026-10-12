@@ -142,10 +142,10 @@ export function Chevron({ dir = "right" }: { dir?: "left" | "right" | "down" }) 
   );
 }
 
-export function Empty({ icon, title, text }: { icon: string; title: string; text?: string }) {
+export function Empty({ icon, title, text }: { icon: ReactNode; title: string; text?: string }) {
   return (
     <div className="empty">
-      <div className="empty-icon" aria-hidden="true">{icon}</div>
+      <div className="empty-icon">{icon}</div>
       <p className="empty-title">{title}</p>
       {text && <p className="empty-text">{text}</p>}
     </div>

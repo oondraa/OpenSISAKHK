@@ -25,7 +25,7 @@ export function Login({ onDone }: { onDone: () => void }) {
     <main className="login">
       <img src="/icon.svg" alt="" className="login-icon" />
       <h1 className="large-title">OpenSISAKHK</h1>
-      <p className="login-sub">Rozvrh, známky a volná tělocvična. Přihlas se stejně jako do školního SIS.</p>
+      <p className="login-sub">Rozvrh, známky a volná posilovna. Přihlas se stejně jako do školního SIS.</p>
       <form onSubmit={submit} className="list login-form">
         <input
           autoComplete="username"

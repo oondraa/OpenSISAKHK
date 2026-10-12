@@ -5,40 +5,15 @@ import { Timetable } from "./Timetable";
 import { Gym } from "./Gym";
 import { Grades } from "./Grades";
 import { Settings } from "./Settings";
+import { CalendarIcon, DumbbellIcon, GearIcon, GradesIcon } from "./icons";
 
 type Tab = "timetable" | "gym" | "grades" | "settings";
 
 const TABS: { id: Tab; label: string; icon: ReactNode }[] = [
-  {
-    id: "timetable",
-    label: "Rozvrh",
-    icon: (
-      <>
-        <rect x="3.5" y="5" width="17" height="15.5" rx="3.5" />
-        <path d="M3.5 10h17M8 3v4M16 3v4" />
-      </>
-    ),
-  },
-  {
-    id: "gym",
-    label: "Gym",
-    icon: <path d="M6.5 7v10M3.5 9.5v5M17.5 7v10M20.5 9.5v5M6.5 12h11" />,
-  },
-  {
-    id: "grades",
-    label: "Známky",
-    icon: <path d="M5 20v-7M12 20V5M19 20v-10" />,
-  },
-  {
-    id: "settings",
-    label: "Nastavení",
-    icon: (
-      <>
-        <circle cx="12" cy="12" r="3" />
-        <path d="M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.5 5.5l1.7 1.7M16.8 16.8l1.7 1.7M5.5 18.5l1.7-1.7M16.8 7.2l1.7-1.7" />
-      </>
-    ),
-  },
+  { id: "timetable", label: "Rozvrh", icon: <CalendarIcon /> },
+  { id: "gym", label: "Gym", icon: <DumbbellIcon /> },
+  { id: "grades", label: "Známky", icon: <GradesIcon /> },
+  { id: "settings", label: "Nastavení", icon: <GearIcon /> },
 ];
 
 export function App() {
@@ -94,9 +69,7 @@ export function App() {
       <nav className="tabbar" aria-label="Hlavní navigace">
         {TABS.map((t) => (
           <button key={t.id} className={tab === t.id ? "active" : ""} aria-current={tab === t.id ? "page" : undefined} onClick={() => setTab(t.id)}>
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              {t.icon}
-            </svg>
+            {t.icon}
             <span>{t.label}</span>
           </button>
         ))}

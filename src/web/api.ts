@@ -1,6 +1,6 @@
-import type { Day, Lesson, Subject } from "../worker/parse";
+import type { Day, Subject } from "../worker/parse";
 
-export type TimetableDay = Day & { cancelled: Lesson[] };
+export type TimetableDay = Day;
 export interface TimetableResponse {
   week: string;
   days: TimetableDay[];
