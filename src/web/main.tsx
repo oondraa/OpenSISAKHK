@@ -7,26 +7,6 @@ import "./fonts.css";
 import "./styles.css";
 
 applyTheme(savedTheme());
-fixIosViewport();
-
-/**
- * iOS (26) home-screen apps: the viewport ends env(safe-area-inset-top) short of the bottom of the screen, so
- * `position: fixed; bottom: 0` floats above an empty band. Measure the shortfall and move the tab
- * bar down over it (--vfix in styles.css). Only on iOS standalone, where the viewport should be the whole screen.
- */
-function fixIosViewport() {
-  const ios = /iPhone|iPad|iPod/.test(navigator.userAgent);
-  const standalone = matchMedia("(display-mode: standalone)").matches || (navigator as { standalone?: boolean }).standalone;
-  if (!ios || !standalone) return;
-  const update = () => {
-    const portrait = innerHeight > innerWidth;
-    const screenHeight = portrait ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height);
-    const gap = screenHeight - innerHeight;
-    document.documentElement.style.setProperty("--vfix", `${gap > 0 && gap < 120 ? gap : 0}px`);
-  };
-  update();
-  addEventListener("resize", update);
-}
 
 // A new version was downloaded in the background: put the splash back up with "Aktualizace", then reload into it.
 // The flag tells the next page load (index.html) to keep saying so while the new version starts.
