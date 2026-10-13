@@ -1,4 +1,4 @@
-import { useCallback, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { api, cache, Unauthorized } from "./api";
 import { Login } from "./Login";
 import { Timetable } from "./Timetable";
@@ -6,33 +6,62 @@ import { Gym } from "./Gym";
 import { Grades } from "./Grades";
 import { Settings } from "./Settings";
 import { Absence } from "./Absence";
-import { AbsenceIcon, CalendarIcon, DumbbellIcon, GearIcon, GradesIcon } from "./icons";
-
-type Tab = "timetable" | "gym" | "grades" | "absence" | "settings";
-
-const TABS: { id: Tab; label: string; icon: ReactNode }[] = [
-  { id: "timetable", label: "Rozvrh", icon: <CalendarIcon /> },
-  { id: "gym", label: "Gym", icon: <DumbbellIcon /> },
-  { id: "grades", label: "Známky", icon: <GradesIcon /> },
-  { id: "absence", label: "Absence", icon: <AbsenceIcon /> },
-  { id: "settings", label: "Nastavení", icon: <GearIcon /> },
-];
+import { Home, TABS, type Tab } from "./Home";
+import { BackContext, ScreenLayer, type LayerHandle } from "./layer";
 
 export function App() {
   // The session cookie is HttpOnly, so "logged in" is remembered locally and corrected by the first 401.
   const [loggedIn, setLoggedIn] = useState(() => cache.get<boolean>("loggedIn") ?? false);
-  // Notifications open the app on their tab (/?tab=grades).
-  const [tab, setTab] = useState<Tab>(() => {
+  // The app always lands on the home grid. Notifications open a screen right away (/?tab=grades), over the home.
+  const [screen, setScreen] = useState<{ tab: Tab; animate: boolean } | null>(() => {
     const t = new URLSearchParams(location.search).get("tab");
-    return TABS.some((x) => x.id === t) ? (t as Tab) : "timetable";
+    return TABS.includes(t as Tab) ? { tab: t as Tab, animate: false } : null;
   });
+  // Home is in render state too, so it re-reads the cached glances once a screen closes.
+  const [, setClosedAt] = useState(0);
+  const home = useRef<HTMLDivElement>(null);
+  const layer = useRef<LayerHandle>(null);
+  const swiped = useRef(false);
+
+  // Each open screen is a history entry, so the system back (Android, browser) closes it like the back button.
+  useEffect(() => {
+    if (screen && history.state?.screen !== screen.tab) {
+      history.replaceState(null, "", "/");
+      history.pushState({ screen: screen.tab }, "", "/");
+    }
+    const onPop = () => {
+      if (swiped.current) swiped.current = false;
+      else layer.current?.close();
+    };
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && layer.current && history.back();
+    addEventListener("popstate", onPop);
+    addEventListener("keydown", onKey);
+    return () => {
+      removeEventListener("popstate", onPop);
+      removeEventListener("keydown", onKey);
+    };
+  }, []);
+
+  const open = useCallback((tab: Tab) => {
+    history.pushState({ screen: tab }, "", "/");
+    setScreen({ tab, animate: true });
+  }, []);
+  const back = useCallback(() => history.back(), []);
+  const closed = useCallback((bySwipe: boolean) => {
+    if (bySwipe) {
+      swiped.current = true;
+      history.back(); // drop the screen's history entry; onPop knows it's already closed
+    }
+    setScreen(null);
+    setClosedAt(Date.now());
+  }, []);
 
   const signOut = useCallback(() => {
     const theme = cache.get("theme");
     cache.clear();
     if (theme) cache.set("theme", theme);
     setLoggedIn(false);
-    setTab("timetable");
+    setScreen(null);
   }, []);
 
   const onError = useCallback(
@@ -54,33 +83,31 @@ export function App() {
       />
     );
 
+  const tab = screen?.tab;
   return (
-    <div className="app">
-      <main className="tab-content" key={tab}>
-        {tab === "timetable" && <Timetable onError={onError} />}
-        {tab === "gym" && <Gym onError={onError} />}
-        {tab === "grades" && <Grades onError={onError} />}
-        {tab === "absence" && <Absence onError={onError} />}
-        {tab === "settings" && (
-          <Settings
-            onError={onError}
-            onLogout={async () => {
-              const sub = await navigator.serviceWorker?.ready.then((r) => r.pushManager.getSubscription()).catch(() => null);
-              await sub?.unsubscribe().catch(() => {});
-              await api.logout().catch(() => {});
-              signOut();
-            }}
-          />
-        )}
-      </main>
-      <nav className="tabbar" aria-label="Hlavní navigace">
-        {TABS.map((t) => (
-          <button key={t.id} className={tab === t.id ? "active" : ""} aria-current={tab === t.id ? "page" : undefined} onClick={() => setTab(t.id)}>
-            {t.icon}
-            <span>{t.label}</span>
-          </button>
-        ))}
-      </nav>
-    </div>
+    <>
+      <Home homeRef={home} onOpen={open} onError={onError} inert={!!screen} />
+      {screen && (
+        <BackContext.Provider value={back}>
+          <ScreenLayer key={tab} tile={screen.tab} home={home} animate={screen.animate} handle={layer} onClosed={closed}>
+            {tab === "timetable" && <Timetable onError={onError} />}
+            {tab === "gym" && <Gym onError={onError} />}
+            {tab === "grades" && <Grades onError={onError} />}
+            {tab === "absence" && <Absence onError={onError} />}
+            {tab === "settings" && (
+              <Settings
+                onError={onError}
+                onLogout={async () => {
+                  const sub = await navigator.serviceWorker?.ready.then((r) => r.pushManager.getSubscription()).catch(() => null);
+                  await sub?.unsubscribe().catch(() => {});
+                  await api.logout().catch(() => {});
+                  signOut();
+                }}
+              />
+            )}
+          </ScreenLayer>
+        </BackContext.Provider>
+      )}
+    </>
   );
 }

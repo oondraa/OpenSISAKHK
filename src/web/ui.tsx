@@ -1,5 +1,6 @@
 import { useLayoutEffect, useRef, type ReactNode } from "react";
 import { addDays, todayPrague, WEEKDAYS } from "./time";
+import { useBack } from "./layer";
 
 export function LargeHeader({ title, subtitle, accessory, loading, children }: {
   title: string;
@@ -8,8 +9,15 @@ export function LargeHeader({ title, subtitle, accessory, loading, children }: {
   loading?: boolean;
   children?: ReactNode;
 }) {
+  const back = useBack();
   return (
     <header className="large-header">
+      {back && (
+        <button className="back" onClick={back}>
+          <Chevron dir="left" />
+          Domů
+        </button>
+      )}
       <div className="large-header-row">
         <div>
           {subtitle && <p className="eyebrow">{subtitle}</p>}

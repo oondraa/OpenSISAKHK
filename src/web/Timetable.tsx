@@ -9,7 +9,7 @@ import { useNow, useScrollToFocus } from "./hooks";
 import { CalendarOffIcon, SunIcon, UtensilsIcon } from "./icons";
 
 /** Today until its last lesson is over, then the next school day: nobody opens the app to see what already was. */
-function startDay(days: TimetableDay[] | undefined) {
+export function startDay(days: TimetableDay[] | undefined) {
   const today = todayPrague();
   const day = defaultSchoolDay();
   const lessons = days?.find((d) => d.date === today)?.lessons ?? [];

@@ -5,7 +5,7 @@ import { Chevron, Empty, LargeHeader, SkeletonList } from "./ui";
 import { useCachedFetch } from "./useFetch";
 import { BookIcon } from "./icons";
 
-function tone(n: number | null) {
+export function tone(n: number | null) {
   if (n === null) return "neutral";
   if (n < 1.75) return "great";
   if (n < 2.75) return "good";

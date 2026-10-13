@@ -21,7 +21,10 @@ export function useScrollToFocus(enabled: boolean) {
     const el = target.current;
     const scroller = el?.closest<HTMLElement>(".page, .scroll");
     if (!enabled || !el || !scroller) return;
-    const top = el.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop - 12;
+    // Measured in layout px: a screen opening from its home tile is still scaled down on this frame.
+    const box = scroller.getBoundingClientRect();
+    const scale = box.height / scroller.offsetHeight || 1;
+    const top = (el.getBoundingClientRect().top - box.top) / scale + scroller.scrollTop - 12;
     if (top > 0) scroller.scrollTo({ top, behavior: "instant" });
   }, [enabled]);
   return target;
