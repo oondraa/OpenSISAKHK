@@ -1,6 +1,7 @@
-import { useLayoutEffect, useRef, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, type ReactNode } from "react";
 import { addDays, todayPrague, WEEKDAYS } from "./time";
 import { useBack } from "./layer";
+import { lift } from "./glass";
 
 export function LargeHeader({ title, subtitle, accessory, loading, children }: {
   title: string;
@@ -13,7 +14,7 @@ export function LargeHeader({ title, subtitle, accessory, loading, children }: {
   return (
     <header className="large-header">
       {back && (
-        <button className="back" onClick={back}>
+        <button className="back glass" data-lens="10" onClick={back}>
           <Chevron dir="left" />
           Domů
         </button>
@@ -35,14 +36,15 @@ export function LargeHeader({ title, subtitle, accessory, loading, children }: {
 export function DayStrip({ monday, selected, onSelect }: { monday: string; selected: string; onSelect: (iso: string) => void }) {
   const today = todayPrague();
   const index = [0, 1, 2, 3, 4].findIndex((i) => addDays(monday, i) === selected);
+  const thumb = useLifted(index);
   return (
-    <div className="day-strip">
+    <div className="day-strip glass" data-lens="12">
       <button className="week-arrow" aria-label="Předchozí týden" onClick={() => onSelect(addDays(selected, -7))}>
         <Chevron dir="left" />
       </button>
       <div className="day-strip-days" role="tablist">
         {/* One pill that slides between days instead of five that blink on and off. */}
-        {index >= 0 && <span className="day-thumb" aria-hidden="true" style={{ "--i": index } as React.CSSProperties} />}
+        {index >= 0 && <span ref={thumb} className="day-thumb" aria-hidden="true" style={{ "--i": index } as React.CSSProperties} />}
         {[0, 1, 2, 3, 4].map((i) => {
           const iso = addDays(monday, i);
           const active = iso === selected;
@@ -128,9 +130,10 @@ export function Segmented<T extends string>({ value, options, onChange, label }:
   label: string;
 }) {
   const i = Math.max(0, options.findIndex((o) => o.value === value));
+  const thumb = useLifted(i);
   return (
     <div className="segmented" role="radiogroup" aria-label={label} style={{ "--n": options.length, "--i": i } as React.CSSProperties}>
-      <span className="segmented-thumb" aria-hidden="true" />
+      <span ref={thumb} className="segmented-thumb" aria-hidden="true" />
       {options.map((o) => (
         <button key={o.value} role="radio" aria-checked={o.value === value} onClick={() => onChange(o.value)}>
           {o.label}
@@ -138,6 +141,17 @@ export function Segmented<T extends string>({ value, options, onChange, label }:
       ))}
     </div>
   );
+}
+
+/** A selection pill lifts into glass whenever it moves to another option (not when it first appears). */
+function useLifted(index: number) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const last = useRef(index);
+  useEffect(() => {
+    if (last.current !== index && last.current >= 0 && index >= 0) lift(ref.current);
+    last.current = index;
+  }, [index]);
+  return ref;
 }
 
 export function Switch({ checked, onChange, disabled, label }: { checked: boolean; onChange: (v: boolean) => void; disabled?: boolean; label: string }) {

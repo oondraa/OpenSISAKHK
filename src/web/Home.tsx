@@ -13,6 +13,7 @@ import { AbsenceIcon, CalendarIcon, DumbbellIcon, GearIcon, GradesIcon } from ".
 export type Tab = "timetable" | "gym" | "grades" | "absence" | "settings";
 export const TABS: Tab[] = ["timetable", "gym", "grades", "absence", "settings"];
 
+const MORNING = 7 * 60; // from 7:00 the home tile names the day's subjects, before that only its span
 const plural = (n: number, one: string, few: string, many: string) => (n === 1 ? one : n > 1 && n < 5 ? few : many);
 
 /**
@@ -55,7 +56,7 @@ function Tile({ id, label, icon, value, valueClass, sub, onOpen }: {
   onOpen: (tab: Tab) => void;
 }) {
   return (
-    <button className={`tile tile-${id}`} data-tile={id} onClick={() => onOpen(id)}>
+    <button className={`tile glass tile-${id}`} data-tile={id} data-lens="18" onClick={() => onOpen(id)}>
       <span className="tile-icon">{icon}</span>
       <span className="tile-body">
         {value && <span className={`tile-value ${valueClass ?? ""}`}>{value}</span>}
@@ -85,10 +86,18 @@ function TimetableTile({ day, days, now, loading, onOpen }: {
   let room = "";
   let meta = loading ? "Načítám…" : "Otevři rozvrh";
   let progress: number | null = null;
+  // School's out for today, or it's the early morning before it: just how long the day is, subjects from 7:00.
+  const overview = lessons.length > 0 && !current && (!live || now < MORNING);
   if (days && !lessons.length) {
     eyebrow = live ? "Dnes" : dayName;
     title = "Volno";
     meta = "Žádná hodina";
+  } else if (overview) {
+    eyebrow = live ? "Dnes" : dayName;
+    const start = lessons.reduce((a, l) => (minutes(l.start) < minutes(a.start) ? l : a)).start;
+    const end = lessons.reduce((a, l) => (minutes(l.end) > minutes(a.end) ? l : a)).end;
+    title = `${start}–${end}`;
+    meta = `${lessons.length} ${plural(lessons.length, "hodina", "hodiny", "hodin")}`;
   } else if (current) {
     eyebrow = `Teď · končí ${inMinutes(minutes(current.end) - now)}`;
     title = current.subject;
@@ -100,15 +109,10 @@ function TimetableTile({ day, days, now, loading, onOpen }: {
     title = next.subject;
     room = next.room;
     meta = `${next.start}–${next.end} · ${next.teacher}`;
-  } else if (next) {
-    eyebrow = dayName;
-    title = next.subject;
-    room = next.room;
-    meta = `Od ${next.start} · ${lessons.length} ${plural(lessons.length, "hodina", "hodiny", "hodin")}`;
   }
 
   return (
-    <button className="tile tile-timetable" data-tile="timetable" onClick={() => onOpen("timetable")}>
+    <button className="tile glass tile-timetable" data-tile="timetable" onClick={() => onOpen("timetable")}>
       <span className="tile-top">
         <span className="tile-icon">
           <CalendarIcon />
@@ -118,7 +122,7 @@ function TimetableTile({ day, days, now, loading, onOpen }: {
       </span>
       <span className="tile-body">
         <span className="hero-main">
-          <span className="hero-subject">{title}</span>
+          <span className={`hero-subject ${overview ? "hero-span" : ""}`}>{title}</span>
           {room && <span className="hero-room">{room}</span>}
         </span>
         <span className="tile-sub">{meta}</span>

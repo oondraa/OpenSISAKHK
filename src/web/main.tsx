@@ -3,10 +3,12 @@ import { createRoot } from "react-dom/client";
 import { registerSW } from "virtual:pwa-register";
 import { App } from "./App";
 import { applyTheme, savedTheme } from "./theme";
+import { initGlass } from "./glass";
 import "./fonts.css";
 import "./styles.css";
 
 applyTheme(savedTheme());
+initGlass();
 
 // A new version was downloaded in the background: put the splash back up with "Aktualizace", then reload into it.
 // The flag tells the next page load (index.html) to keep saying so while the new version starts.
