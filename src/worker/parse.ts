@@ -251,6 +251,84 @@ export function parseProfile(html: string): Profile {
   };
 }
 
+export interface ProjectRole {
+  name: string;
+  /** "zapsaní/míst" (or just "zapsaní" when SIS has no limit) for 1st, 2nd and 3rd choice */
+  choices: string[];
+}
+
+export interface Project {
+  number: string;
+  name: string;
+  /** teacher's code, e.g. "LN" */
+  leader: string;
+  company: string;
+  goal: string;
+  comment: string;
+  roles: ProjectRole[];
+  /** "zapsaní/míst" over all roles */
+  total: string;
+}
+
+export interface ProjectChoice {
+  order: number;
+  number: string;
+  name: string;
+  role: string;
+  approved: boolean;
+}
+
+/** `/Election/Project`: the project elections, newest first ("5.10.2025-6.10.2025"). */
+export function parseElections(html: string): { id: string; label: string }[] {
+  return parse(html)
+    .querySelectorAll("#sel1 option")
+    .map((o) => ({ id: o.getAttribute("value") ?? "", label: text(o) }))
+    .filter((e) => /^\d+$/.test(e.id));
+}
+
+/** `POST /Election/ProjectDetail`: every project of one election with its roles and how full they are. */
+export function parseProjects(html: string): Project[] {
+  const out: Project[] = [];
+  for (const tr of parse(html).querySelectorAll(".projectsTable tbody tr")) {
+    const number = tr.querySelector(".projectNumber");
+    if (number) {
+      const tds = tr.querySelectorAll("td");
+      out.push({
+        number: text(number),
+        name: text(tr.querySelector(".projectName")),
+        leader: text(tds[2] ?? null),
+        company: text(tr.querySelector(".company")),
+        goal: (tr.querySelector(".goal")?.text ?? "").replace(/[ \t]+/g, " ").replace(/\s*\n\s*/g, "\n").trim(),
+        comment: text(tr.querySelector(".comment")),
+        roles: [],
+        total: "",
+      });
+      continue;
+    }
+    const project = out[out.length - 1];
+    const tds = tr.querySelectorAll("td").map(text);
+    if (!project || !tr.classList.contains("professions") || tds.length < 4) continue;
+    project.roles.push({ name: tds[0], choices: tds.slice(1, 4) });
+    if (tds[4]) project.total = tds[4];
+  }
+  return out;
+}
+
+/** `POST /Election/ProjectElected`: the student's own choices; SIS lists an approved one twice, keep it once. */
+export function parseProjectChoices(html: string): ProjectChoice[] {
+  const rows = parse(`<table><tbody>${html}</tbody></table>`).querySelectorAll("tr");
+  const out: ProjectChoice[] = [];
+  for (const tr of rows) {
+    const tds = tr.querySelectorAll("td").map(text);
+    if (tds.length < 4 || !tds[1]) continue;
+    const choice = { order: Number(tds[0]) || out.length + 1, number: tds[1], name: tds[2], role: tds[3], approved: tr.classList.contains("projectApproved") };
+    const same = out.find((c) => c.number === choice.number && c.role === choice.role);
+    if (same) same.approved ||= choice.approved;
+    else out.push(choice);
+  }
+  return out;
+}
+
 export function isLoginPage(html: string): boolean {
   return /name="Password"/.test(html) && /action="\/Account\/Login"/.test(html);
 }

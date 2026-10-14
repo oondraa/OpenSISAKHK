@@ -37,6 +37,13 @@ export const GearIcon = ({ size }: { size?: number }) => (
   </Icon>
 );
 
+export const ProjectIcon = ({ size }: { size?: number }) => (
+  <Icon size={size}>
+    <path d="M9 18h6M10 21.5h4" />
+    <path d="M12 2.5a6.5 6.5 0 0 0-3.9 11.7c.6.5.9 1.1.9 1.8v.5h6V16c0-.7.3-1.3.9-1.8A6.5 6.5 0 0 0 12 2.5z" />
+  </Icon>
+);
+
 export const UtensilsIcon = ({ size }: { size?: number }) => (
   <Icon size={size}>
     <path d="M4 3v6a3 3 0 0 0 3 3v9M10 3v6a3 3 0 0 1-3 3M7 3v5M20 15V3a5 5 0 0 0-4 5v5a2 2 0 0 0 2 2h2zm0 0v6" />

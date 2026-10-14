@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseAbsence, extractUserId, gradeToNumber, isLoginPage, parseGrades, parseProfile, parseTimetable } from "../src/worker/parse";
+import { parseAbsence, extractUserId, gradeToNumber, isLoginPage, parseElections, parseGrades, parseProfile, parseProjectChoices, parseProjects, parseTimetable } from "../src/worker/parse";
 
 // Synthetic fixtures that mirror the markup SIS serves (structure only, no real data).
 const card = (subject: string, time: string, room: string, group: string, teacher: string, extra = "") =>
@@ -144,5 +144,54 @@ describe("parseProfile", () => {
 
   it("copes with a profile without the group tables", () => {
     expect(parseProfile("<table></table>")).toEqual({ name: null, email: null, groups: [], blocks: [], projects: [] });
+  });
+});
+
+describe("project elections", () => {
+  const roleRows = (rows: string[][], total: string) =>
+    `<tr class="professions even"><th>Profese</th><th colspan="3">Stav</th><th rowspan="2">Celkem</th></tr>
+     <tr class="professions even"><th>Volba</th><th>1</th><th>2</th><th>3</th></tr>` +
+    rows.map((r, i) => `<tr class="professions even">${r.map((c) => `<td>${c}</td>`).join("")}${i === 0 ? `<td class="table-cell-center" rowspan="${rows.length}">${total}</td>` : ""}</tr>`).join("");
+  const detail = `<table class="projectsTable table"><tbody>
+    <tr class="even"><td class="table-cell-center projectNumber" rowspan="5">7</td><td colspan="5" class="projectName">Robot</td>
+      <td class="table-cell-center" rowspan="5">HS</td>
+      <td rowspan="5"><span class="company">Firma s.r.o.</span><span class="goal">Postavit robota.
+  •	Arduino</span><span class="comment">Pro všechny</span></td></tr>
+    ${roleRows([["vedoucí", "3/1", "0/1", "0/1"], ["programátor", "7/2", "1/2", "3/2"]], "26/6")}
+    <tr class="odd"><td class="table-cell-center projectNumber" rowspan="4">8</td><td colspan="5" class="projectName">Šperky</td>
+      <td class="table-cell-center" rowspan="4"></td><td rowspan="4"><span class="goal">Návrh</span></td></tr>
+    ${roleRows([["šperkař", "7", "3", "0"]], "10/1")}
+  </tbody></table>`;
+
+  it("reads every project with its roles", () => {
+    const [robot, jewels] = parseProjects(detail);
+    expect(robot).toEqual({
+      number: "7",
+      name: "Robot",
+      leader: "HS",
+      company: "Firma s.r.o.",
+      goal: "Postavit robota.\n• Arduino",
+      comment: "Pro všechny",
+      roles: [
+        { name: "vedoucí", choices: ["3/1", "0/1", "0/1"] },
+        { name: "programátor", choices: ["7/2", "1/2", "3/2"] },
+      ],
+      total: "26/6",
+    });
+    expect(jewels).toMatchObject({ number: "8", leader: "", company: "", roles: [{ name: "šperkař", choices: ["7", "3", "0"] }], total: "10/1" });
+  });
+
+  it("lists the elections newest first", () => {
+    expect(parseElections(`<select id="sel1"><option value="26">5.10.2025-6.10.2025</option><option value="24">12.10.2024-15.10.2024</option></select>`)).toEqual([
+      { id: "26", label: "5.10.2025-6.10.2025" },
+      { id: "24", label: "12.10.2024-15.10.2024" },
+    ]);
+  });
+
+  it("keeps an approved choice once", () => {
+    const row = (cls: string) => `<tr class="${cls}"><td>1</td><td>21</td><td>Fontány</td><td> programátor </td></tr>`;
+    expect(parseProjectChoices(row("projectApproved ") + row(" "))).toEqual([
+      { order: 1, number: "21", name: "Fontány", role: "programátor", approved: true },
+    ]);
   });
 });

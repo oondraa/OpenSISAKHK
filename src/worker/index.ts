@@ -1,6 +1,6 @@
 import { Hono, type Context } from "hono";
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
-import { absenceStudentId, parseAbsence, parseGrades, parseProfile, parseTimetable } from "./parse";
+import { absenceStudentId, parseAbsence, parseElections, parseGrades, parseProfile, parseProjectChoices, parseProjects, parseTimetable } from "./parse";
 import { CLASSES } from "../shared/schoolOcr";
 import { BadCredentials, SessionExpired, get, getBinary, login, post, timetablePath } from "./sis";
 import { seal, unseal, type Session } from "./session";
@@ -329,6 +329,37 @@ app.get("/absence", async (c) => {
     return { value: { page: page.html, summary: summary.html }, changed: page.changed || summary.changed };
   });
   return c.json(parseAbsence(page, summary));
+});
+
+/** Project elections: the student's choices and every project of one election (the newest by default), plus the
+ * groups, blocks and class from the stored profile. */
+app.get("/projects", async (c) => {
+  const wanted = c.req.query("election");
+  type Pages = { elections: { id: string; label: string }[]; election: { id: string; label: string } | null; detail: string; mine: string };
+  const sis = await withSis<Pages>(c, async (s) => {
+    const page = await get(s.jar, "/Election/Project");
+    const elections = parseElections(page.html);
+    const election = elections.find((e) => e.id === wanted) ?? elections[0];
+    if (!election) return { value: { elections, election: null, detail: "", mine: "" }, changed: page.changed };
+    const detail = await post(s.jar, "/Election/ProjectDetail", { id: election.id });
+    const mine = await post(s.jar, "/Election/ProjectElected", { ElectionID: election.id });
+    return { value: { elections, election, detail: detail.html, mine: mine.html }, changed: page.changed || detail.changed || mine.changed };
+  });
+  const row = await c.env.DB.prepare("SELECT email, groups, blocks, class FROM users WHERE id = ?")
+    .bind(c.get("session").userId)
+    .first<{ email: string | null; groups: string | null; blocks: string | null; class: string | null }>();
+  return c.json({
+    elections: sis.elections,
+    election: sis.election,
+    mine: parseProjectChoices(sis.mine),
+    projects: parseProjects(sis.detail),
+    profile: {
+      class: row?.class ?? null,
+      email: row?.email ?? null,
+      groups: JSON.parse(row?.groups ?? "[]") as string[],
+      blocks: JSON.parse(row?.blocks ?? "[]") as { subject: string; block: string }[],
+    },
+  });
 });
 
 app.post("/push/subscribe", async (c) => {

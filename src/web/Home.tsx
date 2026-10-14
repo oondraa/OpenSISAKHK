@@ -1,5 +1,5 @@
 import type { ReactNode, Ref } from "react";
-import { api, cache, type GradesResponse, type TimetableResponse } from "./api";
+import { api, cache, type GradesResponse, type ProjectsResponse, type TimetableResponse } from "./api";
 import type { Absence } from "../worker/parse";
 import { PERIODS, type Cell } from "../shared/schoolOcr";
 import { startDay } from "./Timetable";
@@ -8,10 +8,11 @@ import { LIMIT } from "./absencePlan";
 import { WEEKDAYS, addDays, inMinutes, minutes, mondayOf, todayPrague, weekdayIndex } from "./time";
 import { useCachedFetch } from "./useFetch";
 import { useNow } from "./hooks";
-import { AbsenceIcon, CalendarIcon, DumbbellIcon, GearIcon, GradesIcon } from "./icons";
+import { AbsenceIcon, CalendarIcon, DumbbellIcon, GearIcon, GradesIcon, ProjectIcon } from "./icons";
+import { Chevron } from "./ui";
 
-export type Tab = "timetable" | "gym" | "grades" | "absence" | "settings";
-export const TABS: Tab[] = ["timetable", "gym", "grades", "absence", "settings"];
+export type Tab = "timetable" | "gym" | "grades" | "absence" | "projects" | "settings";
+export const TABS: Tab[] = ["timetable", "gym", "grades", "absence", "projects", "settings"];
 
 const MORNING = 7 * 60; // from 7:00 the home tile names the day's subjects, before that only its span
 const plural = (n: number, one: string, few: string, many: string) => (n === 1 ? one : n > 1 && n < 5 ? few : many);
@@ -40,7 +41,17 @@ export function Home({ onOpen, onError, homeRef, inert }: {
         <GymTile now={now} onOpen={onOpen} />
         <GradesTile onOpen={onOpen} />
         <AbsenceTile onOpen={onOpen} />
-        <Tile id="settings" label="Nastavení" icon={<GearIcon />} sub={me?.name ?? "Notifikace, Strava, vzhled"} onOpen={onOpen} />
+        <ProjectsTile onOpen={onOpen} />
+        <button className="tile glass tile-settings tile-slim" data-tile="settings" data-lens="14" onClick={() => onOpen("settings")}>
+          <span className="tile-icon">
+            <GearIcon />
+          </span>
+          <span className="tile-body">
+            <span className="tile-label">Nastavení</span>
+            <span className="tile-sub">{me?.name ?? "Notifikace, Strava, vzhled"}</span>
+          </span>
+          <Chevron />
+        </button>
       </nav>
     </div>
   );
@@ -197,6 +208,22 @@ function AbsenceTile({ onOpen }: { onOpen: (tab: Tab) => void }) {
       value={total ? `${total.percent.toLocaleString("cs-CZ")} %` : undefined}
       valueClass={`absence-${level}`}
       sub={over.length ? `Přes ${LIMIT} %: ${over.join(", ")}` : total ? `${total.missed} ${plural(total.missed, "hodina", "hodiny", "hodin")} celkem` : "Hranice 30 %"}
+      onOpen={onOpen}
+    />
+  );
+}
+
+/** The approved project of the newest election (or the first choice while it waits), from the last load. */
+function ProjectsTile({ onOpen }: { onOpen: (tab: Tab) => void }) {
+  const data = cache.get<ProjectsResponse>("projects:latest");
+  const mine = data?.mine.find((c) => c.approved) ?? data?.mine[0];
+  return (
+    <Tile
+      id="projects"
+      label="Projekty"
+      icon={<ProjectIcon />}
+      value={mine?.number}
+      sub={mine?.name ?? "Projektové dny"}
       onOpen={onOpen}
     />
   );

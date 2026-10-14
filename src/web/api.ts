@@ -1,4 +1,4 @@
-import type { Absence, Day, Subject } from "../worker/parse";
+import type { Absence, Day, Project, ProjectChoice, Subject } from "../worker/parse";
 import type { LunchDay } from "../worker/strava";
 
 export type TimetableDay = Day;
@@ -42,6 +42,7 @@ export const api = {
   me: () => call<Me>("/me"),
   setClass: (cls: string) => post("/me/class", { cls }),
   lunch: () => call<LunchResponse>("/lunch"),
+  projects: (election?: string) => call<ProjectsResponse>(`/projects${election ? `?election=${election}` : ""}`),
   stravaConnect: (jmeno: string, heslo: string) => post("/strava", { jmeno, heslo }),
   stravaDisconnect: () => post("/strava/disconnect", {}),
   watch: (on: boolean) => post("/watch", { on }),
@@ -51,6 +52,14 @@ export const api = {
   pushUnsubscribe: (endpoint: string) => post("/push/unsubscribe", { endpoint }),
   pushTest: () => call<{ sent: number }>("/push/test", { method: "POST" }),
 };
+
+export interface ProjectsResponse {
+  elections: { id: string; label: string }[];
+  election: { id: string; label: string } | null;
+  mine: ProjectChoice[];
+  projects: Project[];
+  profile: { class: string | null; email: string | null; groups: string[]; blocks: { subject: string; block: string }[] };
+}
 
 export interface Me {
   name: string | null;

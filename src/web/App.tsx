@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { api, cache, Unauthorized } from "./api";
 import { Login } from "./Login";
 import { Timetable } from "./Timetable";
@@ -6,12 +6,14 @@ import { Gym } from "./Gym";
 import { Grades } from "./Grades";
 import { Settings } from "./Settings";
 import { Absence } from "./Absence";
+import { Projects } from "./Projects";
 import { Home, TABS, type Tab } from "./Home";
 import { ClassPrompt } from "./ClassPrompt";
-import { BackContext, ScreenLayer, type LayerHandle } from "./layer";
-import { AbsenceIcon, CalendarIcon, DumbbellIcon, GearIcon, GradesIcon } from "./icons";
+import { AccountContext, BackContext, ScreenLayer, type LayerHandle } from "./layer";
+import { AbsenceIcon, CalendarIcon, DumbbellIcon, GradesIcon, ProjectIcon } from "./icons";
 
-/** "home": the tile grid, screens grow out of their tile. "tabs": the tab bar from before 1.6, picked in Settings. */
+/** "home": the tile grid, screens grow out of their tile. "tabs": the tab bar from before 1.6, picked in Settings;
+ * Settings has no tab there, the account button in the header opens it. */
 export type Layout = "home" | "tabs";
 
 const TAB_BAR: { id: Tab; label: string; icon: ReactNode }[] = [
@@ -19,7 +21,7 @@ const TAB_BAR: { id: Tab; label: string; icon: ReactNode }[] = [
   { id: "gym", label: "Gym", icon: <DumbbellIcon /> },
   { id: "grades", label: "Známky", icon: <GradesIcon /> },
   { id: "absence", label: "Absence", icon: <AbsenceIcon /> },
-  { id: "settings", label: "Nastavení", icon: <GearIcon /> },
+  { id: "projects", label: "Projekty", icon: <ProjectIcon /> },
 ];
 
 export function App() {
@@ -66,7 +68,14 @@ export function App() {
     history.pushState({ screen: tab }, "", "/");
     setScreen({ tab, animate: true });
   }, []);
-  const back = useCallback(() => history.back(), []);
+  const back = useMemo(() => ({ go: () => history.back(), label: "Domů" }), []);
+  // Tab bar layout: the tab Settings was opened from, where its back button returns.
+  const [settingsFrom, setSettingsFrom] = useState<Tab>("timetable");
+  const openSettings = useCallback(() => {
+    setSettingsFrom(tab);
+    setTab("settings");
+  }, [tab]);
+  const settingsBack = useMemo(() => ({ go: () => setTab(settingsFrom), label: "Zpět" }), [settingsFrom]);
   const closed = useCallback((bySwipe: boolean) => {
     if (bySwipe) {
       swiped.current = true;
@@ -126,6 +135,7 @@ export function App() {
       {t === "gym" && <Gym onError={onError} />}
       {t === "grades" && <Grades onError={onError} />}
       {t === "absence" && <Absence onError={onError} />}
+      {t === "projects" && <Projects onError={onError} />}
       {t === "settings" && (
         <Settings
           onError={onError}
@@ -146,7 +156,11 @@ export function App() {
     return (
       <div className="app">
         <main className="tab-content" key={tab}>
-          {content(tab)}
+          {tab === "settings" ? (
+            <BackContext.Provider value={settingsBack}>{content(tab)}</BackContext.Provider>
+          ) : (
+            <AccountContext.Provider value={openSettings}>{content(tab)}</AccountContext.Provider>
+          )}
         </main>
         <nav className="tabbar" aria-label="Hlavní navigace">
           {TAB_BAR.map((t) => (
