@@ -614,6 +614,7 @@ p { margin: 0; }
 .balance-kind { font-size: 0.8125rem; font-weight: 600; color: var(--text-2); }
 .balance-card.overpaid .balance-kind, .balance-card.even .balance-kind { color: var(--green); }
 .balance-card.underpaid .balance-kind { color: var(--orange); }
+.finance-caveat { margin: -6px 4px 16px; }
 .finance-switch { display: flex; justify-content: center; margin: 4px 0 4px; }
 .money-row .row-title { font-size: 0.9375rem; }
 .money { font-variant-numeric: tabular-nums; white-space: nowrap; font-weight: 600; }

@@ -201,6 +201,7 @@ describe("parseFinance", () => {
     <div class="alert alert-info"><div><table>
       <tr><td>VS pro školné</td><td>11112222</td></tr><tr><td>VS pro fond</td><td>33334444</td></tr></table></div>
       <div style="display:table"><div>Bankovní účet je:</div><div> 123456789/0100 </div></div>
+      <ul><li>Platby z banky aktuální k 19.7.2026</li></ul>
       <div>Předpis na školní rok 2025/2026 je ke stažení <a href="https://money.kyberna.cz/Report/a">zde</a>.<br />
       Předpis na školní rok 2026/2027 je ke stažení <a href="https://money.kyberna.cz/Report/b">zde</a>.</div></div></div>
     <ul class="nav nav-tabs"><li><a href="#" data-tabid="fund">Fond</a></li><li><a href="#" data-tabid="school">Školné</a></li></ul>
@@ -244,5 +245,6 @@ describe("parseFinance", () => {
       { label: "Předpis 2026/2027", url: "https://money.kyberna.cz/Report/b" },
     ]);
     expect(f.notice).toBe("Finance doplníme v lednu.");
+    expect(f.paymentsAsOf).toBe("2026-07-19");
   });
 });

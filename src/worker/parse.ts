@@ -353,6 +353,8 @@ export interface Finance {
   documents: { label: string; url: string }[];
   /** the notice SIS shows above (data recovery etc.) */
   notice: string | null;
+  /** how far SIS has loaded the bank payments ("Platby z banky aktuální k 19.7.2026"), YYYY-MM-DD */
+  paymentsAsOf: string | null;
 }
 
 const czMoney = (s: string) => {
@@ -415,6 +417,7 @@ export function parseFinance(html: string): Finance {
     bankAccount,
     documents,
     notice: text(root.querySelector(".container h4")) || null,
+    paymentsAsOf: czDate(info?.text.match(/Platby z banky aktuální k\s*(\d{1,2}\.\d{1,2}\.\d{4})/)?.[1] ?? ""),
   };
 }
 

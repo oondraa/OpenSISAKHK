@@ -44,6 +44,11 @@ export function Finance({ onError }: { onError: (e: unknown) => boolean }) {
                 <BalanceCard key={a.id} a={a} />
               ))}
             </div>
+            <p className="list-footer finance-caveat">
+              Přeplatek a nedoplatek počítá SIS a nemusí být přesné: škola finance po výpadku ještě doplňuje
+              {data.paymentsAsOf ? ` a platby z banky má načtené jen k ${date(data.paymentsAsOf)}` : ""}. Nedoplatek může být
+              i předpis, který ještě není splatný. Když si nejsi jistý, ověř to ve škole.
+            </p>
 
             {data.accounts.length > 1 && (
               <div className="finance-switch">
@@ -106,7 +111,7 @@ function BalanceCard({ a }: { a: FinanceAccount }) {
     <div className={`balance-card ${b?.kind ?? ""}`}>
       <p className="eyebrow">{a.title}</p>
       <p className="balance-value">{b ? (b.kind === "even" ? "Vyrovnáno" : kc(b.amount)) : "–"}</p>
-      <p className="balance-kind">{b ? (b.kind === "overpaid" ? "Přeplatek" : b.kind === "underpaid" ? "Nedoplatek" : "Nic nedlužíš") : "Bez údajů"}</p>
+      <p className="balance-kind">{b ? (b.kind === "overpaid" ? "Přeplatek podle SIS" : b.kind === "underpaid" ? "Nedoplatek podle SIS" : "Vyrovnáno podle SIS") : "Bez údajů"}</p>
     </div>
   );
 }
