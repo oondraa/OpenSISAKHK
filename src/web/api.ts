@@ -39,7 +39,8 @@ export const api = {
   permanentTimetable: (week: string) => call<TimetableResponse>(`/timetable?week=${week}&static=1`),
   grades: () => call<GradesResponse>("/grades"),
   absence: () => call<Absence>("/absence"),
-  me: () => call<{ name: string | null; hasPhoto: boolean; pushDevices: number; watching: boolean; strava: boolean }>("/me"),
+  me: () => call<Me>("/me"),
+  setClass: (cls: string) => post("/me/class", { cls }),
   lunch: () => call<LunchResponse>("/lunch"),
   stravaConnect: (jmeno: string, heslo: string) => post("/strava", { jmeno, heslo }),
   stravaDisconnect: () => post("/strava/disconnect", {}),
@@ -50,6 +51,16 @@ export const api = {
   pushUnsubscribe: (endpoint: string) => post("/push/unsubscribe", { endpoint }),
   pushTest: () => call<{ sent: number }>("/push/test", { method: "POST" }),
 };
+
+export interface Me {
+  name: string | null;
+  hasPhoto: boolean;
+  /** null = not confirmed yet (SIS doesn't show the class, ClassPrompt asks) */
+  class: string | null;
+  pushDevices: number;
+  watching: boolean;
+  strava: boolean;
+}
 
 function post(path: string, body: unknown) {
   return call<{ ok: true }>(path, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });

@@ -1,6 +1,7 @@
 import { Hono, type Context } from "hono";
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
-import { absenceStudentId, parseAbsence, parseGrades, parseProfileName, parseTimetable } from "./parse";
+import { absenceStudentId, parseAbsence, parseGrades, parseProfile, parseTimetable } from "./parse";
+import { CLASSES } from "../shared/schoolOcr";
 import { BadCredentials, SessionExpired, get, getBinary, login, post, timetablePath } from "./sis";
 import { seal, unseal, type Session } from "./session";
 import { SCHOOL_FILES, fetchSchoolImage, schoolWeeks, sha256 } from "./school";
@@ -213,15 +214,30 @@ app.use("/*", async (c, next) => {
 
 app.get("/me", async (c) => {
   const { userId } = c.get("session");
-  const row = await c.env.DB.prepare("SELECT name, photo IS NOT NULL AS hasPhoto FROM users WHERE id = ?")
-    .bind(userId)
-    .first<{ name: string; hasPhoto: number }>();
+  const select = () =>
+    c.env.DB.prepare("SELECT name, photo IS NOT NULL AS hasPhoto, groups IS NOT NULL AS hasProfile, class FROM users WHERE id = ?")
+      .bind(userId)
+      .first<{ name: string; hasPhoto: number; hasProfile: number; class: string | null }>();
+  let row = await select();
+  // Signed in before the profile had e-mail, groups, blocks and projects: read it once now.
+  if (!row?.hasProfile) {
+    await withSis(c, async (s) => ({ value: await saveProfile(c.env.DB, s), changed: false })).catch((e) => console.error("profile", e));
+    row = await select();
+  }
   await c.env.DB.prepare("UPDATE users SET last_seen = ? WHERE id = ?").bind(Date.now(), userId).run();
   const push = await c.env.DB.prepare("SELECT COUNT(*) AS n FROM push_subscriptions WHERE user_id = ?")
     .bind(userId)
     .first<{ n: number }>();
   const watching = await c.env.DB.prepare("SELECT 1 FROM watchers WHERE user_id = ?").bind(userId).first();
-  return c.json({ name: row?.name ?? null, hasPhoto: !!row?.hasPhoto, pushDevices: push?.n ?? 0, watching: !!watching, strava: !!c.get("session").strava });
+  return c.json({ name: row?.name ?? null, hasPhoto: !!row?.hasPhoto, class: row?.class ?? null, pushDevices: push?.n ?? 0, watching: !!watching, strava: !!c.get("session").strava });
+});
+
+/** The student's class, confirmed in the app (SIS doesn't show it). */
+app.post("/me/class", async (c) => {
+  const { cls } = await c.req.json<{ cls?: string }>();
+  if (typeof cls !== "string" || !CLASSES.includes(cls)) return c.json({ error: "bad_class" }, 400);
+  await c.env.DB.prepare("UPDATE users SET class = ? WHERE id = ?").bind(cls, c.get("session").userId).run();
+  return c.json({ ok: true });
 });
 
 // ---------- canteen (Strava.cz) ----------
@@ -363,15 +379,27 @@ app.post("/push/test", async (c) => {
 
 async function saveProfile(db: D1Database, s: Session) {
   const { html } = await get(s.jar, "/Account/UserProfile");
-  const name = parseProfileName(html) ?? s.cred.u;
+  const p = parseProfile(html);
   const photo = await getBinary(s.jar, "/Account/Photo.jpg").catch(() => null);
   const now = Date.now();
   await db
     .prepare(
-      `INSERT INTO users (id, name, photo, photo_type, first_seen, last_seen) VALUES (?1, ?2, ?3, ?4, ?5, ?5)
-       ON CONFLICT(id) DO UPDATE SET name = ?2, photo = COALESCE(?3, photo), photo_type = COALESCE(?4, photo_type), last_seen = ?5`,
+      `INSERT INTO users (id, name, photo, photo_type, first_seen, last_seen, email, groups, blocks, projects)
+       VALUES (?1, ?2, ?3, ?4, ?5, ?5, ?6, ?7, ?8, ?9)
+       ON CONFLICT(id) DO UPDATE SET name = ?2, photo = COALESCE(?3, photo), photo_type = COALESCE(?4, photo_type), last_seen = ?5,
+         email = COALESCE(?6, email), groups = ?7, blocks = ?8, projects = ?9`,
     )
-    .bind(s.userId, name, photo?.body ?? null, photo?.type ?? null, now)
+    .bind(
+      s.userId,
+      p.name ?? s.cred.u,
+      photo?.body ?? null,
+      photo?.type ?? null,
+      now,
+      p.email,
+      JSON.stringify(p.groups),
+      JSON.stringify(p.blocks),
+      JSON.stringify(p.projects),
+    )
     .run();
 }
 

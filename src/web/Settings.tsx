@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { api, cache } from "./api";
+import { api, cache, type Me } from "./api";
+import { CLASSES } from "../shared/schoolOcr";
 import { LargeHeader, Section, Segmented, Switch } from "./ui";
 import { savedTheme, setTheme, type Theme } from "./theme";
 import { useCachedFetch } from "./useFetch";
@@ -21,7 +22,9 @@ export function Settings({ onError, onLogout, layout, onLayout }: {
   layout: Layout;
   onLayout: (l: Layout) => void;
 }) {
-  const me = useCachedFetch("me", api.me, onError);
+  const me = useCachedFetch<Me>("me", api.me, onError);
+  const [cls, setCls] = useState<string | null>(null);
+  const myClass = cls ?? me.data?.class ?? null;
   const [theme, setThemeState] = useState<Theme>(savedTheme);
   const [push, setPush] = useState<PushState>("busy");
   const [pushMsg, setPushMsg] = useState<string | null>(null);
@@ -82,9 +85,37 @@ export function Settings({ onError, onLogout, layout, onLayout }: {
           )}
           <div>
             <p className="profile-name">{me.data?.name ?? "Přihlášený student"}</p>
-            <p className="profile-meta">Přihlášeno přes SIS SSAKHK</p>
+            <p className="profile-meta">{myClass ? `${myClass} · ` : ""}Přihlášeno přes SIS SSAKHK</p>
           </div>
         </div>
+
+        <Section>
+          <label className="row">
+            <span className="row-title">Třída</span>
+            <select
+              className="select"
+              value={myClass ?? ""}
+              onChange={async (e) => {
+                const next = e.target.value;
+                setCls(next);
+                try {
+                  await api.setClass(next);
+                  if (me.data) cache.set("me", { ...me.data, class: next });
+                } catch (err) {
+                  onError(err);
+                  setCls(null);
+                }
+              }}
+            >
+              {!myClass && <option value="">Vyber…</option>}
+              {CLASSES.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+          </label>
+        </Section>
 
         <Section title="Vzhled" footer="Plocha: dlaždice na hlavní obrazovce, sekce se z nich otevírají. Lišta: sekce v liště dole.">
           <div className="row">
@@ -151,8 +182,10 @@ export function Settings({ onError, onLogout, layout, onLayout }: {
         <Section title="Soukromí">
           <div className="privacy">
             <p>
-              <b>Co ukládáme:</b> tvoje jméno a profilovou fotku ze SIS, abychom věděli, kdo aplikaci používá a mohli ti
-              ji ukázat tady. U zapnutých notifikací adresu pro doručení do tohohle zařízení.
+              <b>Co ukládáme:</b> z profilu v SIS tvoje jméno, profilovou fotku, školní e-mail, skupiny, volitelné bloky a
+              projekty, k tomu třídu, kterou potvrdíš. Slouží k tomu, abychom věděli, kdo aplikaci používá, a pro další
+              funkce (třeba změny rozvrhu pro tvoji třídu a skupiny). U zapnutých notifikací adresu pro doručení do tohohle
+              zařízení.
             </p>
             <p>
               <b>Heslo:</b> zůstává zašifrované v tomhle zařízení, aby tě aplikace nemusela odhlašovat, když SIS ukončí

@@ -537,6 +537,29 @@ p { margin: 0; }
 .tabbar .active { color: var(--accent-text); }
 .tabbar .active .icon { stroke-width: 2.1; }
 
+/* ---------- Class prompt: a sheet over everything, until the class is confirmed ---------- */
+.sheet-backdrop {
+  position: fixed; inset: 0; z-index: 50; display: flex; align-items: flex-end; justify-content: center;
+  padding: 12px max(12px, env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+  background: rgba(0, 0, 0, 0.35); animation: fade-in 200ms ease-out both;
+}
+.sheet {
+  width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: 14px; padding: 24px 20px 12px;
+  border-radius: 28px; background: var(--surface); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: sheet-in 420ms var(--ease-spring) both;
+}
+@keyframes sheet-in { from { transform: translateY(40px); opacity: 0; } }
+.sheet-title { margin: 0; font-size: 1.5rem; font-weight: 800; letter-spacing: -0.02em; }
+.sheet-text { font-size: 0.9375rem; line-height: 1.4; color: var(--text-2); min-height: 2.6em; }
+.class-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.class-grid button {
+  height: 48px; border-radius: 14px; background: var(--fill); font-weight: 650; font-size: 1.0625rem;
+  transition: background-color 150ms ease, color 150ms ease, transform 300ms var(--ease-spring);
+}
+.class-grid button:active { transform: scale(0.94); transition-duration: 80ms; }
+.class-grid .selected { background: var(--accent); color: var(--on-accent); }
+.sheet-later { min-height: 44px; font-size: 0.9375rem; color: var(--text-2); }
+
 /* ---------- Motion ---------- */
 /* New content just fades in, all at once. No per-row delays or movement: with cached data showing first and a
    refresh landing a moment later, cascades read as the screen falling apart. */

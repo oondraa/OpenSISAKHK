@@ -7,6 +7,7 @@ import { Grades } from "./Grades";
 import { Settings } from "./Settings";
 import { Absence } from "./Absence";
 import { Home, TABS, type Tab } from "./Home";
+import { ClassPrompt } from "./ClassPrompt";
 import { BackContext, ScreenLayer, type LayerHandle } from "./layer";
 import { AbsenceIcon, CalendarIcon, DumbbellIcon, GearIcon, GradesIcon } from "./icons";
 
@@ -155,6 +156,7 @@ export function App() {
             </button>
           ))}
         </nav>
+        <ClassPrompt onError={onError} />
       </div>
     );
 
@@ -168,6 +170,7 @@ export function App() {
           </ScreenLayer>
         </BackContext.Provider>
       )}
+      <ClassPrompt onError={onError} />
     </>
   );
 }

@@ -224,13 +224,31 @@ export function parseAbsence(html: string, summaryHtml = html): Absence {
   return { subjects: all.filter((s) => s.subject !== "Celkem"), total, missed: lessons };
 }
 
-/** Parses `/Account/UserProfile` — only the first and last name are used. */
-export function parseProfileName(html: string): string | null {
+export interface Profile {
+  name: string | null;
+  email: string | null;
+  groups: string[];
+  blocks: { subject: string; block: string }[];
+  projects: string[];
+}
+
+/** Parses `/Account/UserProfile`: name, school e-mail, and the "Seznam skupin" tables (class groups, blocks, projects). */
+export function parseProfile(html: string): Profile {
   const root = parse(html);
   const field = (label: string) =>
     text(root.querySelectorAll("tr").find((tr) => text(tr.querySelector("label")) === label)?.querySelectorAll("td")[1] ?? null);
   const name = [field("Jméno"), field("Přijmení") || field("Příjmení")].filter(Boolean).join(" ");
-  return name || null;
+  const email = field("Školní e-mail");
+  const table = (heading: string) =>
+    root.querySelectorAll(".studyGroups table").find((t) => text(t.querySelector("th")).startsWith(heading));
+  const rows = (heading: string) => (table(heading)?.querySelectorAll("tr") ?? []).map((tr) => tr.querySelectorAll("td").map(text)).filter((r) => r.length && r[0]);
+  return {
+    name: name || null,
+    email: /^[^@\s]+@[^@\s]+$/.test(email) ? email : null,
+    groups: [...new Set(rows("Rozdělení").map((r) => r[0]))],
+    blocks: rows("Bloky").filter((r) => r[1]).map(([subject, block]) => ({ subject, block })),
+    projects: [...new Set(rows("Projekty").map((r) => r[0]))],
+  };
 }
 
 export function isLoginPage(html: string): boolean {

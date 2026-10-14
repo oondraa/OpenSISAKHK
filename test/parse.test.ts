@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseAbsence, extractUserId, gradeToNumber, isLoginPage, parseGrades, parseTimetable } from "../src/worker/parse";
+import { parseAbsence, extractUserId, gradeToNumber, isLoginPage, parseGrades, parseProfile, parseTimetable } from "../src/worker/parse";
 
 // Synthetic fixtures that mirror the markup SIS serves (structure only, no real data).
 const card = (subject: string, time: string, room: string, group: string, teacher: string, extra = "") =>
@@ -118,5 +118,31 @@ describe("parseAbsence", () => {
       { date: "2026-10-01", period: 6, subject: "TEV", teacher: "RO", code: "n" },
       { date: "2026-09-14", period: 3, subject: "AGJ", teacher: "SA", code: "n" },
     ]);
+  });
+});
+
+describe("parseProfile", () => {
+  const groups = (heading: string, rows: string) =>
+    `<div class="studyGroups"><table class="table"><tr><th>${heading}</th></tr>${rows}</table></div>`;
+  const html = `
+    <table><tr><td><label>Jméno</label></td><td>Jan</td></tr><tr><td><label>Přijmení</label></td><td>Novák</td></tr>
+    <tr><td><label>Školní e-mail</label></td><td> novak.jan@example.cz </td></tr></table>
+    ${groups("Rozdělení třídy", ["1", "p", "r", "r"].map((g) => `<tr><td> ${g} </td></tr>`).join(""))}
+    <div class="studyGroups"><table class="table"><tr><th colspan="2">Bloky</th></tr><tr><th>Předmět</th><th>Název</th></tr>
+      <tr><td>MPT</td><td>B09</td></tr></table></div>
+    ${groups("Projekty", "<tr><td>P21</td></tr>")}`;
+
+  it("reads name, e-mail, groups, blocks and projects", () => {
+    expect(parseProfile(html)).toEqual({
+      name: "Jan Novák",
+      email: "novak.jan@example.cz",
+      groups: ["1", "p", "r"],
+      blocks: [{ subject: "MPT", block: "B09" }],
+      projects: ["P21"],
+    });
+  });
+
+  it("copes with a profile without the group tables", () => {
+    expect(parseProfile("<table></table>")).toEqual({ name: null, email: null, groups: [], blocks: [], projects: [] });
   });
 });
