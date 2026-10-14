@@ -50,7 +50,7 @@ Celé je to v [`src/worker/sis.ts`](../src/worker/sis.ts), [`src/worker/session.
 | --- | --- |
 | Z profilu v SIS: jméno, profilová fotka, školní e-mail, skupiny v rozdělení třídy, volitelné bloky a projekty (obnoví se při každém přihlášení) | Heslo (kromě zapnutých notifikací, viz níž) |
 | Třída: SIS ji nikde neukazuje, aplikace ji odhadne porovnáním osobního rozvrhu s rozvrhem školy a student ji potvrdí nebo změní (`src/web/classGuess.ts`, `ClassPrompt.tsx`) |
-| Kdy ses poprvé a naposledy přihlásil | Známky, rozvrh, absence |
+| Kdy ses poprvé a naposledy přihlásil | Známky, rozvrh, absence, finance (ani v zařízení) |
 | Otisky obrázků veřejného rozvrhu školy (aby se poznalo, že ho škola přepsala) | Cookies SIS relace |
 | **Jen u zapnutých notifikací:** adresa pro doručení, přihlášení do SIS zašifrované AES-GCM a krátké hashe známek, absencí a hodin rozvrhu (z nich se nic vyčíst nedá) | Přihlášení do Stravy |
 

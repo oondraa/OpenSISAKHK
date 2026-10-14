@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseAbsence, extractUserId, gradeToNumber, isLoginPage, parseElections, parseGrades, parseProfile, parseProjectChoices, parseProjects, parseTimetable } from "../src/worker/parse";
+import { parseAbsence, extractUserId, gradeToNumber, isLoginPage, parseElections, parseFinance, parseGrades, parseProfile, parseProjectChoices, parseProjects, parseTimetable } from "../src/worker/parse";
 
 // Synthetic fixtures that mirror the markup SIS serves (structure only, no real data).
 const card = (subject: string, time: string, room: string, group: string, teacher: string, extra = "") =>
@@ -193,5 +193,56 @@ describe("project elections", () => {
     expect(parseProjectChoices(row("projectApproved ") + row(" "))).toEqual([
       { order: 1, number: "21", name: "Fontány", role: "programátor", approved: true },
     ]);
+  });
+});
+
+describe("parseFinance", () => {
+  const html = `<div class="container"><h4>Finance doplníme v lednu.</h4>
+    <div class="alert alert-info"><div><table>
+      <tr><td>VS pro školné</td><td>11112222</td></tr><tr><td>VS pro fond</td><td>33334444</td></tr></table></div>
+      <div style="display:table"><div>Bankovní účet je:</div><div> 123456789/0100 </div></div>
+      <div>Předpis na školní rok 2025/2026 je ke stažení <a href="https://money.kyberna.cz/Report/a">zde</a>.<br />
+      Předpis na školní rok 2026/2027 je ke stažení <a href="https://money.kyberna.cz/Report/b">zde</a>.</div></div></div>
+    <ul class="nav nav-tabs"><li><a href="#" data-tabid="fund">Fond</a></li><li><a href="#" data-tabid="school">Školné</a></li></ul>
+    <div class="tab-content finance">
+      <div role="tabpanel" class="tab-pane active" id="fund"><table>
+        <tr><th colspan="3">Čerpání fondu studenta</th></tr><tr><th>Datum</th><th>Text</th><th>Částka</th></tr>
+        <tr><td>30.9.2025</td><td>Jídelna Obědy <span onclick="x">+</span><div style="display:none">{"Data": 1}</div></td><td>295.83 Kč</td></tr>
+        <tr><th colspan="2">Celkem:</th><td>295.83 Kč</td></tr><tr></tr>
+        <tr><th colspan="3">Platby do fondu studenta</th></tr><tr><th>Datum</th><th>Text</th><th>Částka</th></tr>
+        <tr><td>29.4.2026</td><td>Platba</td><td>7000 Kč</td></tr>
+        <tr><th colspan="2">Celkem:</th><td>7000 Kč</td></tr>
+        <tr><th colspan="3">Na fondu máte přeplatek 6704.17 Kč.</th></tr></table></div>
+      <div role="tabpanel" class="tab-pane" id="school"><table>
+        <tr><th colspan="3">Předpis školného pro studenta</th></tr><tr><th>Datum</th><th>Text</th><th>Částka</th></tr>
+        <tr><td>15.8.2025</td><td>Školné 1.pol 25/26</td><td>55267 Kč</td></tr>
+        <tr><th colspan="2">Celkem:</th><td>55267 Kč</td></tr>
+        <tr><th colspan="3">Na školném máte nedoplatek 55267 Kč.</th></tr></table></div>
+    </div>`;
+
+  it("reads both accounts with their rows, totals and balance", () => {
+    const f = parseFinance(html);
+    expect(f.accounts.map((a) => [a.id, a.title, a.balance?.kind, a.balance?.amount])).toEqual([
+      ["fund", "Fond", "overpaid", 6704.17],
+      ["school", "Školné", "underpaid", 55267],
+    ]);
+    expect(f.accounts[0].sections).toEqual([
+      { title: "Čerpání fondu studenta", rows: [{ date: "2025-09-30", text: "Jídelna Obědy", amount: 295.83 }], total: 295.83 },
+      { title: "Platby do fondu studenta", rows: [{ date: "2026-04-29", text: "Platba", amount: 7000 }], total: 7000 },
+    ]);
+  });
+
+  it("reads the payment details and documents", () => {
+    const f = parseFinance(html);
+    expect(f.symbols).toEqual([
+      { label: "VS pro školné", value: "11112222" },
+      { label: "VS pro fond", value: "33334444" },
+    ]);
+    expect(f.bankAccount).toBe("123456789/0100");
+    expect(f.documents).toEqual([
+      { label: "Předpis 2025/2026", url: "https://money.kyberna.cz/Report/a" },
+      { label: "Předpis 2026/2027", url: "https://money.kyberna.cz/Report/b" },
+    ]);
+    expect(f.notice).toBe("Finance doplníme v lednu.");
   });
 });

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api, cache, Unauthorized } from "./api";
 import { Login } from "./Login";
 import { Timetable } from "./Timetable";
@@ -7,22 +7,21 @@ import { Grades } from "./Grades";
 import { Settings } from "./Settings";
 import { Absence } from "./Absence";
 import { Projects } from "./Projects";
-import { Home, TABS, type Tab } from "./Home";
+import { Lunch } from "./Lunch";
+import { Finance } from "./Finance";
+import { More } from "./More";
+import { Home } from "./Home";
+import { LABELS, LINKABLE, TAB_SLOTS, tabOrder, type Tab } from "./sections";
 import { ClassPrompt } from "./ClassPrompt";
-import { AccountContext, BackContext, ScreenLayer, type LayerHandle } from "./layer";
-import { AbsenceIcon, CalendarIcon, DumbbellIcon, GradesIcon, ProjectIcon } from "./icons";
+import { BackContext, ScreenLayer, type LayerHandle } from "./layer";
+import { TAB_ICONS } from "./icons";
 
-/** "home": the tile grid, screens grow out of their tile. "tabs": the tab bar from before 1.6, picked in Settings;
- * Settings has no tab there, the account button in the header opens it. */
+/** "home": the tile grid, screens grow out of their tile. "tabs": a tab bar with the first few parts and "Více"
+ * for the rest and Settings. Both orders are picked in Settings. */
 export type Layout = "home" | "tabs";
 
-const TAB_BAR: { id: Tab; label: string; icon: ReactNode }[] = [
-  { id: "timetable", label: "Rozvrh", icon: <CalendarIcon /> },
-  { id: "gym", label: "Gym", icon: <DumbbellIcon /> },
-  { id: "grades", label: "Známky", icon: <GradesIcon /> },
-  { id: "absence", label: "Absence", icon: <AbsenceIcon /> },
-  { id: "projects", label: "Projekty", icon: <ProjectIcon /> },
-];
+/** Shorter names where the tab bar is narrow. */
+const BAR_LABELS: Partial<Record<Tab, string>> = { gym: "Gym" };
 
 export function App() {
   // The session cookie is HttpOnly, so "logged in" is remembered locally and corrected by the first 401.
@@ -31,7 +30,7 @@ export function App() {
   // Notifications open their screen right away (/?tab=grades): over the home grid, or as the selected tab.
   const [linked] = useState(() => {
     const t = new URLSearchParams(location.search).get("tab");
-    return TABS.includes(t as Tab) ? (t as Tab) : null;
+    return LINKABLE.includes(t as Tab) ? (t as Tab) : null;
   });
   // Home layout: the app lands on the grid, `screen` is the one opened over it.
   const [screen, setScreen] = useState<{ tab: Tab; animate: boolean } | null>(() =>
@@ -39,7 +38,7 @@ export function App() {
   );
   // Tab bar layout: the selected tab.
   const [tab, setTab] = useState<Tab>(linked ?? "timetable");
-  // Home is in render state too, so it re-reads the cached glances once a screen closes.
+  // Home is in render state too, so it re-reads the cached glances once a screen closes (and the orders once changed).
   const [, setClosedAt] = useState(0);
   const home = useRef<HTMLDivElement>(null);
   const layer = useRef<LayerHandle>(null);
@@ -69,13 +68,8 @@ export function App() {
     setScreen({ tab, animate: true });
   }, []);
   const back = useMemo(() => ({ go: () => history.back(), label: "Domů" }), []);
-  // Tab bar layout: the tab Settings was opened from, where its back button returns.
-  const [settingsFrom, setSettingsFrom] = useState<Tab>("timetable");
-  const openSettings = useCallback(() => {
-    setSettingsFrom(tab);
-    setTab("settings");
-  }, [tab]);
-  const settingsBack = useMemo(() => ({ go: () => setTab(settingsFrom), label: "Zpět" }), [settingsFrom]);
+  // Tab bar layout: what's opened from "Více" leads back there.
+  const moreBack = useMemo(() => ({ go: () => setTab("more"), label: "Více" }), []);
   const closed = useCallback((bySwipe: boolean) => {
     if (bySwipe) {
       swiped.current = true;
@@ -87,10 +81,11 @@ export function App() {
 
   const signOut = useCallback(() => {
     const theme = cache.get("theme");
-    const savedLayout = cache.get("layout");
+    // Device preferences outlive the account: theme, layout and the orders.
+    const keep = ["layout", "homeOrder", "tabOrder"].map((k) => [k, cache.get(k)] as const);
     cache.clear();
     if (theme) cache.set("theme", theme);
-    if (savedLayout) cache.set("layout", savedLayout);
+    for (const [k, v] of keep) if (v) cache.set(k, v);
     setLoggedIn(false);
     setScreen(null);
     setTab("timetable");
@@ -136,11 +131,15 @@ export function App() {
       {t === "grades" && <Grades onError={onError} />}
       {t === "absence" && <Absence onError={onError} />}
       {t === "projects" && <Projects onError={onError} />}
+      {t === "lunch" && <Lunch onError={onError} />}
+      {t === "finance" && <Finance onError={onError} />}
+      {t === "more" && <More items={tabOrder().slice(TAB_SLOTS)} onOpen={setTab} />}
       {t === "settings" && (
         <Settings
           onError={onError}
           layout={layout}
           onLayout={changeLayout}
+          onOrder={() => setClosedAt(Date.now())}
           onLogout={async () => {
             const sub = await navigator.serviceWorker?.ready.then((r) => r.pushManager.getSubscription()).catch(() => null);
             await sub?.unsubscribe().catch(() => {});
@@ -152,27 +151,29 @@ export function App() {
     </>
   );
 
-  if (layout === "tabs")
+  if (layout === "tabs") {
+    const bar: Tab[] = [...tabOrder().slice(0, TAB_SLOTS), "more"];
+    const inMore = !bar.includes(tab);
     return (
       <div className="app">
         <main className="tab-content" key={tab}>
-          {tab === "settings" ? (
-            <BackContext.Provider value={settingsBack}>{content(tab)}</BackContext.Provider>
-          ) : (
-            <AccountContext.Provider value={openSettings}>{content(tab)}</AccountContext.Provider>
-          )}
+          {inMore ? <BackContext.Provider value={moreBack}>{content(tab)}</BackContext.Provider> : content(tab)}
         </main>
         <nav className="tabbar" aria-label="Hlavní navigace">
-          {TAB_BAR.map((t) => (
-            <button key={t.id} className={tab === t.id ? "active" : ""} aria-current={tab === t.id ? "page" : undefined} onClick={() => setTab(t.id)}>
-              {t.icon}
-              <span>{t.label}</span>
-            </button>
-          ))}
+          {bar.map((t) => {
+            const active = tab === t || (t === "more" && inMore);
+            return (
+              <button key={t} className={active ? "active" : ""} aria-current={active ? "page" : undefined} onClick={() => setTab(t)}>
+                {TAB_ICONS[t]}
+                <span>{BAR_LABELS[t] ?? LABELS[t]}</span>
+              </button>
+            );
+          })}
         </nav>
         <ClassPrompt onError={onError} />
       </div>
     );
+  }
 
   return (
     <>

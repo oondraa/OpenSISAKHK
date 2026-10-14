@@ -1,12 +1,12 @@
 import { Hono, type Context } from "hono";
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
-import { absenceStudentId, parseAbsence, parseElections, parseGrades, parseProfile, parseProjectChoices, parseProjects, parseTimetable } from "./parse";
+import { absenceStudentId, parseAbsence, parseElections, parseFinance, parseGrades, parseProfile, parseProjectChoices, parseProjects, parseTimetable } from "./parse";
 import { CLASSES } from "../shared/schoolOcr";
 import { BadCredentials, SessionExpired, get, getBinary, login, post, timetablePath } from "./sis";
 import { seal, unseal, type Session } from "./session";
 import { SCHOOL_FILES, fetchSchoolImage, schoolWeeks, sha256 } from "./school";
 import { isPushEndpoint, sendPush } from "./push";
-import { CANTEEN, StravaBadCredentials, checkLogin, fetchLunches } from "./strava";
+import { CANTEEN, StravaBadCredentials, StravaOrderRefused, changeOrder, checkLogin, fetchLunches, fetchMenu } from "./strava";
 
 type Bindings = {
   SESSION_SECRET: string;
@@ -274,6 +274,52 @@ app.get("/lunch", async (c) => {
     await writeSession(c, { ...s, strava: undefined });
     return c.json({ connected: false, days: [], error: "strava_bad_credentials" });
   }
+});
+
+/** The whole menu with what's ordered and the account balance, for the Obědy screen. */
+app.get("/canteen", async (c) => {
+  const s = c.get("session");
+  if (!s.strava) return c.json({ connected: false, balance: null, days: [] });
+  try {
+    return c.json({ connected: true, ...(await fetchMenu(s.strava)) });
+  } catch (e) {
+    if (!(e instanceof StravaBadCredentials)) throw e;
+    await writeSession(c, { ...s, strava: undefined });
+    return c.json({ connected: false, balance: null, days: [], error: "strava_bad_credentials" });
+  }
+});
+
+/**
+ * Orders a meal for a day (switching from the ordered one), or cancels the day with `veta: null`. Real money:
+ * the app asks first, the change is checked against a fresh read, and the answer is the menu as Strava has it after.
+ */
+app.post("/canteen/order", async (c) => {
+  const { date, veta } = await c.req.json<{ date?: string; veta?: string | null }>();
+  if (typeof date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(date) || !(veta === null || (typeof veta === "string" && /^\d{1,10}$/.test(veta))))
+    return c.json({ error: "bad_order" }, 400);
+  const s = c.get("session");
+  if (!s.strava) return c.json({ error: "strava_not_connected" }, 400);
+  if (await overLimit(c.env.LOGIN_USER_LIMIT, `order:${s.userId}`)) return c.json({ error: "rate_limited" }, 429);
+  try {
+    return c.json({ connected: true, ...(await changeOrder(s.strava, date, veta)) });
+  } catch (e) {
+    if (e instanceof StravaOrderRefused) return c.json({ error: e.message }, 409);
+    if (e instanceof StravaBadCredentials) return c.json({ error: "strava_bad_credentials" }, 400);
+    throw e;
+  }
+});
+
+/**
+ * Tuition and fund statement. Read-only and never stored: not in D1, not logged, and the browser is told not to
+ * keep it (the app doesn't cache it either).
+ */
+app.get("/finance", async (c) => {
+  const html = await withSis(c, async (s) => {
+    const { html, changed } = await get(s.jar, "/Finance/Info");
+    return { value: html, changed };
+  });
+  c.header("cache-control", "no-store");
+  return c.json(parseFinance(html));
 });
 
 /** Opt in/out of background checks for new grades and absences: stores or deletes the sealed SIS login. */

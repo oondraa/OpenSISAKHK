@@ -329,6 +329,95 @@ export function parseProjectChoices(html: string): ProjectChoice[] {
   return out;
 }
 
+export interface FinanceRow {
+  date: string; // YYYY-MM-DD
+  text: string;
+  amount: number; // Kč
+}
+
+export interface FinanceAccount {
+  id: string; // "fund", "school", …
+  title: string; // "Fond", "Školné"
+  /** e.g. "Čerpání fondu studenta" (charges) and "Platby do fondu studenta" (payments) */
+  sections: { title: string; rows: FinanceRow[]; total: number | null }[];
+  /** SIS's own verdict, e.g. overpaid 1341.33 ("Na fondu máte přeplatek 1341.331 Kč.") */
+  balance: { kind: "overpaid" | "underpaid" | "even"; amount: number; text: string } | null;
+}
+
+export interface Finance {
+  accounts: FinanceAccount[];
+  /** variable symbols per account, e.g. { label: "VS pro školné", value: "13254709" } */
+  symbols: { label: string; value: string }[];
+  bankAccount: string | null;
+  /** fee schedules (PDF on money.kyberna.cz) */
+  documents: { label: string; url: string }[];
+  /** the notice SIS shows above (data recovery etc.) */
+  notice: string | null;
+}
+
+const czMoney = (s: string) => {
+  const n = Number(s.replace(/\s|Kč/g, "").replace(",", "."));
+  return Number.isFinite(n) ? n : null;
+};
+const czDate = (s: string) => {
+  const m = s.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+  return m ? `${m[3]}-${m[2].padStart(2, "0")}-${m[1].padStart(2, "0")}` : null;
+};
+
+/** Parses `/Finance/Info`: per account (fund, tuition, …) the charges, the payments and SIS's balance. */
+export function parseFinance(html: string): Finance {
+  const root = parse(html);
+  const titles = new Map(root.querySelectorAll(".nav-tabs a[data-tabid]").map((a) => [a.getAttribute("data-tabid") ?? "", text(a)]));
+  const accounts = root.querySelectorAll(".tab-content.finance .tab-pane").map((pane): FinanceAccount => {
+    const sections: FinanceAccount["sections"] = [];
+    let balance: FinanceAccount["balance"] = null;
+    for (const tr of pane.querySelectorAll("tr")) {
+      const ths = tr.querySelectorAll("th");
+      const tds = tr.querySelectorAll("td");
+      if (ths.length === 1 && !tds.length) {
+        const t = text(ths[0]);
+        const verdict = t.match(/(přeplatek|nedoplatek)\s+([\d\s.,]+)\s*Kč/i);
+        if (verdict) balance = { kind: verdict[1].toLowerCase() === "přeplatek" ? "overpaid" : "underpaid", amount: Math.round((czMoney(verdict[2]) ?? 0) * 100) / 100, text: t };
+        else if (/vyrovn/i.test(t)) balance = { kind: "even", amount: 0, text: t };
+        else sections.push({ title: t, rows: [], total: null });
+        continue;
+      }
+      const section = sections[sections.length - 1];
+      if (!section || !tds.length) continue;
+      if (/^celkem/i.test(text(ths[0] ?? null))) {
+        section.total = czMoney(text(tds[tds.length - 1]));
+        continue;
+      }
+      tds.forEach((td) => td.querySelectorAll("div, span").forEach((el) => el.remove())); // the hidden JSON detail
+      const cells = tds.map(text);
+      const date = czDate(cells[0]);
+      const amount = czMoney(cells[2] ?? "");
+      if (date && amount !== null) section.rows.push({ date, text: cells[1] ?? "", amount });
+    }
+    const id = pane.getAttribute("id") ?? "";
+    return { id, title: titles.get(id) ?? id, sections, balance };
+  });
+  const info = root.querySelector(".alert-info");
+  const symbols = (info?.querySelectorAll("table tr") ?? [])
+    .map((tr) => tr.querySelectorAll("td").map(text))
+    .filter((r) => r.length === 2 && /^\d+$/.test(r[1]))
+    .map(([label, value]) => ({ label, value }));
+  const bankAccount = info?.text.match(/účet je:\s*((?:\d{1,6}-)?\d{2,10}\/\d{4})/)?.[1] ?? null;
+  // One sentence per school year, each with its link ("Předpis na školní rok 2025/2026 je ke stažení zde").
+  const years = [...(info?.text.matchAll(/Předpis na školní rok (\d{4}\/\d{4})/g) ?? [])].map((m) => `Předpis ${m[1]}`);
+  const documents = (info?.querySelectorAll("a[href^='https://money.kyberna.cz/']") ?? []).map((a, i) => ({
+    label: years[i] ?? "Předpis",
+    url: a.getAttribute("href") ?? "",
+  }));
+  return {
+    accounts,
+    symbols,
+    bankAccount,
+    documents,
+    notice: text(root.querySelector(".container h4")) || null,
+  };
+}
+
 export function isLoginPage(html: string): boolean {
   return /name="Password"/.test(html) && /action="\/Account\/Login"/.test(html);
 }

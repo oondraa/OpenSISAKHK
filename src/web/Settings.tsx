@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { api, cache, type Me } from "./api";
 import { CLASSES } from "../shared/schoolOcr";
-import { LargeHeader, Section, Segmented, Switch } from "./ui";
+import { Chevron, LargeHeader, Section, Segmented, Switch } from "./ui";
 import { savedTheme, setTheme, type Theme } from "./theme";
 import { useCachedFetch } from "./useFetch";
 import { BUILT, VERSION } from "./version";
 import type { Layout } from "./App";
+import { LABELS, TAB_SLOTS, homeOrder, saveHomeOrder, saveTabOrder, tabOrder, type Part } from "./sections";
+import { TAB_ICONS } from "./icons";
 
 const b64ToBytes = (b64: string) => Uint8Array.from(atob(b64.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0));
 
@@ -16,11 +18,13 @@ async function currentSubscription() {
   return reg?.pushManager.getSubscription() ?? null;
 }
 
-export function Settings({ onError, onLogout, layout, onLayout }: {
+export function Settings({ onError, onLogout, layout, onLayout, onOrder }: {
   onError: (e: unknown) => boolean;
   onLogout: () => void;
   layout: Layout;
   onLayout: (l: Layout) => void;
+  /** an order changed: the home grid or the tab bar redraws */
+  onOrder: () => void;
 }) {
   const me = useCachedFetch<Me>("me", api.me, onError);
   const [cls, setCls] = useState<string | null>(null);
@@ -148,6 +152,23 @@ export function Settings({ onError, onLogout, layout, onLayout }: {
           </div>
         </Section>
 
+        {layout === "home" ? (
+          <OrderSection
+            title="Pořadí na ploše"
+            footer="Rozvrh je vždycky nahoře, ostatní dlaždice jdou pod ním po dvou."
+            load={homeOrder}
+            save={(o) => (saveHomeOrder(o), onOrder())}
+          />
+        ) : (
+          <OrderSection
+            title="V liště"
+            footer="Šipkami přesouváš i mezi lištou a Více. Nastavení je vždycky pod Více."
+            load={tabOrder}
+            save={(o) => (saveTabOrder(o), onOrder())}
+            split={TAB_SLOTS}
+          />
+        )}
+
         <Section
           title="Notifikace"
           footer={
@@ -193,7 +214,7 @@ export function Settings({ onError, onLogout, layout, onLayout }: {
               Jinak by server nemohl sám zjistit, že ti něco přibylo.
             </p>
             <p>
-              <b>Co neukládáme:</b> známky, rozvrh ani absenci. U notifikací o známkách si server pamatuje jen krátké
+              <b>Co neukládáme:</b> známky, rozvrh, absenci ani finance (ty ani v tomhle zařízení). U notifikací o známkách si server pamatuje jen krátké
               otisky (hashe), podle kterých pozná, co je nové. Samotné známky z nich nevyčte.
             </p>
             <p>
@@ -223,6 +244,45 @@ export function Settings({ onError, onLogout, layout, onLayout }: {
   );
 }
 
+/** Up/down arrows rather than dragging: precise with a thumb, and works with a screen reader. */
+function OrderSection({ title, footer, load, save, split }: {
+  title: string;
+  footer: string;
+  load: () => Part[];
+  save: (order: Part[]) => void;
+  /** tab bar: the first `split` are in the bar, the rest are listed under "Ve Více" (moving across works the same) */
+  split?: number;
+}) {
+  const [order, setOrder] = useState(load);
+  const move = (i: number, by: number) => {
+    const next = [...order];
+    [next[i], next[i + by]] = [next[i + by], next[i]];
+    setOrder(next);
+    save(next);
+  };
+  const row = (part: Part, i: number) => (
+    <div key={part} className={`row order-row tint-${part}`}>
+      <span className="more-icon">{TAB_ICONS[part]}</span>
+      <span className="row-title">{LABELS[part]}</span>
+      <span className="order-buttons">
+        <button aria-label={`${LABELS[part]} výš`} disabled={i === 0} onClick={() => move(i, -1)}>
+          <Chevron dir="up" />
+        </button>
+        <button aria-label={`${LABELS[part]} níž`} disabled={i === order.length - 1} onClick={() => move(i, 1)}>
+          <Chevron dir="down" />
+        </button>
+      </span>
+    </div>
+  );
+  if (split === undefined) return <Section title={title} footer={footer}>{order.map(row)}</Section>;
+  return (
+    <>
+      <Section title={title}>{order.slice(0, split).map(row)}</Section>
+      <Section title="Ve Více" footer={footer}>{order.slice(split).map((p, i) => row(p, i + split))}</Section>
+    </>
+  );
+}
+
 /** Canteen account (Strava.cz): its login lives only in the encrypted session cookie, like the SIS one. */
 function StravaSection({ connected, onError }: { connected: boolean; onError: (e: unknown) => boolean }) {
   const [on, setOn] = useState<boolean | null>(null);
@@ -238,7 +298,8 @@ function StravaSection({ connected, onError }: { connected: boolean; onError: (e
     setMsg(null);
     try {
       await api.stravaConnect(jmeno, heslo);
-      cache.set("lunch", null); // the timetable reloads lunches with the new account
+      cache.set("lunch", null); // the timetable and Obědy reload with the new account
+      cache.set("canteen", null);
       setOn(true);
       setHeslo("");
     } catch (err) {
@@ -254,6 +315,7 @@ function StravaSection({ connected, onError }: { connected: boolean; onError: (e
     try {
       await api.stravaDisconnect();
       cache.set("lunch", null);
+      cache.set("canteen", null);
       setOn(false);
     } catch (err) {
       onError(err);
@@ -268,8 +330,8 @@ function StravaSection({ connected, onError }: { connected: boolean; onError: (e
       footer={
         msg ??
         (isOn
-          ? "V rozvrhu u oběda uvidíš, co máš objednané. Objednává se dál ve Stravě."
-          : "Propoj účet jídelny a v rozvrhu u oběda uvidíš, jaké číslo máš objednané. Heslo zůstává jen zašifrované v tomhle zařízení.")
+          ? "Obědy objednáváš a měníš v sekci Obědy, v rozvrhu u oběda uvidíš, co máš objednané."
+          : "Propoj účet jídelny a budeš objednávat obědy přímo tady. Heslo zůstává jen zašifrované v tomhle zařízení.")
       }
     >
       {isOn ? (

@@ -4,9 +4,6 @@ import { SpringValue, project } from "./spring";
 /** The back action of the open screen and where it leads (LargeHeader shows a back button when there is one). */
 export const BackContext = createContext<{ go: () => void; label: string } | null>(null);
 export const useBack = () => useContext(BackContext);
-/** Tab bar layout: opens Settings, which has no tab of its own (LargeHeader shows the account button). */
-export const AccountContext = createContext<(() => void) | null>(null);
-export const useAccount = () => useContext(AccountContext);
 
 export interface LayerHandle {
   close(): void;

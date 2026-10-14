@@ -1,5 +1,5 @@
-import type { Absence, Day, Project, ProjectChoice, Subject } from "../worker/parse";
-import type { LunchDay } from "../worker/strava";
+import type { Absence, Day, Finance, Project, ProjectChoice, Subject } from "../worker/parse";
+import type { LunchDay, Menu } from "../worker/strava";
 
 export type TimetableDay = Day;
 export interface TimetableResponse {
@@ -42,6 +42,11 @@ export const api = {
   me: () => call<Me>("/me"),
   setClass: (cls: string) => post("/me/class", { cls }),
   lunch: () => call<LunchResponse>("/lunch"),
+  canteen: () => call<CanteenResponse>("/canteen"),
+  /** Orders `veta` for the day (switching from the ordered meal), or cancels the day with null. */
+  order: (date: string, veta: string | null) =>
+    call<CanteenResponse>("/canteen/order", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ date, veta }) }),
+  finance: () => call<Finance>("/finance", { cache: "no-store" }),
   projects: (election?: string) => call<ProjectsResponse>(`/projects${election ? `?election=${election}` : ""}`),
   stravaConnect: (jmeno: string, heslo: string) => post("/strava", { jmeno, heslo }),
   stravaDisconnect: () => post("/strava/disconnect", {}),
@@ -60,6 +65,8 @@ export interface ProjectsResponse {
   projects: Project[];
   profile: { class: string | null; email: string | null; groups: string[]; blocks: { subject: string; block: string }[] };
 }
+
+export type CanteenResponse = Menu & { connected: boolean; error?: string };
 
 export interface Me {
   name: string | null;

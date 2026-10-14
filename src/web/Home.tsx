@@ -1,18 +1,17 @@
 import type { ReactNode, Ref } from "react";
-import { api, cache, type GradesResponse, type ProjectsResponse, type TimetableResponse } from "./api";
+import { api, cache, type CanteenResponse, type GradesResponse, type ProjectsResponse, type TimetableResponse } from "./api";
 import type { Absence } from "../worker/parse";
 import { PERIODS, type Cell } from "../shared/schoolOcr";
 import { startDay } from "./Timetable";
 import { tone } from "./Grades";
 import { LIMIT } from "./absencePlan";
-import { WEEKDAYS, addDays, inMinutes, minutes, mondayOf, todayPrague, weekdayIndex } from "./time";
+import { WEEKDAYS, addDays, inMinutes, minutes, mondayOf, nowMinutesPrague, todayPrague, weekdayIndex } from "./time";
 import { useCachedFetch } from "./useFetch";
 import { useNow } from "./hooks";
-import { AbsenceIcon, CalendarIcon, DumbbellIcon, GearIcon, GradesIcon, ProjectIcon } from "./icons";
+import { AbsenceIcon, CalendarIcon, DumbbellIcon, GearIcon, GradesIcon, ProjectIcon, UtensilsIcon, WalletIcon } from "./icons";
 import { Chevron } from "./ui";
 
-export type Tab = "timetable" | "gym" | "grades" | "absence" | "projects" | "settings";
-export const TABS: Tab[] = ["timetable", "gym", "grades", "absence", "projects", "settings"];
+import { homeOrder, type Part, type Tab } from "./sections";
 
 const MORNING = 7 * 60; // from 7:00 the home tile names the day's subjects, before that only its span
 const plural = (n: number, one: string, few: string, many: string) => (n === 1 ? one : n > 1 && n < 5 ? few : many);
@@ -38,10 +37,9 @@ export function Home({ onOpen, onError, homeRef, inert }: {
     <div className="home" ref={homeRef} inert={inert}>
       <nav className="tiles" aria-label="Aplikace">
         <TimetableTile day={day} days={week.data?.week === mondayOf(day) ? week.data.days : undefined} now={now} loading={week.loading} onOpen={onOpen} />
-        <GymTile now={now} onOpen={onOpen} />
-        <GradesTile onOpen={onOpen} />
-        <AbsenceTile onOpen={onOpen} />
-        <ProjectsTile onOpen={onOpen} />
+        {homeOrder().map((part) => (
+          <PartTile key={part} part={part} now={now} onOpen={onOpen} />
+        ))}
         <button className="tile glass tile-settings tile-slim" data-tile="settings" data-lens="14" onClick={() => onOpen("settings")}>
           <span className="tile-icon">
             <GearIcon />
@@ -75,6 +73,38 @@ function Tile({ id, label, icon, value, valueClass, sub, onOpen }: {
         {sub && <span className="tile-sub">{sub}</span>}
       </span>
     </button>
+  );
+}
+
+/** The tiles under the timetable, in the order picked in Settings. */
+function PartTile({ part, now, onOpen }: { part: Part; now: number; onOpen: (tab: Tab) => void }) {
+  if (part === "gym") return <GymTile now={now} onOpen={onOpen} />;
+  if (part === "grades") return <GradesTile onOpen={onOpen} />;
+  if (part === "absence") return <AbsenceTile onOpen={onOpen} />;
+  if (part === "projects") return <ProjectsTile onOpen={onOpen} />;
+  if (part === "lunch") return <LunchTile onOpen={onOpen} />;
+  // No amounts on the home screen: whoever glances at the phone doesn't see what's owed.
+  if (part === "finance") return <Tile id="finance" label="Finance" icon={<WalletIcon />} sub="Školné a fond" onOpen={onOpen} />;
+  return null;
+}
+
+/** The next meal ordered in Strava: today's until lunch is over, then the next day's. */
+function LunchTile({ onOpen }: { onOpen: (tab: Tab) => void }) {
+  const data = cache.get<CanteenResponse>("canteen");
+  const today = todayPrague();
+  const late = nowMinutesPrague() >= 14 * 60;
+  const day = data?.days.find((d) => (d.date > today || (d.date === today && !late)) && !d.closed);
+  const meal = day?.meals.find((m) => m.ordered);
+  const when = !day ? "" : day.date === today ? "Dnes" : day.date === addDays(today, 1) ? "Zítra" : WEEKDAYS[weekdayIndex(day.date)];
+  return (
+    <Tile
+      id="lunch"
+      label="Obědy"
+      icon={<UtensilsIcon />}
+      value={meal?.number ? String(meal.number) : day && !meal ? "Nic" : undefined}
+      sub={!data?.connected ? "Objednávky ze Stravy" : meal ? `${when} · ${meal.name}` : day ? `${when} nemáš objednáno` : "Jídelníček"}
+      onOpen={onOpen}
+    />
   );
 }
 

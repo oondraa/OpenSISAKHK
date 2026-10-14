@@ -1,5 +1,6 @@
 // Line icons on a 24×24 grid, stroked with currentColor (styled by .icon).
 import type { ReactNode } from "react";
+import type { Tab } from "./sections";
 
 function Icon({ children, size }: { children: ReactNode; size?: number }) {
   return (
@@ -44,6 +45,21 @@ export const ProjectIcon = ({ size }: { size?: number }) => (
   </Icon>
 );
 
+export const WalletIcon = ({ size }: { size?: number }) => (
+  <Icon size={size}>
+    <path d="M19 7.5V6a2 2 0 0 0-2-2H5.5A2.5 2.5 0 0 0 3 6.5v11A2.5 2.5 0 0 0 5.5 20H19a2 2 0 0 0 2-2v-8.5a2 2 0 0 0-2-2H5.5A2.5 2.5 0 0 1 3 6.5" />
+    <path d="M16.5 14h.01" />
+  </Icon>
+);
+
+export const MoreIcon = ({ size }: { size?: number }) => (
+  <Icon size={size}>
+    <circle cx="5.5" cy="12" r="1.2" />
+    <circle cx="12" cy="12" r="1.2" />
+    <circle cx="18.5" cy="12" r="1.2" />
+  </Icon>
+);
+
 export const UtensilsIcon = ({ size }: { size?: number }) => (
   <Icon size={size}>
     <path d="M4 3v6a3 3 0 0 0 3 3v9M10 3v6a3 3 0 0 1-3 3M7 3v5M20 15V3a5 5 0 0 0-4 5v5a2 2 0 0 0 2 2h2zm0 0v6" />
@@ -83,3 +99,16 @@ export const AlertIcon = ({ size }: { size?: number }) => (
     <path d="M10.3 3.9 2.6 17.5A2 2 0 0 0 4.3 20.5h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0zM12 9v4.5M12 17h.01" />
   </Icon>
 );
+
+/** One icon per part of the app, for the tab bar, the Více list and the order editor in Settings. */
+export const TAB_ICONS: Record<Tab, ReactNode> = {
+  timetable: <CalendarIcon />,
+  lunch: <UtensilsIcon />,
+  gym: <DumbbellIcon />,
+  grades: <GradesIcon />,
+  absence: <AbsenceIcon />,
+  projects: <ProjectIcon />,
+  finance: <WalletIcon />,
+  settings: <GearIcon />,
+  more: <MoreIcon />,
+};

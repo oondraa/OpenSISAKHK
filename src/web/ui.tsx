@@ -1,9 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, type ReactNode } from "react";
 import { addDays, todayPrague, WEEKDAYS } from "./time";
-import { useAccount, useBack } from "./layer";
-import { cache, type Me } from "./api";
+import { useBack } from "./layer";
 import { lift } from "./glass";
-import { GearIcon } from "./icons";
 
 export function LargeHeader({ title, subtitle, accessory, loading, children }: {
   title: string;
@@ -13,7 +11,6 @@ export function LargeHeader({ title, subtitle, accessory, loading, children }: {
   children?: ReactNode;
 }) {
   const back = useBack();
-  const account = useAccount();
   return (
     <header className="large-header">
       {back && (
@@ -28,22 +25,10 @@ export function LargeHeader({ title, subtitle, accessory, loading, children }: {
           <h1 className="large-title">{title}</h1>
         </div>
         {accessory}
-        {account && <AccountButton onClick={account} />}
       </div>
       {children}
       {loading && <div className="progress" role="progressbar" aria-label="Načítání" />}
     </header>
-  );
-}
-
-/** Tab bar layout: the student's photo (or initials) in the header opens Settings, like the account in the App Store. */
-function AccountButton({ onClick }: { onClick: () => void }) {
-  const me = cache.get<Me>("me");
-  const initials = (me?.name ?? "").split(" ").map((p) => p[0]).slice(0, 2).join("");
-  return (
-    <button className="account" aria-label="Nastavení" onClick={onClick}>
-      {me?.hasPhoto ? <img src="/api/me/photo" alt="" /> : initials ? <span>{initials}</span> : <GearIcon />}
-    </button>
   );
 }
 
@@ -187,8 +172,8 @@ export function Section({ title, footer, children }: { title?: string; footer?: 
   );
 }
 
-export function Chevron({ dir = "right" }: { dir?: "left" | "right" | "down" }) {
-  const rot = { left: 180, right: 0, down: 90 }[dir];
+export function Chevron({ dir = "right" }: { dir?: "left" | "right" | "down" | "up" }) {
+  const rot = { left: 180, right: 0, down: 90, up: -90 }[dir];
   return (
     <svg className="chevron" viewBox="0 0 24 24" aria-hidden="true" style={{ transform: `rotate(${rot}deg)` }}>
       <path d="M9 5l7 7-7 7" />
