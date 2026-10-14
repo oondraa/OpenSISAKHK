@@ -67,12 +67,51 @@ export function Timetable({ onError }: { onError: (e: unknown) => boolean }) {
   );
 }
 
-type Item = { kind: "lesson"; lesson: Lesson; start: string; end: string } | { kind: "lunch"; start: string; end: string };
+type Item =
+  | { kind: "lesson"; lesson: Lesson; start: string; end: string }
+  | { kind: "lunch"; start: string; end: string }
+  | { kind: "free"; start: string; end: string };
+
+const LUNCH_MIN = 30; // eating takes about this long; SIS marks the whole window the canteen serves in
+const FREE_MIN = 20; // a gap at least this long gets its own row; shorter ones are ordinary breaks
+const hhmm = (m: number) => `${Math.floor(m / 60)}:${String(m % 60).padStart(2, "0")}`;
+const span = (m: number) => (m >= 60 ? `${Math.floor(m / 60)} h${m % 60 ? ` ${m % 60} min` : ""}` : `${m} min`);
+
+/**
+ * Lessons with what's between them: a long gap shows as free time, and lunch takes only its ~30 minutes of it
+ * (at the start of the gap, or when the canteen opens), so a two-hour break doesn't hide behind the lunch card.
+ */
+export function dayItems(day: TimetableDay): Item[] {
+  const lessons = [...day.lessons].sort((a, b) => minutes(a.start) - minutes(b.start));
+  const items: Item[] = [];
+  const lunch = day.lunch && { start: minutes(day.lunch.start), end: minutes(day.lunch.end) };
+  let lunchPlaced = false;
+  const free = (a: number, b: number) => b - a >= FREE_MIN && items.push({ kind: "free", start: hhmm(a), end: hhmm(b) });
+  lessons.forEach((lesson, i) => {
+    items.push({ kind: "lesson", lesson, start: lesson.start, end: lesson.end });
+    const next = lessons[i + 1];
+    if (!next) return;
+    const g0 = minutes(lesson.end);
+    const g1 = minutes(next.start);
+    if (lunch && !lunchPlaced && lunch.start < g1 && lunch.end > g0 && g1 - Math.max(g0, lunch.start) >= 15) {
+      const ls = Math.max(g0, lunch.start);
+      const le = Math.min(ls + LUNCH_MIN, g1);
+      free(g0, ls);
+      items.push({ kind: "lunch", start: hhmm(ls), end: hhmm(le) });
+      free(le, g1);
+      lunchPlaced = true;
+    } else free(g0, g1);
+  });
+  // Lunch outside the lessons (after the last one, or no gap fits it): where SIS puts it, ~30 minutes long.
+  if (lunch && !lunchPlaced) {
+    items.push({ kind: "lunch", start: hhmm(lunch.start), end: hhmm(Math.min(lunch.start + LUNCH_MIN, lunch.end)) });
+    items.sort((a, b) => minutes(a.start) - minutes(b.start));
+  }
+  return items;
+}
 
 function DayView({ day, live, now, meal }: { day: TimetableDay; live: boolean; now: number; meal?: LunchDay }) {
-  const items: Item[] = day.lessons.map((lesson) => ({ kind: "lesson" as const, lesson, start: lesson.start, end: lesson.end }));
-  if (day.lunch) items.push({ kind: "lunch", ...day.lunch });
-  items.sort((a, b) => minutes(a.start) - minutes(b.start));
+  const items = dayItems(day);
 
   // First item that hasn't ended yet = what's on now, or next.
   const focus = live ? items.findIndex((it) => now < minutes(it.end)) : -1;
@@ -86,6 +125,21 @@ function DayView({ day, live, now, meal }: { day: TimetableDay; live: boolean; n
     <ol className="timeline stagger">
       {items.map((it, i) => {
         const ref = i === focus ? (el: HTMLLIElement | null) => void (focusRef.current = el) : undefined;
+        if (it.kind === "free")
+          return (
+            <li key={`free-${it.start}`} ref={ref}>
+              <div className={`free-slot ${state(it)}`}>
+                <span className="free-line" aria-hidden="true" />
+                <span className="free-text">
+                  {state(it) === "now" ? `Volno ještě ${span(Math.max(1, Math.ceil(minutes(it.end) - now)))}` : `Volno ${span(minutes(it.end) - minutes(it.start))}`}
+                  <small>
+                    {it.start}–{it.end}
+                  </small>
+                </span>
+                <span className="free-line" aria-hidden="true" />
+              </div>
+            </li>
+          );
         return it.kind === "lunch" ? (
           <li key="lunch" ref={ref}>
             <div className={`lesson-card lunch ${state(it)}`}>

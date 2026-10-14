@@ -364,6 +364,14 @@ p { margin: 0; }
 .lunch-icon { width: 40px; height: 40px; flex: none; display: grid; place-items: center; border-radius: 12px; background: var(--green); color: #fff; }
 .lunch-icon.none { background: var(--fill); color: var(--text-2); }
 .lunch-number { font-family: var(--num); font-variant-numeric: tabular-nums; font-size: 1.25rem; font-weight: 700; }
+/* A long gap between lessons: no card, just a labelled break in the list, so it reads as empty time. */
+.free-slot { display: flex; align-items: center; gap: 12px; padding: 10px 4px; color: var(--text-2); }
+.free-line { flex: 1; height: 0; border-top: 1.5px dashed var(--separator); }
+.free-text { display: flex; flex-direction: column; align-items: center; font-size: 0.875rem; font-weight: 650; }
+.free-text small { font-size: 0.75rem; font-weight: 500; color: var(--text-3); font-variant-numeric: tabular-nums; }
+.free-slot.past { opacity: 0.45; }
+.free-slot.now { color: var(--accent-text); }
+.free-slot.now .free-line { border-top-color: var(--accent); }
 .lesson-card.lunch.now { box-shadow: 0 0 0 2px var(--green), var(--shadow); }
 
 /* ---------- Lists (inset grouped) ---------- */
