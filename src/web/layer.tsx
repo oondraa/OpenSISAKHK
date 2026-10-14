@@ -30,6 +30,7 @@ export function ScreenLayer({ tile, home, animate, handle, onClosed, children }:
   onClosed: (swiped: boolean) => void;
   children: ReactNode;
 }) {
+  const root = useRef<HTMLDivElement>(null);
   const card = useRef<HTMLDivElement>(null);
   const content = useRef<HTMLDivElement>(null);
   const scrim = useRef<HTMLDivElement>(null);
@@ -54,6 +55,10 @@ export function ScreenLayer({ tile, home, animate, handle, onClosed, children }:
     const W = innerWidth;
     const H = innerHeight;
     const shown = clamp01(p) * (1 - d);
+    // Own GPU layers while anything moves (styles.css, .moving), back to plain paint once settled.
+    const moving = p < 0.9995 || d > 0;
+    root.current!.classList.toggle("moving", moving);
+    home.current?.classList.toggle("moving", moving);
     const hs = 1 - 0.06 * shown;
     if (home.current) home.current.style.transform = hs < 0.9999 ? `scale(${hs})` : "";
     scrim.current!.style.opacity = String(0.3 * shown);
@@ -106,6 +111,7 @@ export function ScreenLayer({ tile, home, animate, handle, onClosed, children }:
       sp.d.stop();
       handle.current = null;
       if (home.current) home.current.style.transform = "";
+      home.current?.classList.remove("moving");
     };
   }, []);
 
@@ -146,7 +152,7 @@ export function ScreenLayer({ tile, home, animate, handle, onClosed, children }:
   }
 
   return (
-    <div className="layer">
+    <div className="layer" ref={root}>
       <div className="layer-scrim" ref={scrim} />
       <div className="layer-card" ref={card}>
         <div className="layer-content" ref={content}>

@@ -14,7 +14,7 @@ export function LargeHeader({ title, subtitle, accessory, loading, children }: {
   return (
     <header className="large-header">
       {back && (
-        <button className="back glass" data-lens="10" onClick={back.go}>
+        <button className="back glass" onClick={back.go}>
           <Chevron dir="left" />
           {back.label}
         </button>
@@ -38,7 +38,7 @@ export function DayStrip({ monday, selected, onSelect }: { monday: string; selec
   const index = [0, 1, 2, 3, 4].findIndex((i) => addDays(monday, i) === selected);
   const thumb = useLifted(index);
   return (
-    <div className="day-strip glass" data-lens="12">
+    <div className="day-strip glass">
       <button className="week-arrow" aria-label="Předchozí týden" onClick={() => onSelect(addDays(selected, -7))}>
         <Chevron dir="left" />
       </button>

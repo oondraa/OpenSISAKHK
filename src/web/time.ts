@@ -1,10 +1,14 @@
 export const WEEKDAYS = ["Pondělí", "Úterý", "Středa", "Čtvrtek", "Pátek", "Sobota", "Neděle"];
 const MONTHS = ["ledna", "února", "března", "dubna", "května", "června", "července", "srpna", "září", "října", "listopadu", "prosince"];
 
-export const todayPrague = () => new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Prague" }).format(new Date());
+// Built once: a DateTimeFormat is costly to create, and these run on every render.
+const DATE = new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Prague" });
+const TIME = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Prague", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+
+export const todayPrague = () => DATE.format(new Date());
 
 export function nowMinutesPrague() {
-  const [h, m] = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Prague", hour: "2-digit", minute: "2-digit", hourCycle: "h23" })
+  const [h, m] = TIME
     .format(new Date())
     .split(":")
     .map(Number);

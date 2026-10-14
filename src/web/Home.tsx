@@ -40,7 +40,7 @@ export function Home({ onOpen, onError, homeRef, inert }: {
         {homeOrder().map((part) => (
           <PartTile key={part} part={part} now={now} onOpen={onOpen} />
         ))}
-        <button className="tile glass tile-settings tile-slim" data-tile="settings" data-lens="14" onClick={() => onOpen("settings")}>
+        <button className="tile glass tile-settings tile-slim" data-tile="settings" onClick={() => onOpen("settings")}>
           <span className="tile-icon">
             <GearIcon />
           </span>
@@ -65,7 +65,7 @@ function Tile({ id, label, icon, value, valueClass, sub, onOpen }: {
   onOpen: (tab: Tab) => void;
 }) {
   return (
-    <button className={`tile glass tile-${id}`} data-tile={id} data-lens="18" onClick={() => onOpen(id)}>
+    <button className={`tile glass tile-${id}`} data-tile={id} onClick={() => onOpen(id)}>
       <span className="tile-icon">{icon}</span>
       <span className="tile-body">
         {value && <span className={`tile-value ${valueClass ?? ""}`}>{value}</span>}

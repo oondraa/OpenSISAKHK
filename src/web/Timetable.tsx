@@ -48,6 +48,8 @@ export function Timetable({ onError }: { onError: (e: unknown) => boolean }) {
   const todayDay = selected === today ? days.find((d) => d.date === today) : undefined;
   const current = todayDay?.lessons.find((l) => minutes(l.start) <= now && now < minutes(l.end));
   const next = todayDay?.lessons.find((l) => minutes(l.start) > now);
+  const shown = useRef<{ current?: Lesson; next?: Lesson } | null>(null);
+  if (current || next) shown.current = { current, next };
 
   return (
     <div className="screen">
@@ -55,7 +57,11 @@ export function Timetable({ onError }: { onError: (e: unknown) => boolean }) {
         <DayStrip monday={monday} selected={selected} onSelect={setSelected} />
       </LargeHeader>
       {error && <p className="banner">Rozvrh se nepodařilo obnovit. Zobrazuji poslední uložený.</p>}
-      {(current || next) && <NowCard current={current} next={next} now={now} />}
+      {/* Stays mounted and collapses (or grows back) while the days slide, instead of vanishing on the first frame
+          and yanking the list up mid-glide. While collapsing it keeps showing the last lesson it had. */}
+      <div className="collapse now-collapse" data-open={!!(current || next)} aria-hidden={!(current || next)}>
+        <div className="collapse-inner">{shown.current && <NowCard {...shown.current} now={now} />}</div>
+      </div>
       <DayPager index={weekdayIndex(selected)} onIndex={(i) => setSelected(addDays(monday, i))}>
         {[0, 1, 2, 3, 4].map((i) => {
           const day = days.find((d) => d.date === addDays(monday, i));

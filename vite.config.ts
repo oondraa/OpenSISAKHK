@@ -67,6 +67,7 @@ export default defineConfig({
         theme_color: "#0e0e10",
         background_color: "#0e0e10",
         display: "standalone",
+        orientation: "portrait", // Android: the layout is made for a phone held upright
         start_url: "/",
         icons: [
           { src: "icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },

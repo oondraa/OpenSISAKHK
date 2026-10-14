@@ -144,8 +144,10 @@ function SubjectRow({ s, p }: { s: AbsenceSubject; p: Plan }) {
         <span className="absence-numbers">
           <b>{pct(s.percent)}</b>
           <small>
-            {s.missed}/{s.taught} h{s.unexcused ? ` · ${s.unexcused} neoml.` : ""}
+            {s.missed}/{s.taught} h
           </small>
+          {/* Own line, so the numbers column (and with it the bar) is the same width on every row. */}
+          {s.unexcused > 0 && <small className="unexcused">{s.unexcused} neoml.</small>}
         </span>
       </div>
       {text && <p className="absence-hint">{text}</p>}

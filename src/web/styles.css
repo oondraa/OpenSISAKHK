@@ -119,7 +119,9 @@ html {
   font: 100%/1.45 var(--font);
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
+  /* No font boosting: Chrome on Android otherwise enlarges some text blocks on its own and the layout breaks. */
   -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 body { background: var(--bg); color: var(--text); overscroll-behavior: none; transition: background-color 300ms ease; }
 button { font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; cursor: pointer; touch-action: manipulation; }
@@ -162,14 +164,14 @@ p { margin: 0; }
 .back .chevron { width: 24px; height: 24px; stroke: currentColor; stroke-width: 2.6; }
 .back:active { transform: scale(0.94); transition-duration: 80ms; }
 
-/* ---------- Liquid glass (src/web/glass.ts adds edge refraction and the touch point) ----------
+/* ---------- Liquid glass (src/web/glass.ts adds the touch point) ----------
    Only for what floats above content: home tiles, the back button, the day strip, a moving selection pill.
    Lists and lesson cards are content and stay solid: glass on everything is what makes it look cheap. */
 .glass {
   position: relative; isolation: isolate;
   background: var(--glass-tint);
   -webkit-backdrop-filter: blur(12px) saturate(1.8);
-  backdrop-filter: var(--lens,) blur(12px) saturate(1.8);
+  backdrop-filter: blur(12px) saturate(1.8);
   box-shadow: var(--glass-shadow), inset 0 1px 1px var(--glass-rim-2), inset 0 -1px 2px var(--glass-shade);
 }
 /* Specular rim: light from the top left, a fainter catch on the opposite corner. */
@@ -196,8 +198,10 @@ p { margin: 0; }
 }
 /* Nothing above the grid: it is the whole screen, the hero row a little taller, three rows of two, settings as a slim bar. */
 .tiles {
-  width: 100%; max-width: 560px; margin: auto; flex: 1; min-height: 0; max-height: 820px; display: grid; gap: 12px;
-  grid-template-columns: 1fr 1fr; grid-template-rows: minmax(164px, 1.25fr) repeat(3, minmax(128px, 1fr)) auto;
+  /* Rows never shrink below their content (tiles clip, so a squeezed row cut its last line off): on a screen too short
+     for the whole grid the home scrolls instead. */
+  width: 100%; max-width: 560px; margin: auto; flex: 1 0 auto; max-height: 820px; display: grid; gap: 12px;
+  grid-template-columns: 1fr 1fr; grid-template-rows: minmax(min-content, 1.25fr) repeat(3, minmax(min-content, 1fr)) auto;
   animation: fade-in 220ms ease-out both;
   /* The light sits on the grid itself, so it's behind the glass tiles on any screen size. */
   background:
@@ -268,11 +272,38 @@ p { margin: 0; }
 .hero-progress { display: block; height: 4px; margin-top: 12px; border-radius: 2px; background: rgba(255, 255, 255, 0.28); overflow: hidden; }
 .hero-progress span { display: block; height: 100%; background: #fff; transform-origin: left; transition: transform 600ms var(--ease-spring); }
 
+/* Short screens (iPhone SE to 15, most Androids with on-screen buttons): tighter tiles, so the grid still fits without scrolling. */
+@media (max-height: 800px) {
+  .home { padding-top: calc(env(safe-area-inset-top) + 10px); padding-bottom: calc(env(safe-area-inset-bottom) + 10px); }
+  .tiles { gap: 8px; }
+  .tile { gap: 4px; padding: 12px 14px; border-radius: 22px; }
+  .tile-icon { width: 34px; height: 34px; border-radius: 11px; }
+  .tile-icon .icon { width: 20px; height: 20px; }
+  .tile-value { font-size: 1.5rem; margin-bottom: 2px; }
+  :is(.tile-gym, .tile-lunch) .tile-value { font-size: 1.3125rem; }
+  .tile-label { font-size: 1rem; }
+  .tile-slim { padding: 7px 12px 7px 7px; }
+  .tile-slim .tile-icon { width: 32px; height: 32px; border-radius: 10px; }
+  .tile-timetable .tile-icon { width: 32px; height: 32px; border-radius: 10px; }
+  .hero-subject { font-size: clamp(2rem, 10vw, 2.75rem); }
+  .tile-timetable .tile-sub { margin-top: 4px; }
+  .hero-progress { margin-top: 10px; }
+}
+@media (max-height: 680px) {
+  .tile { padding: 10px 12px; }
+  .tile-timetable .tile-sub { margin-top: 2px; }
+  .hero-progress { margin-top: 8px; }
+}
+
 /* ---------- Screen layer: grows out of its tile (src/web/layer.tsx drives it frame by frame) ---------- */
 .layer { position: fixed; inset: 0; z-index: 20; pointer-events: none; }
 .layer-scrim { position: absolute; inset: 0; background: #000; opacity: 0; }
 .layer-card { position: absolute; inset: 0; overflow: hidden; background: radial-gradient(90% 35% at 100% 0%, var(--ambient-1), transparent 70%), var(--bg); pointer-events: auto; box-shadow: -10px 0 40px rgba(0, 0, 0, 0.22); }
 .layer-content { position: absolute; inset: 0; display: flex; transform-origin: 50% 50%; }
+/* While the screen grows or shrinks, the moving parts are their own GPU layers, painted once and only moved and
+   scaled: without this Chrome repaints them at every new scale, every frame (the stutter on Android). layer.tsx sets
+   .moving for the animation only, so the settled screen is painted sharp at full size. */
+.layer.moving .layer-content, .layer.moving .layer-card, .home.moving { will-change: transform; }
 /* Back swipe starts here; touch-action keeps the browser (and the day pager) from taking the gesture. */
 .edge { position: absolute; left: 0; top: 0; bottom: 0; z-index: 5; touch-action: none; }
 .large-header-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
@@ -322,6 +353,8 @@ p { margin: 0; }
 /* Cards pinned between the header and the scrolling list (Now card, gym status). */
 .now-wrap, .pinned { padding: 0 16px 10px; max-width: 760px; width: 100%; margin: 0 auto; }
 .pinned .gym-status { margin-bottom: 0; }
+.now-collapse .now-card { transition: opacity 250ms ease, transform 400ms var(--ease-spring); }
+.now-collapse[data-open="false"] .now-card { opacity: 0; transform: scale(0.96); }
 .now-card {
   padding: 16px 18px; border-radius: 20px; color: var(--on-accent);
   background: linear-gradient(135deg, var(--ember), var(--ember-dark));
@@ -392,7 +425,7 @@ p { margin: 0; }
 .chevron { width: 18px; height: 18px; flex: none; fill: none; stroke: var(--text-3); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; transition: transform 300ms var(--ease-spring); }
 
 /* ---------- Controls ---------- */
-.select { font: inherit; font-size: 1.0625rem; color: var(--text-2); background: transparent; border: 0; text-align: right; padding: 4px 0; cursor: pointer; }
+.select { min-width: 0; max-width: 60%; font: inherit; font-size: 1.0625rem; color: var(--text-2); background: transparent; border: 0; text-align: right; text-overflow: ellipsis; padding: 4px 0; cursor: pointer; }
 .select:focus-visible { outline: 2px solid var(--accent); }
 .switch { width: 51px; height: 31px; flex: none; border-radius: 99px; background: var(--fill); position: relative; transition: background-color 250ms ease; }
 .switch[aria-checked="true"] { background: var(--green); }
@@ -409,6 +442,9 @@ p { margin: 0; }
 .switch:disabled { opacity: 0.4; }
 
 .segmented { position: relative; display: grid; grid-template-columns: repeat(var(--n), 1fr); padding: 2px; border-radius: 9px; background: var(--fill); min-width: 210px; }
+/* Narrow screen or large text: the control drops under its label instead of running off the edge. */
+.row:has(> .segmented) { flex-wrap: wrap; }
+.row > .segmented { margin-left: auto; }
 .segmented button { position: relative; z-index: 1; padding: 6px 10px; font-size: 0.8125rem; font-weight: 500; border-radius: 7px; }
 .segmented button[aria-checked="true"] { font-weight: 600; }
 .segmented-thumb {
@@ -496,6 +532,7 @@ p { margin: 0; }
 .absence-numbers b { font-weight: 600; color: var(--tone); }
 .absence-none .absence-numbers b { color: var(--text-2); font-weight: 500; }
 .absence-numbers small { font-size: 0.75rem; color: var(--text-2); white-space: nowrap; }
+.absence-numbers .unexcused { color: var(--red); }
 .absence-hint { font-size: 0.8125rem; line-height: 1.4; color: var(--text-2); padding-left: calc(3.6rem + 14px); }
 .absence-mid .absence-hint { color: color-mix(in srgb, var(--orange) 75%, var(--text)); }
 .absence-high .absence-hint { color: var(--red); font-weight: 500; }
@@ -508,9 +545,10 @@ p { margin: 0; }
 .missed-date { display: flex; flex-direction: column; min-width: 4.8rem; line-height: 1.25; }
 .missed-date b { font-family: var(--num); font-weight: 600; }
 .missed-date small { font-size: 0.75rem; color: var(--text-2); }
-.missed-lessons { flex: 1; display: flex; flex-direction: column; gap: 6px; }
-.missed-lesson { display: flex; align-items: center; gap: 8px; font-weight: 600; }
-.missed-lesson small { font-weight: 400; color: var(--text-2); }
+.missed-lessons { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.missed-lesson { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; font-weight: 600; }
+.missed-lesson small { min-width: 0; font-weight: 400; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.missed-lesson .tag { flex: none; }
 .missed-lesson .tag { margin-left: auto; }
 .missed-period { font-family: var(--num); font-variant-numeric: tabular-nums; font-weight: 500; color: var(--text-2); min-width: 1.6rem; }
 .tag-warn { background: color-mix(in srgb, var(--red) 15%, transparent); color: var(--red); }
