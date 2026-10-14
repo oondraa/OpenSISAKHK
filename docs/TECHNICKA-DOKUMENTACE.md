@@ -142,9 +142,9 @@ Všechno se vejde do free tieru Cloudflare (100 000 požadavků denně) a GitHub
 
 ## Brand
 
-Barvy Ember `#FF5A1F`, Ember tmavá `#D9440F`, Ink `#0E0E10`, Paper `#F6F3EE`. Písma
-[Sora](https://fonts.google.com/specimen/Sora) (logo, nadpisy, UI) a
-[JetBrains Mono](https://www.jetbrains.com/lp/mono/) (časy, učebny, čísla), obě pod SIL OFL 1.1.
+Barvy Ember `#FF5A1F`, Ember tmavá `#D9440F`, Ink `#0E0E10`, Paper `#F6F3EE`. Aplikace
+píše systémovým písmem (SF Pro na iPhonu, Roboto na Androidu), čísla s tabulkovými číslicemi. Logo a obrázky značky
+jsou vysázené v [Sora](https://fonts.google.com/specimen/Sora) (SIL OFL 1.1, `brand/fonts/`).
 Ikony, wordmark a GitHub social preview generuje `npx tsx scripts/brand.ts` do `public/` a `brand/`.
 
 ## Licence

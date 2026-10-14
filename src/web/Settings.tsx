@@ -4,6 +4,7 @@ import { LargeHeader, Section, Segmented, Switch } from "./ui";
 import { savedTheme, setTheme, type Theme } from "./theme";
 import { useCachedFetch } from "./useFetch";
 import { BUILT, VERSION } from "./version";
+import type { Layout } from "./App";
 
 const b64ToBytes = (b64: string) => Uint8Array.from(atob(b64.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0));
 
@@ -14,7 +15,12 @@ async function currentSubscription() {
   return reg?.pushManager.getSubscription() ?? null;
 }
 
-export function Settings({ onError, onLogout }: { onError: (e: unknown) => boolean; onLogout: () => void }) {
+export function Settings({ onError, onLogout, layout, onLayout }: {
+  onError: (e: unknown) => boolean;
+  onLogout: () => void;
+  layout: Layout;
+  onLayout: (l: Layout) => void;
+}) {
   const me = useCachedFetch("me", api.me, onError);
   const [theme, setThemeState] = useState<Theme>(savedTheme);
   const [push, setPush] = useState<PushState>("busy");
@@ -80,7 +86,7 @@ export function Settings({ onError, onLogout }: { onError: (e: unknown) => boole
           </div>
         </div>
 
-        <Section title="Vzhled">
+        <Section title="Vzhled" footer="Plocha: dlaždice na hlavní obrazovce, sekce se z nich otevírají. Lišta: sekce v liště dole.">
           <div className="row">
             <span className="row-title">Režim</span>
             <Segmented<Theme>
@@ -94,6 +100,18 @@ export function Settings({ onError, onLogout }: { onError: (e: unknown) => boole
                 { value: "system", label: "Auto" },
                 { value: "light", label: "Světlý" },
                 { value: "dark", label: "Tmavý" },
+              ]}
+            />
+          </div>
+          <div className="row">
+            <span className="row-title">Navigace</span>
+            <Segmented<Layout>
+              label="Navigace v aplikaci"
+              value={layout}
+              onChange={onLayout}
+              options={[
+                { value: "home", label: "Plocha" },
+                { value: "tabs", label: "Lišta" },
               ]}
             />
           </div>

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { api, cache, Unauthorized } from "./api";
 import { Login } from "./Login";
 import { Timetable } from "./Timetable";
@@ -8,15 +8,34 @@ import { Settings } from "./Settings";
 import { Absence } from "./Absence";
 import { Home, TABS, type Tab } from "./Home";
 import { BackContext, ScreenLayer, type LayerHandle } from "./layer";
+import { AbsenceIcon, CalendarIcon, DumbbellIcon, GearIcon, GradesIcon } from "./icons";
+
+/** "home": the tile grid, screens grow out of their tile. "tabs": the tab bar from before 1.6, picked in Settings. */
+export type Layout = "home" | "tabs";
+
+const TAB_BAR: { id: Tab; label: string; icon: ReactNode }[] = [
+  { id: "timetable", label: "Rozvrh", icon: <CalendarIcon /> },
+  { id: "gym", label: "Gym", icon: <DumbbellIcon /> },
+  { id: "grades", label: "Známky", icon: <GradesIcon /> },
+  { id: "absence", label: "Absence", icon: <AbsenceIcon /> },
+  { id: "settings", label: "Nastavení", icon: <GearIcon /> },
+];
 
 export function App() {
   // The session cookie is HttpOnly, so "logged in" is remembered locally and corrected by the first 401.
   const [loggedIn, setLoggedIn] = useState(() => cache.get<boolean>("loggedIn") ?? false);
-  // The app always lands on the home grid. Notifications open a screen right away (/?tab=grades), over the home.
-  const [screen, setScreen] = useState<{ tab: Tab; animate: boolean } | null>(() => {
+  const [layout, setLayout] = useState<Layout>(() => cache.get<Layout>("layout") ?? "home");
+  // Notifications open their screen right away (/?tab=grades): over the home grid, or as the selected tab.
+  const [linked] = useState(() => {
     const t = new URLSearchParams(location.search).get("tab");
-    return TABS.includes(t as Tab) ? { tab: t as Tab, animate: false } : null;
+    return TABS.includes(t as Tab) ? (t as Tab) : null;
   });
+  // Home layout: the app lands on the grid, `screen` is the one opened over it.
+  const [screen, setScreen] = useState<{ tab: Tab; animate: boolean } | null>(() =>
+    layout === "home" && linked ? { tab: linked, animate: false } : null,
+  );
+  // Tab bar layout: the selected tab.
+  const [tab, setTab] = useState<Tab>(linked ?? "timetable");
   // Home is in render state too, so it re-reads the cached glances once a screen closes.
   const [, setClosedAt] = useState(0);
   const home = useRef<HTMLDivElement>(null);
@@ -58,10 +77,13 @@ export function App() {
 
   const signOut = useCallback(() => {
     const theme = cache.get("theme");
+    const savedLayout = cache.get("layout");
     cache.clear();
     if (theme) cache.set("theme", theme);
+    if (savedLayout) cache.set("layout", savedLayout);
     setLoggedIn(false);
     setScreen(null);
+    setTab("timetable");
   }, []);
 
   const onError = useCallback(
@@ -83,28 +105,66 @@ export function App() {
       />
     );
 
-  const tab = screen?.tab;
+  // Switched in Settings, so Settings stays on screen: as the selected tab, or opened over the home grid.
+  const changeLayout = (next: Layout) => {
+    cache.set("layout", next);
+    setLayout(next);
+    if (next === "tabs") {
+      history.replaceState(null, "", "/"); // its screen entry, if any, now leads nowhere
+      setTab(screen?.tab ?? "settings");
+      setScreen(null);
+    } else {
+      history.pushState({ screen: tab }, "", "/");
+      setScreen({ tab, animate: false });
+    }
+  };
+
+  const content = (t: Tab) => (
+    <>
+      {t === "timetable" && <Timetable onError={onError} />}
+      {t === "gym" && <Gym onError={onError} />}
+      {t === "grades" && <Grades onError={onError} />}
+      {t === "absence" && <Absence onError={onError} />}
+      {t === "settings" && (
+        <Settings
+          onError={onError}
+          layout={layout}
+          onLayout={changeLayout}
+          onLogout={async () => {
+            const sub = await navigator.serviceWorker?.ready.then((r) => r.pushManager.getSubscription()).catch(() => null);
+            await sub?.unsubscribe().catch(() => {});
+            await api.logout().catch(() => {});
+            signOut();
+          }}
+        />
+      )}
+    </>
+  );
+
+  if (layout === "tabs")
+    return (
+      <div className="app">
+        <main className="tab-content" key={tab}>
+          {content(tab)}
+        </main>
+        <nav className="tabbar" aria-label="Hlavní navigace">
+          {TAB_BAR.map((t) => (
+            <button key={t.id} className={tab === t.id ? "active" : ""} aria-current={tab === t.id ? "page" : undefined} onClick={() => setTab(t.id)}>
+              {t.icon}
+              <span>{t.label}</span>
+            </button>
+          ))}
+        </nav>
+      </div>
+    );
+
   return (
     <>
       <Home homeRef={home} onOpen={open} onError={onError} inert={!!screen} />
       {screen && (
         <BackContext.Provider value={back}>
-          <ScreenLayer key={tab} tile={screen.tab} home={home} animate={screen.animate} handle={layer} onClosed={closed}>
-            {tab === "timetable" && <Timetable onError={onError} />}
-            {tab === "gym" && <Gym onError={onError} />}
-            {tab === "grades" && <Grades onError={onError} />}
-            {tab === "absence" && <Absence onError={onError} />}
-            {tab === "settings" && (
-              <Settings
-                onError={onError}
-                onLogout={async () => {
-                  const sub = await navigator.serviceWorker?.ready.then((r) => r.pushManager.getSubscription()).catch(() => null);
-                  await sub?.unsubscribe().catch(() => {});
-                  await api.logout().catch(() => {});
-                  signOut();
-                }}
-              />
-            )}
+          <ScreenLayer key={screen.tab} tile={screen.tab} home={home} animate={screen.animate} handle={layer} onClosed={closed}>
+            {content(screen.tab)}
           </ScreenLayer>
         </BackContext.Provider>
       )}

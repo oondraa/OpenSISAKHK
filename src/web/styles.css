@@ -20,8 +20,9 @@
   --chrome: rgba(246, 243, 238, 0.76);
   --chrome-edge: rgba(14, 14, 16, 0.1);
   --shadow: 0 1px 2px rgba(14, 14, 16, 0.04), 0 4px 16px rgba(14, 14, 16, 0.04);
-  --font: "Sora", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  /* System UI font (SF Pro on Apple, Roboto on Android, Segoe on Windows): native look, nothing to download. */
+  --font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  --num: var(--font); /* times, rooms and numbers */
   --green: #34c759;
   --teal: #30b0c7;
   --orange: #ff9500;
@@ -127,10 +128,10 @@ p { margin: 0; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 8px; }
 
 /* Press feedback lives on pointer-down and is instant; release springs back. */
-.pressable, .day, .lesson-card, .row-button, .primary, .week-arrow, .subject-head {
+.pressable, .day, .lesson-card, .row-button, .tabbar button, .primary, .week-arrow, .subject-head {
   transition: transform 300ms var(--ease-spring), background-color 150ms ease, opacity 150ms ease;
 }
-.pressable:active, .day:active, .lesson-card:active, .primary:active, .week-arrow:active {
+.pressable:active, .day:active, .lesson-card:active, .primary:active, .week-arrow:active, .tabbar button:active {
   transform: scale(0.96);
   transition-duration: 80ms;
 }
@@ -138,13 +139,13 @@ p { margin: 0; }
 
 /* ---------- Type ---------- */
 .large-title { font-size: 2.125rem; line-height: 1.1; font-weight: 800; letter-spacing: -0.03em; margin: 0; }
-/* JetBrains Mono for times, rooms and numbers (brand: "kód, štítky, čísla"). */
-.lesson-time, .lesson-room, .day-num, .chip, .avg-badge, .summary-value, .gym-period, .now-room, .pill-status small { font-family: var(--mono); letter-spacing: -0.01em; }
-.eyebrow { font-family: var(--mono); font-size: 0.75rem; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-2); }
-.list-title { font-family: var(--mono); font-size: 0.75rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-2); margin: 28px 16px 8px; }
+/* Times, rooms and numbers: tabular figures so columns of them line up. */
+.lesson-time, .lesson-room, .day-num, .chip, .avg-badge, .summary-value, .gym-period, .now-room, .pill-status small { font-family: var(--num); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+.eyebrow { font-family: var(--num); font-size: 0.75rem; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-2); }
+.list-title { font-family: var(--num); font-size: 0.75rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-2); margin: 28px 16px 8px; }
 .list-footer { font-size: 0.8125rem; line-height: 1.4; color: var(--text-2); margin: 8px 16px 0; }
 .list-footer.center { text-align: center; margin: 32px 16px 8px; }
-.diag { font-family: var(--mono); font-size: 0.6875rem; color: var(--text-3); }
+.diag { font-family: var(--num); font-size: 0.6875rem; color: var(--text-3); }
 
 /* ---------- Shell ---------- */
 .screen { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; max-width: 760px; margin: 0 auto; width: 100%; }
@@ -220,7 +221,7 @@ p { margin: 0; }
 .tile-absence { --tint: var(--orange); }
 .tile-settings { --tint: var(--graphite); }
 .tile-body { width: 100%; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
-.tile-value { font-family: var(--mono); font-size: 2rem; font-weight: 600; line-height: 1.05; letter-spacing: -0.045em; font-variant-numeric: tabular-nums; margin-bottom: 6px; }
+.tile-value { font-family: var(--num); font-size: 2rem; font-weight: 600; line-height: 1.05; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; margin-bottom: 6px; }
 .tile-value:is(.great, .good, .meh, .bad), .tile-value[class*="absence-"] { color: var(--tone); }
 .tile-gym .tile-value { font-family: var(--font); font-size: 1.625rem; font-weight: 700; letter-spacing: -0.03em; }
 .tile-value.free { color: var(--green); }
@@ -244,14 +245,14 @@ p { margin: 0; }
 .tile-timetable .tile-icon { width: 36px; height: 36px; border-radius: 11px; background: rgba(255, 255, 255, 0.2); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25); }
 .tile-timetable .tile-icon .icon { width: 21px; height: 21px; }
 .tile-eyebrow {
-  margin-left: auto; min-width: 0; font-family: var(--mono); font-size: 0.75rem; font-weight: 500; letter-spacing: 0.05em;
+  margin-left: auto; min-width: 0; font-family: var(--num); font-size: 0.75rem; font-weight: 500; letter-spacing: 0.05em;
   text-transform: uppercase; color: rgba(255, 255, 255, 0.86); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .hero-main { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; min-width: 0; }
-.hero-subject { font-size: clamp(2.25rem, 11vw, 3.25rem); font-weight: 800; line-height: 1; letter-spacing: -0.045em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hero-subject { font-size: clamp(2.25rem, 11vw, 3.25rem); font-weight: 800; line-height: 1; letter-spacing: -0.03em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* "8:00–14:25": the whole day's span, in the numbers face and a size that fits ten characters. */
-.hero-span { font-family: var(--mono); font-size: clamp(2rem, 10vw, 2.875rem); font-weight: 600; letter-spacing: -0.05em; font-variant-numeric: tabular-nums; }
-.hero-room { font-family: var(--mono); font-size: clamp(1.5rem, 7vw, 2.125rem); font-weight: 600; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }
+.hero-span { font-family: var(--num); font-size: clamp(2rem, 10vw, 2.875rem); font-weight: 600; letter-spacing: -0.035em; font-variant-numeric: tabular-nums; }
+.hero-room { font-family: var(--num); font-size: clamp(1.5rem, 7vw, 2.125rem); font-weight: 600; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }
 .tile-timetable .tile-sub { margin-top: 6px; font-size: 0.9375rem; color: rgba(255, 255, 255, 0.88); }
 .hero-progress { display: block; height: 4px; margin-top: 12px; border-radius: 2px; background: rgba(255, 255, 255, 0.28); overflow: hidden; }
 .hero-progress span { display: block; height: 100%; background: #fff; transform-origin: left; transition: transform 600ms var(--ease-spring); }
@@ -351,7 +352,7 @@ p { margin: 0; }
 .lesson-card.lunch .lesson-teacher { color: color-mix(in srgb, var(--green) 55%, var(--text-2)); }
 .lunch-icon { width: 40px; height: 40px; flex: none; display: grid; place-items: center; border-radius: 12px; background: var(--green); color: #fff; }
 .lunch-icon.none { background: var(--fill); color: var(--text-2); }
-.lunch-number { font-family: var(--mono); font-size: 1.25rem; font-weight: 700; }
+.lunch-number { font-family: var(--num); font-variant-numeric: tabular-nums; font-size: 1.25rem; font-weight: 700; }
 .lesson-card.lunch.now { box-shadow: 0 0 0 2px var(--green), var(--shadow); }
 
 /* ---------- Lists (inset grouped) ---------- */
@@ -467,12 +468,12 @@ p { margin: 0; }
 .summary-value[class*="absence-"] { color: var(--tone); }
 .absence-row { flex-direction: column; align-items: stretch; gap: 4px; padding-top: 12px; padding-bottom: 12px; }
 .absence-line { display: grid; grid-template-columns: 3.6rem 1fr auto; align-items: center; gap: 14px; }
-.absence-subject { font-weight: 600; font-family: var(--mono); }
+.absence-subject { font-weight: 600; font-family: var(--num); }
 .absence-bar { position: relative; height: 8px; border-radius: 4px; background: var(--fill); }
 .absence-bar span { display: block; height: 100%; border-radius: 4px; background: var(--tone); transform-origin: left; }
 /* The 30 % line the bar must not reach. */
 .absence-bar i { position: absolute; top: -3px; bottom: -3px; width: 2px; margin-left: -1px; border-radius: 1px; background: var(--text-3); }
-.absence-numbers { display: flex; flex-direction: column; align-items: flex-end; font-family: var(--mono); line-height: 1.2; min-width: 4.5rem; }
+.absence-numbers { display: flex; flex-direction: column; align-items: flex-end; font-family: var(--num); font-variant-numeric: tabular-nums; line-height: 1.2; min-width: 4.5rem; }
 .absence-numbers b { font-weight: 600; color: var(--tone); }
 .absence-none .absence-numbers b { color: var(--text-2); font-weight: 500; }
 .absence-numbers small { font-size: 0.75rem; color: var(--text-2); white-space: nowrap; }
@@ -486,13 +487,13 @@ p { margin: 0; }
 .absence-alert.mid { background: color-mix(in srgb, var(--orange) 14%, transparent); color: color-mix(in srgb, var(--orange) 70%, var(--text)); }
 .missed-day { align-items: flex-start; }
 .missed-date { display: flex; flex-direction: column; min-width: 4.8rem; line-height: 1.25; }
-.missed-date b { font-family: var(--mono); font-weight: 600; }
+.missed-date b { font-family: var(--num); font-weight: 600; }
 .missed-date small { font-size: 0.75rem; color: var(--text-2); }
 .missed-lessons { flex: 1; display: flex; flex-direction: column; gap: 6px; }
 .missed-lesson { display: flex; align-items: center; gap: 8px; font-weight: 600; }
 .missed-lesson small { font-weight: 400; color: var(--text-2); }
 .missed-lesson .tag { margin-left: auto; }
-.missed-period { font-family: var(--mono); font-weight: 500; color: var(--text-2); min-width: 1.6rem; }
+.missed-period { font-family: var(--num); font-variant-numeric: tabular-nums; font-weight: 500; color: var(--text-2); min-width: 1.6rem; }
 .tag-warn { background: color-mix(in srgb, var(--red) 15%, transparent); color: var(--red); }
 
 /* ---------- Settings ---------- */
@@ -517,6 +518,24 @@ p { margin: 0; }
 .login-form input + input { border-top: 0.5px solid var(--separator); }
 .error { color: var(--danger); font-size: 0.9375rem; }
 .fineprint { font-size: 0.8125rem; color: var(--text-2); margin-top: 6px; line-height: 1.45; }
+
+/* ---------- Tab bar layout (Nastavení → Rozložení): translucent material, content scrolls under ---------- */
+.app { height: 100%; display: flex; flex-direction: column; }
+.tab-content { flex: 1; min-height: 0; display: flex; animation: fade-in 160ms ease-out; }
+.app :is(.scroll, .page) { padding-bottom: calc(100px + env(safe-area-inset-bottom)); }
+.tabbar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
+  display: grid; grid-template-columns: repeat(5, 1fr);
+  padding: 6px max(4px, env(safe-area-inset-left)) calc(4px + env(safe-area-inset-bottom));
+  background: var(--chrome);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border-top: 0.5px solid var(--chrome-edge);
+}
+.tabbar button { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 4px 0; font-size: 0.625rem; font-weight: 500; letter-spacing: 0.01em; color: var(--text-2); }
+.tabbar .icon { width: 27px; height: 27px; }
+.tabbar .active { color: var(--accent-text); }
+.tabbar .active .icon { stroke-width: 2.1; }
 
 /* ---------- Motion ---------- */
 /* New content just fades in, all at once. No per-row delays or movement: with cached data showing first and a
@@ -556,9 +575,11 @@ p { margin: 0; }
   .day-thumb.lifted { background: var(--accent); }
   .segmented-thumb.lifted { background: var(--surface); }
   .switch:active .switch-knob { background: #fff; }
+  .tabbar { background: var(--surface); backdrop-filter: none; -webkit-backdrop-filter: none; }
 }
 @media (prefers-contrast: more) {
   .glass { background: var(--surface); }
+  .tabbar { background: var(--surface); border-top-color: var(--text); }
   .list, .tile, .lesson-card, .room-card, .summary-card, .profile-card { box-shadow: 0 0 0 1px var(--text-3); }
 }
 @media (min-width: 760px) {

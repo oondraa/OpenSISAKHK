@@ -58,7 +58,7 @@ export default defineConfig({
     VitePWA({
       // "prompt" so main.tsx can show "Aktualizace" before the new version reloads the page.
       registerType: "prompt",
-      includeAssets: ["icon.svg", "favicon-32.png", "apple-touch-icon.png", "fonts/*.woff2"],
+      includeAssets: ["icon.svg", "favicon-32.png", "apple-touch-icon.png"],
       manifest: {
         name: "OpenSISAKHK",
         short_name: "OpenSISAKHK",
@@ -78,7 +78,7 @@ export default defineConfig({
       workbox: {
         navigateFallbackDenylist: [/^\/api\//],
         importScripts: ["push-sw.js"],
-        globPatterns: ["**/*.{js,css,html,svg,png,woff2}"],
+        globPatterns: ["**/*.{js,css,html,svg,png}"],
       },
     }),
     securityHeaders(),

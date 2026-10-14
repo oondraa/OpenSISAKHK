@@ -4,7 +4,6 @@ import { registerSW } from "virtual:pwa-register";
 import { App } from "./App";
 import { applyTheme, savedTheme } from "./theme";
 import { initGlass } from "./glass";
-import "./fonts.css";
 import "./styles.css";
 
 applyTheme(savedTheme());

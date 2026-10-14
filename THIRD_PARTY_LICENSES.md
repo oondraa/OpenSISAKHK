@@ -2,7 +2,7 @@
 
 OpenSISAKHK is built with the following open-source components and fonts. Each remains under its own license
 (listed below); the OpenSISAKHK license does not apply to them. Full license texts are in each project's repository,
-the font licenses are also in `public/fonts/` and `brand/fonts/`.
+the font licenses are also in `brand/fonts/`.
 
 ## Shipped in the app and the server
 
@@ -27,8 +27,8 @@ the font licenses are also in `public/fonts/` and `brand/fonts/`.
 
 | Asset | License | Source |
 |---|---|---|
-| Sora | SIL Open Font License 1.1 (`OFL-Sora.txt`) | https://github.com/sora-xor/sora-font |
-| JetBrains Mono | SIL Open Font License 1.1 (`OFL-JetBrainsMono.txt`) | https://github.com/JetBrains/JetBrainsMono |
+| Sora (logo and brand images only, the app uses the system font) | SIL Open Font License 1.1 (`OFL-Sora.txt`) | https://github.com/sora-xor/sora-font |
+| JetBrains Mono (brand images only) | SIL Open Font License 1.1 (`OFL-JetBrainsMono.txt`) | https://github.com/JetBrains/JetBrainsMono |
 | Gear icon (based on Lucide) | ISC | https://lucide.dev |
 
 ## Build and run tools only
