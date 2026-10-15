@@ -4,7 +4,8 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="google-site-verification" content="bVb7uDbiZeKTo60uHFWjh2av7620HBJBl7iYOHcBhhQ" />
-    <title>OpenSISAKHK — neoficiální appka pro Kybernu: rozvrh, známky, SIS</title>
+    <title>OpenSISAKHK — appka ke školnímu systému Kyberny (SIS): rozvrh, suplování, známky</title>
+    <link rel="canonical" href="https://oondraa.github.io/OpenSISAKHK/" />
     <meta
       name="description"
       content="OpenSISAKHK je neoficiální studentská appka pro Kybernu (SŠ a VOŠ aplikované kybernetiky Hradec Králové) k systému SIS / KybernaIS: rozvrh, známky, absence, obědy, posilovna, projekty a upozornění na změny rozvrhu."
@@ -13,6 +14,11 @@
     <meta property="og:title" content="OpenSISAKHK" />
     <meta property="og:description" content="Kyberna v jedné appce — rozvrh, známky, absence, obědy a projekty ze SIS." />
     <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://oondraa.github.io/OpenSISAKHK/" />
+    <meta property="og:image" content="https://oondraa.github.io/OpenSISAKHK/shots/home.webp" />
+    <meta property="og:locale" content="cs_CZ" />
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "OpenSISAKHK", "alternateName": ["Open SISAKHK", "OpenSISAKHK Kyberna"], "url": "https://oondraa.github.io/OpenSISAKHK/", "description": "Neoficiální studentská appka ke školnímu systému Kyberny (SIS, KybernaIS): rozvrh, suplování, známky, absence, obědy a posilovna.", "applicationCategory": "EducationalApplication", "operatingSystem": "iOS, Android, Web", "inLanguage": "cs", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "CZK"}, "author": {"@type": "Person", "name": "oondraa", "url": "https://github.com/oondraa"}}</script>
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Co je OpenSISAKHK?", "acceptedAnswer": {"@type": "Answer", "text": "Neoficiální studentská appka ke školnímu systému Kyberny (SIS, KybernaIS na sis.ssakhk.cz). Ukazuje rozvrh se suplováním, známky, absenci, obědy, posilovnu a projekty rychleji a přehledněji než web SIS a upozorní tě na změny v rozvrhu."}}, {"@type": "Question", "name": "Je to oficiální SIS Kyberny?", "acceptedAnswer": {"@type": "Answer", "text": "Ne. Oficiální informační systém Kyberny (SŠ a VOŠ aplikované kybernetiky Hradec Králové) je KybernaIS na sis.ssakhk.cz. OpenSISAKHK z něj jen čte tvoje data a zobrazuje je přehledněji. Napsal ji student Kyberny a škola ji nespravuje."}}, {"@type": "Question", "name": "Jak se přihlásím?", "acceptedAnswer": {"@type": "Answer", "text": "Stejným jménem a heslem jako do SIS Kyberny. Uživatelské jméno je část školního e-mailu před zavináčem. Heslo se nikam neukládá, posílá se jen do SIS kvůli přihlášení."}}, {"@type": "Question", "name": "Uvidím suplování a změny rozvrhu?", "acceptedAnswer": {"@type": "Answer", "text": "Ano. Rozvrh se bere přímo ze SIS Kyberny, takže suplování, odpadlé hodiny a přesunuté učebny jsou označené. Když se ti rozvrh změní, appka ti může poslat notifikaci."}}, {"@type": "Question", "name": "Funguje na iPhonu i Androidu?", "acceptedAnswer": {"@type": "Answer", "text": "Ano. Je to webová aplikace (PWA): otevřeš ji v Safari nebo Chromu a přidáš si ji na plochu. Nic se nestahuje z App Storu ani z Google Play."}}, {"@type": "Question", "name": "Kolik to stojí?", "acceptedAnswer": {"@type": "Answer", "text": "Nic. OpenSISAKHK je zdarma a její zdrojový kód je veřejně na GitHubu."}}]}</script>
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -188,6 +194,14 @@
       .final h2 { margin-bottom: 12px; }
       .final .sub { margin: 0 auto 34px; }
 
+      .faq { margin-top: 40px; max-width: 760px; display: grid; gap: 10px; }
+      .faq details { background: var(--surface); border: 1px solid var(--separator); border-radius: 16px; padding: 0 22px; transition: border-color 300ms; }
+      .faq details[open] { border-color: rgba(255, 90, 31, 0.35); }
+      .faq summary { cursor: pointer; list-style: none; padding: 18px 0; font-weight: 600; display: flex; justify-content: space-between; gap: 16px; }
+      .faq summary::-webkit-details-marker { display: none; }
+      .faq summary::after { content: "+"; color: var(--ember); font-weight: 700; transition: transform 300ms var(--spring); }
+      .faq details[open] summary::after { transform: rotate(45deg); }
+      .faq p { margin: 0 0 18px; color: var(--muted); font-size: 0.96rem; }
       footer { padding: 48px 0 64px; color: var(--muted); font-size: 0.88rem; text-align: center; }
       footer a { color: var(--text); text-decoration: none; border-bottom: 1px solid var(--separator); }
       footer a:hover { border-color: var(--ember); }
@@ -444,6 +458,39 @@
               <span>Jen souhrnné počty po třídách. Žádná jména ani fotky.</span>
             </p>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="otazky">
+      <div class="wrap">
+        <p class="kicker reveal">Časté otázky</p>
+        <h2 class="reveal" style="--d: 80ms">Appka k SIS Kyberny.</h2>
+        <div class="faq reveal" style="--d: 160ms">
+          <details>
+            <summary>Co je OpenSISAKHK?</summary>
+            <p>Neoficiální studentská appka ke školnímu systému Kyberny (SIS, KybernaIS na sis.ssakhk.cz). Ukazuje rozvrh se suplováním, známky, absenci, obědy, posilovnu a projekty rychleji a přehledněji než web SIS a upozorní tě na změny v rozvrhu.</p>
+          </details>
+          <details>
+            <summary>Je to oficiální SIS Kyberny?</summary>
+            <p>Ne. Oficiální informační systém Kyberny (SŠ a VOŠ aplikované kybernetiky Hradec Králové) je KybernaIS na sis.ssakhk.cz. OpenSISAKHK z něj jen čte tvoje data a zobrazuje je přehledněji. Napsal ji student Kyberny a škola ji nespravuje.</p>
+          </details>
+          <details>
+            <summary>Jak se přihlásím?</summary>
+            <p>Stejným jménem a heslem jako do SIS Kyberny. Uživatelské jméno je část školního e-mailu před zavináčem. Heslo se nikam neukládá, posílá se jen do SIS kvůli přihlášení.</p>
+          </details>
+          <details>
+            <summary>Uvidím suplování a změny rozvrhu?</summary>
+            <p>Ano. Rozvrh se bere přímo ze SIS Kyberny, takže suplování, odpadlé hodiny a přesunuté učebny jsou označené. Když se ti rozvrh změní, appka ti může poslat notifikaci.</p>
+          </details>
+          <details>
+            <summary>Funguje na iPhonu i Androidu?</summary>
+            <p>Ano. Je to webová aplikace (PWA): otevřeš ji v Safari nebo Chromu a přidáš si ji na plochu. Nic se nestahuje z App Storu ani z Google Play.</p>
+          </details>
+          <details>
+            <summary>Kolik to stojí?</summary>
+            <p>Nic. OpenSISAKHK je zdarma a její zdrojový kód je veřejně na GitHubu.</p>
+          </details>
         </div>
       </div>
     </section>
