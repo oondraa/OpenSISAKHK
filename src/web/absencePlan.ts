@@ -63,3 +63,32 @@ export function plan(s: Pick<AbsenceSubject, "missed" | "taught">, remaining: nu
   const reserve = Math.max(0, Math.min(remaining, Math.ceil((LIMIT * total - 100 * m) / 100) - 1));
   return { needed, remaining, reserve, best: total ? Math.round((1000 * m) / total) / 10 : 0 };
 }
+
+/**
+ * Whether one more lesson of a subject can be skipped. `budget` is the subject's reserve minus the lessons already
+ * planned to skip (anywhere in the semester: only the total counts, not which day it falls on).
+ * ok: skippable with some to spare, last: skippable but it's the last one, no: it would end the semester over LIMIT.
+ */
+export type Verdict = "ok" | "last" | "no" | "unknown";
+
+export function verdict(budget: number | null): Verdict {
+  if (budget === null) return "unknown";
+  return budget >= 2 ? "ok" : budget === 1 ? "last" : "no";
+}
+
+/** Lessons left to skip per subject once `planned` (subject of every planned skip) are taken off the reserves. */
+export function budgets(reserves: Map<string, number | null>, planned: string[]): Map<string, number | null> {
+  const out = new Map(reserves);
+  for (const s of planned) {
+    const r = out.get(s);
+    if (r !== undefined && r !== null) out.set(s, r - 1);
+  }
+  return out;
+}
+
+/** Subjects whose budget can't cover skipping all of `subjects` (one entry per lesson) on top of what's planned. */
+export function blockers(budget: Map<string, number | null>, subjects: string[]): string[] {
+  const count = new Map<string, number>();
+  for (const s of subjects) count.set(s, (count.get(s) ?? 0) + 1);
+  return [...count].filter(([s, n]) => (budget.get(s) ?? -Infinity) < n).map(([s]) => s);
+}

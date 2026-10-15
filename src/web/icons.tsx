@@ -74,6 +74,13 @@ export const AbsenceIcon = ({ size }: { size?: number }) => (
   </Icon>
 );
 
+export const CalculatorIcon = ({ size }: { size?: number }) => (
+  <Icon size={size}>
+    <rect x="5" y="2.5" width="14" height="19" rx="3" />
+    <path d="M8.5 6.5h7v3h-7zM8.5 13.5h.01M12 13.5h.01M15.5 13.5h.01M8.5 17.5h.01M12 17.5h.01M15.5 17.5h.01" />
+  </Icon>
+);
+
 export const SunIcon = ({ size }: { size?: number }) => (
   <Icon size={size}>
     <circle cx="12" cy="12" r="4" />

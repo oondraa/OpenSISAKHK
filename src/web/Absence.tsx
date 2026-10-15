@@ -1,9 +1,12 @@
+import { useMemo, useState } from "react";
 import { api } from "./api";
 import type { Absence as AbsenceData, AbsenceSubject, Day, MissedLesson } from "../worker/parse";
-import { Empty, LargeHeader, SkeletonList } from "./ui";
+import { Chevron, Empty, LargeHeader, SkeletonList } from "./ui";
 import { WEEKDAYS, addDays, mondayOf, todayPrague, weekdayIndex } from "./time";
 import { useCachedFetch } from "./useFetch";
-import { AbsenceIcon } from "./icons";
+import { AbsenceIcon, CalculatorIcon } from "./icons";
+import { BackContext } from "./layer";
+import { AbsenceCalc, type PlannedSkip } from "./AbsenceCalc";
 import { LIMIT, LIMIT_HARD, plan, remainingLessons, semesterEnd, type Plan } from "./absencePlan";
 
 const CODES: Record<string, string> = { n: "neomluveno", o: "omluveno" };
@@ -30,7 +33,7 @@ function useRemaining(onError: (e: unknown) => boolean) {
     () => Promise.all([monday, addDays(monday, 7)].map((w) => api.permanentTimetable(w).then((t) => t.days))),
     onError,
   );
-  return data ? remainingLessons(monday, data[0], data[1], today, semesterEnd(today)) : null;
+  return useMemo(() => (data ? remainingLessons(monday, data[0], data[1], today, semesterEnd(today)) : null), [data, monday, today]);
 }
 
 export function Absence({ onError }: { onError: (e: unknown) => boolean }) {
@@ -43,6 +46,23 @@ export function Absence({ onError }: { onError: (e: unknown) => boolean }) {
   const total = data?.total;
   const over = subjects.filter((s) => s.percent >= LIMIT);
   const close = subjects.filter((s) => level(s.percent) === "mid");
+  // The calculator opens inside this screen; the plan outlives going back to the list and in again.
+  const [calc, setCalc] = useState(false);
+  const [planned, setPlanned] = useState<PlannedSkip[]>([]);
+  const calcBack = useMemo(() => ({ go: () => setCalc(false), label: "Absence" }), []);
+  const reserves = useMemo(
+    () => new Map((data?.subjects ?? []).map((s) => [s.subject, plan(s, remaining?.get(s.subject) ?? null).reserve] as const)),
+    [data, remaining],
+  );
+
+  if (calc)
+    return (
+      <BackContext.Provider value={calcBack}>
+        <div className="subscreen">
+          <AbsenceCalc reserves={reserves} planned={planned} onPlanned={setPlanned} onError={onError} />
+        </div>
+      </BackContext.Provider>
+    );
 
   return (
     <div className="screen">
@@ -88,6 +108,21 @@ export function Absence({ onError }: { onError: (e: unknown) => boolean }) {
                 <span>Hlídej si, kolik hodin ještě můžeš vynechat.</span>
               </div>
             ) : null}
+
+            {remaining && (
+              <div className="list calc-entry">
+                <button className="row more-row tint-absence" onClick={() => setCalc(true)}>
+                  <span className="more-icon">
+                    <CalculatorIcon />
+                  </span>
+                  <span className="row-main">
+                    <span className="row-title">Co můžu vynechat</span>
+                    <span className="row-sub">Rozvrh s hodinami, na které nemusíš</span>
+                  </span>
+                  <Chevron />
+                </button>
+              </div>
+            )}
 
             <h2 className="list-title">Podle předmětů</h2>
             {subjects.length > 0 && (

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { plan, remainingLessons, semesterEnd } from "../src/web/absencePlan";
+import { blockers, budgets, plan, remainingLessons, semesterEnd, verdict } from "../src/web/absencePlan";
 import type { Day, Lesson } from "../src/worker/parse";
 
 const lesson = (subject: string) => ({ subject }) as Lesson;
@@ -41,5 +41,31 @@ describe("remainingLessons", () => {
   it("knows the semester ends", () => {
     expect(semesterEnd("2026-10-12")).toBe("2027-01-28");
     expect(semesterEnd("2027-03-01")).toBe("2027-06-30");
+  });
+});
+
+describe("skip calculator", () => {
+  const reserves = new Map<string, number | null>([["MAT", 3], ["FYZ", 1], ["CJL", 0], ["NEW", null]]);
+
+  it("takes planned skips off the reserve", () => {
+    const b = budgets(reserves, ["MAT", "MAT", "FYZ"]);
+    expect(b.get("MAT")).toBe(1);
+    expect(b.get("FYZ")).toBe(0);
+    expect(b.get("NEW")).toBeNull();
+  });
+
+  it("tells which lessons can still go", () => {
+    expect(verdict(3)).toBe("ok");
+    expect(verdict(1)).toBe("last");
+    expect(verdict(0)).toBe("no");
+    expect(verdict(-1)).toBe("no");
+    expect(verdict(null)).toBe("unknown");
+  });
+
+  it("finds what stops skipping a whole day", () => {
+    expect(blockers(reserves, ["MAT", "MAT", "FYZ"])).toEqual([]);
+    expect(blockers(reserves, ["FYZ", "FYZ", "CJL"])).toEqual(["FYZ", "CJL"]);
+    // unknown subjects (no reserve) block too: the app can't promise anything about them
+    expect(blockers(reserves, ["NEW", "XYZ"])).toEqual(["NEW", "XYZ"]);
   });
 });
