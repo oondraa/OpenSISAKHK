@@ -13,6 +13,7 @@ import { More } from "./More";
 import { Home } from "./Home";
 import { LABELS, LINKABLE, TAB_SLOTS, tabOrder, type Tab } from "./sections";
 import { ClassPrompt } from "./ClassPrompt";
+import { NotifyPrompt } from "./NotifyPrompt";
 import { BackContext, ScreenLayer, type LayerHandle } from "./layer";
 import { TAB_ICONS } from "./icons";
 
@@ -184,6 +185,7 @@ export function App() {
             })}
           </nav>
           <ClassPrompt onError={onError} />
+          <NotifyPrompt onError={onError} />
         </div>
         {overlay}
       </>
@@ -202,6 +204,7 @@ export function App() {
           </BackContext.Provider>
         )}
         <ClassPrompt onError={onError} />
+        <NotifyPrompt onError={onError} />
       </>
       {overlay}
     </>

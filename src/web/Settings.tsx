@@ -9,15 +9,9 @@ import type { Layout } from "./App";
 import { LABELS, TAB_SLOTS, homeOrder, saveHomeOrder, saveTabOrder, tabOrder, type Part } from "./sections";
 import { BugIcon, CoffeeIcon, TAB_ICONS } from "./icons";
 import { ReportSheet } from "./Report";
-
-const b64ToBytes = (b64: string) => Uint8Array.from(atob(b64.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0));
+import { currentSubscription, disableNotifications, enableNotifications } from "./pushState";
 
 type PushState = "unsupported" | "denied" | "off" | "on" | "busy";
-
-async function currentSubscription() {
-  const reg = await navigator.serviceWorker?.ready;
-  return reg?.pushManager.getSubscription() ?? null;
-}
 
 export function Settings({ onError, onLogout, layout, onLayout, onOrder }: {
   onError: (e: unknown) => boolean;
@@ -48,23 +42,13 @@ export function Settings({ onError, onLogout, layout, onLayout, onOrder }: {
     setPush("busy");
     setPushMsg(null);
     try {
-      const reg = await navigator.serviceWorker.ready;
       if (on) {
-        if ((await Notification.requestPermission()) !== "granted") return setPush("denied");
-        const sub = (await reg.pushManager.getSubscription()) ??
-          (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToBytes((await api.pushKey()).key) }));
-        await api.pushSubscribe(sub.toJSON());
-        await api.watch(true);
+        if ((await enableNotifications()) === "denied") return setPush("denied");
         setWatching(true);
         setPush("on");
       } else {
-        await api.watch(false); // no notifications = no reason to keep the stored login
+        await disableNotifications();
         setWatching(false);
-        const sub = await reg.pushManager.getSubscription();
-        if (sub) {
-          await api.pushUnsubscribe(sub.endpoint).catch(() => {});
-          await sub.unsubscribe();
-        }
         setPush("off");
       }
     } catch (e) {
