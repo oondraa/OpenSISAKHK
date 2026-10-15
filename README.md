@@ -5,10 +5,12 @@
   </picture>
 </h1>
 
-**Školní SIS tak, jak má vypadat v telefonu.**
+**Studentská appka pro Kybernu: školní SIS tak, jak má vypadat v telefonu.**
 
 Rozvrh, který ví, co máš teď. Absence, která tě varuje dřív, než je pozdě. Posilovna, oběd a notifikace, i když
-škola přepíše rozvrh ve tři ráno. Pro studenty SŠ a VOŠ aplikované kybernetiky v Hradci Králové.
+škola přepíše rozvrh ve tři ráno. Pro studenty Kyberny, SŠ a VOŠ aplikované kybernetiky v Hradci Králové.
+
+Web: **[oondraa.github.io/OpenSISAKHK](https://oondraa.github.io/OpenSISAKHK/)**
 
 <p>
   <a href="https://opensisakhk.opensisakhk.workers.dev"><img alt="Otevřít aplikaci" src="https://img.shields.io/badge/Otev%C5%99%C3%ADt_aplikaci-FF5A1F?style=for-the-badge&labelColor=0E0E10"></a>
@@ -24,13 +26,13 @@ Rozvrh, který ví, co máš teď. Absence, která tě varuje dřív, než je po
 
 ## Proč
 
-SIS je dělaný na počítač. Na telefonu se v něm hledá, přibližuje a ztrácí. OpenSISAKHK bere stejná data a skládá je
+SIS Kyberny (KybernaIS na sis.ssakhk.cz) je dělaný na počítač. Na telefonu se v něm hledá, přibližuje a ztrácí. OpenSISAKHK bere stejná data a skládá je
 do appky, kterou otevřeš jedním palcem mezi hodinami: co mám teď, kde, co je k obědu a jak jsem na tom s absencí.
 
 ## Co umí
 
-### Rozvrh, který ví, co je teď
-Otevře se rovnou na aktuální hodině. Nahoře karta **Teď / Další** s učebnou a odpočtem, změny od školy jsou
+### Rozvrh Kyberny, který ví, co je teď
+Rozvrh i se suplováním přímo ze SIS. Otevře se rovnou na aktuální hodině. Nahoře karta **Teď / Další** s učebnou a odpočtem, změny od školy jsou
 zvýrazněné. Po poslední hodině ti rovnou ukáže zítřek. Mezi dny se přejíždí prstem, u hodin na dálku je odkaz na Meet.
 
 ### Oběd přímo v rozvrhu
@@ -43,7 +45,7 @@ každého předmětu ukáže, kolik máš, jak blízko jsi hranici, a hlavně **
 dostal pod ni, nebo kolik si jich můžeš dovolit vynechat do konce pololetí.
 
 ### Známky na jednom místě
-Všechny známky po předmětech s vahou, typem a komentářem a průměr, který počítá SIS.
+Všechny známky ze SIS Kyberny po předmětech s vahou, typem a komentářem a průměr, který počítá SIS.
 
 ### Je posilovna volná?
 Jedním pohledem. Appka čte rozvrh celé školy a ukáže, jestli je posilovna teď volná a kdy tam která třída je.
@@ -60,7 +62,7 @@ ukáže poslední načtená data.
 ## Jak začít
 
 1. Otevři **[opensisakhk.opensisakhk.workers.dev](https://opensisakhk.opensisakhk.workers.dev)** v telefonu.
-2. Přihlas se stejným jménem a heslem jako do SIS.
+2. Přihlas se stejným jménem a heslem jako do SIS Kyberny.
 3. Přidej si ji na plochu:
    - **iPhone:** Safari → Sdílet → *Přidat na plochu*
    - **Android:** Chrome → menu → *Nainstalovat aplikaci*
@@ -92,5 +94,5 @@ licence, viz [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).
 
 ---
 
-<sub>Neoficiální aplikace. Není spojená se školou, s autory SIS ani se Strava.cz. Vytvořil
+<sub>Studentská aplikace. Není spojená se školou, s autory SIS ani se Strava.cz. Vytvořil
 [Ondra](https://github.com/oondraa).</sub>
