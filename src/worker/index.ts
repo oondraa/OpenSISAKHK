@@ -63,13 +63,16 @@ async function sameSecret(a: string, b: string) {
   return diff === 0;
 }
 
+/** The session from the cookie. One sealed with the old shared key is sealed again with the cookie key. */
 async function unsealCookie(c: Context<Env>) {
   const token = getCookie(c, COOKIE);
-  return token ? unseal(token, c.env.SESSION_SECRET) : null;
+  const opened = token ? await unseal<Session>(token, c.env.SESSION_SECRET, "session-cookie") : null;
+  if (opened?.legacy) await writeSession(c, opened.value);
+  return opened?.value ?? null;
 }
 
 async function writeSession(c: Context<Env>, s: Session) {
-  setCookie(c, COOKIE, await seal(s, c.env.SESSION_SECRET), {
+  setCookie(c, COOKIE, await seal(s, c.env.SESSION_SECRET, "session-cookie"), {
     httpOnly: true,
     secure: new URL(c.req.url).protocol === "https:",
     sameSite: "Strict",
@@ -133,7 +136,7 @@ app.post("/login", async (c) => {
   c.executionCtx.waitUntil(saveProfile(c.env.DB, session).catch((e) => console.error("profile", e)));
   // Password changed in SIS: keep the background checks of an opted-in student working.
   await c.env.DB.prepare("UPDATE watchers SET cred = ? WHERE user_id = ?")
-    .bind(await seal(session.cred, c.env.SESSION_SECRET), userId)
+    .bind(await seal(session.cred, c.env.SESSION_SECRET, "watcher-cred"), userId)
     .run();
   return c.json({ ok: true });
 });
@@ -196,14 +199,22 @@ internal.get("/watchers", async (c) => {
      JOIN push_subscriptions s ON s.user_id = w.user_id WHERE s.p256dh IS NOT NULL`,
   ).all<{ user_id: string; cred: string; seen: string | null; endpoint: string; p256dh: string; auth: string }>();
   const byUser = new Map<string, { userId: string; cred: Cred | null; seen: unknown; subscriptions: { endpoint: string; p256dh: string; auth: string }[] }>();
+  const resealed: D1PreparedStatement[] = [];
   for (const r of rows.results) {
     let w = byUser.get(r.user_id);
     if (!w) {
-      w = { userId: r.user_id, cred: await unseal<Cred>(r.cred, c.env.SESSION_SECRET), seen: r.seen ? JSON.parse(r.seen) : null, subscriptions: [] };
+      const opened = await unseal<Cred>(r.cred, c.env.SESSION_SECRET, "watcher-cred");
+      // Logins stored with the old shared key move to the watcher key on the next check.
+      if (opened?.legacy)
+        resealed.push(
+          c.env.DB.prepare("UPDATE watchers SET cred = ? WHERE user_id = ?").bind(await seal(opened.value, c.env.SESSION_SECRET, "watcher-cred"), r.user_id),
+        );
+      w = { userId: r.user_id, cred: opened?.value ?? null, seen: r.seen ? JSON.parse(r.seen) : null, subscriptions: [] };
       byUser.set(r.user_id, w);
     }
     w.subscriptions.push({ endpoint: r.endpoint, p256dh: r.p256dh, auth: r.auth });
   }
+  if (resealed.length) await c.env.DB.batch(resealed);
   return c.json({ watchers: [...byUser.values()].filter((w) => w.cred) });
 });
 
@@ -350,7 +361,7 @@ app.post("/watch", async (c) => {
     await c.env.DB.prepare(
       "INSERT INTO watchers (user_id, cred, created) VALUES (?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET cred = excluded.cred",
     )
-      .bind(s.userId, await seal(s.cred, c.env.SESSION_SECRET), Date.now())
+      .bind(s.userId, await seal(s.cred, c.env.SESSION_SECRET, "watcher-cred"), Date.now())
       .run();
   else await c.env.DB.prepare("DELETE FROM watchers WHERE user_id = ?").bind(s.userId).run();
   return c.json({ ok: true });

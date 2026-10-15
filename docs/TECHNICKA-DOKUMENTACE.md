@@ -32,7 +32,8 @@ telefon ──(jméno + heslo, HTTPS)──▶ Cloudflare Worker ──▶ sis.s
 1. Zadáš jméno a heslo do aplikace. Worker si stáhne přihlašovací stránku SIS (kvůli anti-forgery tokenu) a odešle
    formulář s *Remember me*.
 2. Cookies SIS relace, tvoje SIS ID **a přihlašovací údaje** zabalí do jedné cookie zašifrované **AES-GCM** klíčem,
-   který zná jen server. Cookie je `HttpOnly`, `Secure`, `SameSite=Strict`, takže ji JavaScript na stránce
+   který zná jen server (odvozený přes HKDF ze `SESSION_SECRET`; přihlášení uložená kvůli notifikacím mají vlastní,
+   jiný odvozený klíč). Cookie je `HttpOnly`, `Secure`, `SameSite=Strict`, takže ji JavaScript na stránce
    nepřečte a jiný web ji nepošle.
 3. **Server si nic z toho neukládá.** Cookie existuje jen v tvém zařízení a server ji při každém požadavku jen
    rozšifruje v paměti, použije a zapomene. Jediná výjimka je, když si zapneš notifikace
