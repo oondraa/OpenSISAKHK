@@ -157,6 +157,22 @@ app.get("/school/:file{[A-Z]{2}[12]\\.jpg}", async (c) => {
 
 app.get("/push/key", (c) => c.json({ key: c.env.VAPID_PUBLIC_KEY }));
 
+/**
+ * Public usage numbers for the promo site (GitHub Pages, a different origin — hence the CORS header). Aggregates
+ * only: how many students use the app and how they split across classes. No names, no photos, nothing per-student.
+ */
+app.get("/stats", async (c) => {
+  const [total, byClass] = await c.env.DB.batch<{ n: number; class?: string }>([
+    c.env.DB.prepare("SELECT COUNT(*) AS n FROM users"),
+    c.env.DB.prepare("SELECT class, COUNT(*) AS n FROM users WHERE class IS NOT NULL GROUP BY class"),
+  ]);
+  const classes: Record<string, number> = {};
+  for (const r of byClass.results) classes[r.class!] = r.n;
+  c.header("access-control-allow-origin", "*");
+  c.header("cache-control", "public, max-age=300");
+  return c.json({ users: total.results[0]?.n ?? 0, classes });
+});
+
 // ---------- internal: used by the GitHub Action (.github/workflows/watch.yml) ----------
 
 const internal = new Hono<Env>();

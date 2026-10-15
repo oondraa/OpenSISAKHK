@@ -1,0 +1,456 @@
+<!doctype html>
+<html lang="cs">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>OpenSISAKHK — škola v jedné appce</title>
+    <meta
+      name="description"
+      content="OpenSISAKHK je rychlá appka k školnímu systému SIS: rozvrh, známky, absence, obědy, projekty a upozornění na změny. Postavená studentem SPŠ a VOŠ HK."
+    />
+    <meta name="theme-color" content="#0e0e10" />
+    <meta property="og:title" content="OpenSISAKHK" />
+    <meta property="og:description" content="Škola v jedné appce — rozvrh, známky, absence, obědy a projekty ze SIS." />
+    <meta property="og:type" content="website" />
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --ember: #ff5a1f;
+        --ember-dark: #d9440f;
+        --ink: #0e0e10;
+        --paper: #f6f3ee;
+        --bg: #0e0e10;
+        --surface: #1a191c;
+        --surface-2: #232226;
+        --text: #f6f3ee;
+        --muted: #a5a1a6;
+        --separator: rgba(246, 243, 238, 0.12);
+        --radius: 18px;
+        --font: "Sora", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        margin: 0;
+        font-family: var(--font);
+        background: var(--bg);
+        color: var(--text);
+        -webkit-font-smoothing: antialiased;
+        line-height: 1.5;
+      }
+      a {
+        color: inherit;
+      }
+      .wrap {
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 0 24px;
+      }
+      /* ---- hero ---- */
+      header {
+        position: relative;
+        overflow: hidden;
+        padding: 80px 0 72px;
+        text-align: center;
+        background: radial-gradient(120% 120% at 50% -10%, rgba(255, 90, 31, 0.22), transparent 60%), var(--bg);
+      }
+      .logo {
+        width: 76px;
+        height: 76px;
+        border-radius: 22px;
+        display: block;
+        margin: 0 auto 24px;
+        box-shadow: 0 10px 40px rgba(255, 90, 31, 0.35);
+      }
+      h1 {
+        font-size: clamp(2.3rem, 7vw, 3.8rem);
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        margin: 0 0 14px;
+        line-height: 1.05;
+      }
+      h1 .ember {
+        color: var(--ember);
+      }
+      .lead {
+        font-size: clamp(1.05rem, 3vw, 1.3rem);
+        color: var(--muted);
+        max-width: 30ch;
+        margin: 0 auto 32px;
+      }
+      .cta {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        background: var(--ember);
+        color: #fff;
+        font-weight: 700;
+        font-size: 1.05rem;
+        text-decoration: none;
+        padding: 14px 26px;
+        border-radius: 999px;
+        transition: transform 0.15s ease, background 0.15s ease;
+      }
+      .cta:hover {
+        background: var(--ember-dark);
+        transform: translateY(-1px);
+      }
+      .cta svg {
+        width: 18px;
+        height: 18px;
+      }
+      .note {
+        margin-top: 16px;
+        font-size: 0.85rem;
+        color: var(--muted);
+      }
+      /* ---- sections ---- */
+      section {
+        padding: 64px 0;
+        border-top: 1px solid var(--separator);
+      }
+      h2 {
+        font-size: clamp(1.5rem, 4vw, 2rem);
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        margin: 0 0 8px;
+      }
+      .sub {
+        color: var(--muted);
+        margin: 0 0 36px;
+        max-width: 48ch;
+      }
+      /* ---- features ---- */
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+        gap: 16px;
+      }
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--separator);
+        border-radius: var(--radius);
+        padding: 24px;
+      }
+      .card .ic {
+        width: 38px;
+        height: 38px;
+        border-radius: 11px;
+        display: grid;
+        place-items: center;
+        background: rgba(255, 90, 31, 0.14);
+        color: var(--ember);
+        margin-bottom: 14px;
+      }
+      .card .ic svg {
+        width: 21px;
+        height: 21px;
+      }
+      .card h3 {
+        margin: 0 0 6px;
+        font-size: 1.05rem;
+        font-weight: 600;
+      }
+      .card p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.92rem;
+      }
+      /* ---- usage ---- */
+      .usage-top {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: 14px;
+        margin-bottom: 34px;
+      }
+      .bignum {
+        font-size: clamp(3.2rem, 12vw, 5.5rem);
+        font-weight: 800;
+        letter-spacing: -0.04em;
+        line-height: 1;
+        color: var(--ember);
+        font-variant-numeric: tabular-nums;
+      }
+      .bignum.loading {
+        color: var(--surface-2);
+      }
+      .bignum-label {
+        font-size: 1.2rem;
+        color: var(--muted);
+      }
+      .classes {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 56px 1fr auto;
+        align-items: center;
+        gap: 14px;
+      }
+      .row .cls {
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+      }
+      .bar {
+        height: 10px;
+        border-radius: 999px;
+        background: var(--surface-2);
+        overflow: hidden;
+      }
+      .bar > i {
+        display: block;
+        height: 100%;
+        border-radius: 999px;
+        background: linear-gradient(90deg, var(--ember-dark), var(--ember));
+        width: 0;
+        transition: width 0.8s cubic-bezier(0.32, 0.72, 0, 1);
+      }
+      .row .cnt {
+        color: var(--muted);
+        font-variant-numeric: tabular-nums;
+        min-width: 1.5ch;
+        text-align: right;
+      }
+      .usage-msg {
+        color: var(--muted);
+      }
+      .privacy {
+        margin-top: 30px;
+        font-size: 0.85rem;
+        color: var(--muted);
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+        max-width: 60ch;
+      }
+      .privacy svg {
+        width: 16px;
+        height: 16px;
+        flex: none;
+        margin-top: 3px;
+        color: var(--ember);
+      }
+      /* ---- footer ---- */
+      footer {
+        padding: 48px 0 64px;
+        border-top: 1px solid var(--separator);
+        color: var(--muted);
+        font-size: 0.88rem;
+        text-align: center;
+      }
+      footer a {
+        color: var(--text);
+        text-decoration: none;
+        border-bottom: 1px solid var(--separator);
+      }
+      footer a:hover {
+        border-color: var(--ember);
+      }
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          transition: none !important;
+          scroll-behavior: auto;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap">
+        <!-- Osis mark, Ember on Ink -->
+        <svg class="logo" viewBox="0 0 512 512" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+          <rect width="512" height="512" rx="120" fill="#FF5A1F" />
+          <path
+            fill="#0E0E10"
+            d="M116.1 366.88Q101.41 366.88 91.4 362.27Q81.39 357.66 76.28 349.67Q71.17 341.68 71.17 331.31L97.09 331.31Q97.09 335.06 99.18 338.15Q101.26 341.25 105.44 342.98Q109.62 344.7 116.1 344.7Q121.71 344.7 125.67 343.26Q129.63 341.82 131.72 339.23Q133.81 336.64 133.81 333.04Q133.81 328.43 129.92 325.91Q126.03 323.39 116.82 322.67L110.05 322.1Q93.78 320.66 84.13 311.87Q74.48 303.09 74.48 288.54Q74.48 278.18 79.3 270.83Q84.13 263.49 92.91 259.6Q101.7 255.71 113.65 255.71Q126.61 255.71 135.61 260.03Q144.61 264.35 149.36 272.2Q154.11 280.05 154.11 290.42L128.19 290.42Q128.19 286.96 126.46 284.08Q124.74 281.2 121.5 279.54Q118.26 277.89 113.65 277.89Q109.33 277.89 106.38 279.26Q103.42 280.62 101.91 283.07Q100.4 285.52 100.4 288.54Q100.4 292.58 103.14 295.46Q105.87 298.34 112.64 298.91L119.41 299.49Q131.22 300.5 140.29 304.6Q149.36 308.7 154.54 315.76Q159.73 322.82 159.73 333.04Q159.73 343.26 154.47 350.9Q149.22 358.53 139.5 362.7Q129.78 366.88 116.1 366.88M196.3 364L169.52 364L169.52 258.88L196.3 258.88L196.3 364M251.02 366.88Q236.34 366.88 226.33 362.27Q216.32 357.66 211.21 349.67Q206.1 341.68 206.1 331.31L232.02 331.31Q232.02 335.06 234.1 338.15Q236.19 341.25 240.37 342.98Q244.54 344.7 251.02 344.7Q256.64 344.7 260.6 343.26Q264.56 341.82 266.65 339.23Q268.74 336.64 268.74 333.04Q268.74 328.43 264.85 325.91Q260.96 323.39 251.74 322.67L244.98 322.1Q228.7 320.66 219.06 311.87Q209.41 303.09 209.41 288.54Q209.41 278.18 214.23 270.83Q219.06 263.49 227.84 259.6Q236.62 255.71 248.58 255.71Q261.54 255.71 270.54 260.03Q279.54 264.35 284.29 272.2Q289.04 280.05 289.04 290.42L263.12 290.42Q263.12 286.96 261.39 284.08Q259.66 281.2 256.42 279.54Q253.18 277.89 248.58 277.89Q244.26 277.89 241.3 279.26Q238.35 280.62 236.84 283.07Q235.33 285.52 235.33 288.54Q235.33 292.58 238.06 295.46Q240.8 298.34 247.57 298.91L254.34 299.49Q266.14 300.5 275.22 304.6Q284.29 308.7 289.47 315.76Q294.66 322.82 294.66 333.04Q294.66 343.26 289.4 350.9Q284.14 358.53 274.42 362.7Q264.7 366.88 251.02 366.88"
+          />
+        </svg>
+        <h1>Open<span class="ember">SIS</span>AKHK</h1>
+        <p class="lead">Školní systém SIS, konečně rychlý. Rozvrh, známky, absence, obědy a projekty na jednom místě.</p>
+        <a class="cta" id="open-app" href="#">
+          Otevřít aplikaci
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12h14M13 6l6 6-6 6" />
+          </svg>
+        </a>
+        <p class="note">Zdarma · funguje jako appka na telefonu · přihlášení je vždy jen zašifrované</p>
+      </div>
+    </header>
+
+    <section>
+      <div class="wrap">
+        <h2>Co umí</h2>
+        <p class="sub">Všechno, pro co jinak otevíráš SIS a Strávu — jen přehledně a bez čekání.</p>
+        <div class="grid">
+          <div class="card">
+            <div class="ic">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+            </div>
+            <h3>Rozvrh</h3>
+            <p>Osobní i stálý rozvrh. Změny a suplování vidíš hned, i odkaz na online hodinu.</p>
+          </div>
+          <div class="card">
+            <div class="ic">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 5.2 5.6.5-4.2 3.8 1.3 5.5L12 19.8 6.9 22l1.3-5.5L4 12.7l5.6-.5z"/></svg>
+            </div>
+            <h3>Známky</h3>
+            <p>Všechny předměty, váhy a komentáře. Spočítá, co potřebuješ z další písemky na známku, kterou chceš.</p>
+          </div>
+          <div class="card">
+            <div class="ic">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            </div>
+            <h3>Absence</h3>
+            <p>Zameškané hodiny a procenta po předmětech. Ukáže v rozvrhu, které hodiny ještě můžeš vynechat.</p>
+          </div>
+          <div class="card">
+            <div class="ic">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3h16M6 3v8a6 6 0 0 0 12 0V3M12 17v4M8 21h8"/></svg>
+            </div>
+            <h3>Obědy</h3>
+            <p>Jídelníček ze Strávy, objednání i zrušení oběda a aktuální stav kreditu.</p>
+          </div>
+          <div class="card">
+            <div class="ic">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v6l9 4 9-4V7"/></svg>
+            </div>
+            <h3>Projekty</h3>
+            <p>Přehled projektových voleb, tvoje volby i všechny projekty dané volby pohromadě.</p>
+          </div>
+          <div class="card">
+            <div class="ic">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            </div>
+            <h3>Upozornění</h3>
+            <p>Dá vědět, když přibude známka, absence nebo se přes noc přehází rozvrh.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="usage">
+      <div class="wrap">
+        <h2>Kdo ji používá</h2>
+        <p class="sub">Živá čísla přímo z aplikace — kolik studentů ji má a jak se rozkládají po třídách.</p>
+        <div class="usage-top">
+          <span class="bignum loading" id="user-count">—</span>
+          <span class="bignum-label" id="user-label">studentů</span>
+        </div>
+        <div class="classes" id="classes"></div>
+        <p class="usage-msg" id="usage-msg"></p>
+        <p class="privacy">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <span>Zobrazujeme jen souhrnné počty a třídy. Žádná jména, žádné fotky, nic, co by ukázalo na konkrétního člověka.</span>
+        </p>
+      </div>
+    </section>
+
+    <footer>
+      <div class="wrap">
+        <p>OpenSISAKHK — nezávislá studentská appka k systému SIS (KybernaIS) SPŠ a VOŠ Hradec Králové. Není oficiální produkt školy.</p>
+        <p><a href="https://github.com/oondraa/OpenSISAKHK" target="_blank" rel="noopener">Zdrojový kód na GitHubu</a></p>
+      </div>
+    </footer>
+
+    <script>
+      // The Pages build replaces %API_URL% with the Worker origin (GitHub secret API_URL). If it's still the
+      // placeholder (e.g. opened straight from disk), fall back to same-origin so nothing throws.
+      var API = "%API_URL%";
+      if (!API || API.indexOf("%") !== -1) API = location.origin;
+      API = API.replace(/\/$/, "");
+
+      document.getElementById("open-app").href = API + "/";
+
+      function plural(n) {
+        if (n === 1) return "student";
+        if (n >= 2 && n <= 4) return "studenti";
+        return "studentů";
+      }
+
+      function animateCount(el, to) {
+        var dur = 900,
+          start = performance.now(),
+          reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+        if (reduce || to === 0) {
+          el.textContent = to;
+          return;
+        }
+        function step(now) {
+          var t = Math.min(1, (now - start) / dur);
+          var eased = 1 - Math.pow(1 - t, 3);
+          el.textContent = Math.round(eased * to);
+          if (t < 1) requestAnimationFrame(step);
+        }
+        requestAnimationFrame(step);
+      }
+
+      fetch(API + "/api/stats", { headers: { accept: "application/json" } })
+        .then(function (r) {
+          if (!r.ok) throw new Error("http " + r.status);
+          return r.json();
+        })
+        .then(function (data) {
+          var count = data.users || 0;
+          var el = document.getElementById("user-count");
+          el.classList.remove("loading");
+          animateCount(el, count);
+          document.getElementById("user-label").textContent = plural(count);
+
+          var classes = data.classes || {};
+          var entries = Object.keys(classes).map(function (k) {
+            return [k, classes[k]];
+          });
+          // Most students first, then by class name.
+          entries.sort(function (a, b) {
+            return b[1] - a[1] || a[0].localeCompare(b[0], "cs");
+          });
+          var max = entries.reduce(function (m, e) {
+            return Math.max(m, e[1]);
+          }, 0);
+
+          var box = document.getElementById("classes");
+          if (!entries.length) {
+            document.getElementById("usage-msg").textContent =
+              count > 0 ? "Studenti zatím nemají potvrzenou třídu." : "";
+            return;
+          }
+          entries.forEach(function (e) {
+            var row = document.createElement("div");
+            row.className = "row";
+            var cls = document.createElement("span");
+            cls.className = "cls";
+            cls.textContent = e[0];
+            var bar = document.createElement("div");
+            bar.className = "bar";
+            var fill = document.createElement("i");
+            var cnt = document.createElement("span");
+            cnt.className = "cnt";
+            cnt.textContent = e[1];
+            bar.appendChild(fill);
+            row.appendChild(cls);
+            row.appendChild(bar);
+            row.appendChild(cnt);
+            box.appendChild(row);
+            requestAnimationFrame(function () {
+              fill.style.width = (max ? (e[1] / max) * 100 : 0) + "%";
+            });
+          });
+        })
+        .catch(function () {
+          document.getElementById("user-count").textContent = "–";
+          document.getElementById("user-count").classList.remove("loading");
+          document.getElementById("usage-msg").textContent = "Čísla se teď nepodařilo načíst, zkus to prosím za chvíli.";
+        });
+    </script>
+  </body>
+</html>
