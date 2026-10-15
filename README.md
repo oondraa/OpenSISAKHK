@@ -93,6 +93,10 @@ klient pro telefon.
 Oficiální mobilní aplikaci SIS Kyberny nemá, web je dělaný hlavně na počítač. OpenSISAKHK funguje na iPhonu i
 Androidu jako webová aplikace (PWA), nic se nestahuje z App Storu ani z Google Play.
 
+**Kde najdu rozvrh Kyberny?**
+Rozvrh celé školy je v KybernaIS na sis.ssakhk.cz/TimeTable/School, osobní rozvrh se suplováním v SIS po
+přihlášení. Na telefonu ho OpenSISAKHK ukáže i s během aktuální hodiny a notifikacemi o změnách.
+
 **Je to oficiální SIS Kyberny?**
 Ne. Oficiální je KybernaIS na sis.ssakhk.cz. OpenSISAKHK z něj jen čte tvoje data a zobrazuje je přehledněji. Napsal
 ji student Kyberny a škola ji nespravuje.
