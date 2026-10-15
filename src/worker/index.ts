@@ -17,6 +17,10 @@ type Bindings = {
   /** Fine-grained GitHub token allowed to trigger that Action (optional; without it the Action runs on its own schedule). */
   GITHUB_TOKEN?: string;
   GITHUB_REPO: string;
+  /** Telegram bot that receives bug reports and ideas from Settings (optional; without it reporting is off). */
+  TELEGRAM_BOT_TOKEN?: string;
+  /** Chat the bot posts the reports to (the developer's own chat with the bot). */
+  TELEGRAM_CHAT_ID?: string;
   DB: D1Database;
   /** Login attempts per IP; logins per SIS username, canteen logins and test pushes per student (wrangler.jsonc "ratelimits"). */
   LOGIN_IP_LIMIT?: RateLimit;
@@ -466,6 +470,43 @@ app.post("/push/test", async (c) => {
   const valid = subs.results.filter((s) => isPushEndpoint(s.endpoint));
   await notifyAll(c.env, valid);
   return c.json({ sent: valid.length });
+});
+
+// ---------- bug reports ----------
+
+const REPORT_MAX = 2000;
+
+/** A bug report or an idea from Settings, posted to the developer's Telegram as plain text (no markup to inject). */
+app.post("/report", async (c) => {
+  if (!c.env.TELEGRAM_BOT_TOKEN || !c.env.TELEGRAM_CHAT_ID) return c.json({ error: "not_configured" }, 503);
+  const { userId } = c.get("session");
+  if (await overLimit(c.env.LOGIN_USER_LIMIT, `report:${userId}`)) return c.json({ error: "rate_limited" }, 429);
+  const body = await c.req.json<{ kind?: string; text?: string; meta?: Record<string, unknown> }>().catch(() => null);
+  const text = typeof body?.text === "string" ? body.text.trim() : "";
+  if (!text || text.length > REPORT_MAX) return c.json({ error: "bad_text" }, 400);
+  const kind = body?.kind === "idea" ? "Nápad" : "Chyba";
+  // Short, known fields only: whatever else the client sends doesn't end up in the chat.
+  const meta = body?.meta ?? {};
+  const field = (k: string) => (typeof meta[k] === "string" ? (meta[k] as string).slice(0, 200) : "?");
+  const who = await c.env.DB.prepare("SELECT name, class FROM users WHERE id = ?").bind(userId).first<{ name: string | null; class: string | null }>();
+  const message = [
+    `${kind} · ${who?.name ?? "?"}${who?.class ? ` (${who.class})` : ""}`,
+    "",
+    text,
+    "",
+    `verze ${field("version")} · ${field("screen")} · ${field("layout")} · ${field("display")}`,
+    field("device"),
+  ].join("\n");
+  const res = await fetch(`https://api.telegram.org/bot${c.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ chat_id: c.env.TELEGRAM_CHAT_ID, text: message, disable_web_page_preview: true }),
+  });
+  if (!res.ok) {
+    console.error("telegram", res.status, await res.text().catch(() => ""));
+    return c.json({ error: "upstream" }, 502);
+  }
+  return c.json({ ok: true });
 });
 
 // ---------- profile & notifications ----------

@@ -786,6 +786,21 @@ p { margin: 0; }
 .class-grid .selected { background: var(--accent); color: var(--on-accent); }
 .sheet-later { min-height: 44px; font-size: 0.9375rem; color: var(--text-2); }
 
+/* ---------- Bug reports (Report.tsx) ---------- */
+.tint-report { --tint: var(--red); }
+.report-text {
+  width: 100%; min-height: 140px; resize: vertical; font: inherit; font-size: 1rem; line-height: 1.45; padding: 14px 16px;
+  border: 0; border-radius: 16px; background: var(--fill); color: var(--text); outline: none; transition: box-shadow 200ms ease;
+}
+.report-text:focus { box-shadow: inset 0 0 0 2px var(--accent); }
+.report-text::placeholder { color: var(--text-3); }
+.report-note { margin: -4px 2px 0; font-size: 0.8125rem; line-height: 1.4; color: var(--text-2); }
+.report-sent { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px; padding-top: 8px; }
+.report-sent .primary { margin-top: 6px; }
+.report-tick { width: 64px; height: 64px; display: grid; place-items: center; border-radius: 50%; background: color-mix(in srgb, var(--green) 16%, transparent); animation: welcome-pop 600ms cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+.report-tick svg { width: 32px; height: 32px; fill: none; stroke: var(--green); stroke-width: 2.8; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 24; stroke-dashoffset: 24; animation: report-draw 400ms ease 250ms forwards; }
+@keyframes report-draw { to { stroke-dashoffset: 0; } }
+
 /* ---------- Motion ---------- */
 /* New content just fades in, all at once. No per-row delays or movement: with cached data showing first and a
    refresh landing a moment later, cascades read as the screen falling apart. */

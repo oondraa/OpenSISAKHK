@@ -7,7 +7,8 @@ import { useCachedFetch } from "./useFetch";
 import { BUILT, VERSION } from "./version";
 import type { Layout } from "./App";
 import { LABELS, TAB_SLOTS, homeOrder, saveHomeOrder, saveTabOrder, tabOrder, type Part } from "./sections";
-import { TAB_ICONS } from "./icons";
+import { BugIcon, TAB_ICONS } from "./icons";
+import { ReportSheet } from "./Report";
 
 const b64ToBytes = (b64: string) => Uint8Array.from(atob(b64.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0));
 
@@ -28,6 +29,7 @@ export function Settings({ onError, onLogout, layout, onLayout, onOrder }: {
 }) {
   const me = useCachedFetch<Me>("me", api.me, onError);
   const [cls, setCls] = useState<string | null>(null);
+  const [report, setReport] = useState(false);
   const myClass = cls ?? me.data?.class ?? null;
   const [theme, setThemeState] = useState<Theme>(savedTheme);
   const [push, setPush] = useState<PushState>("busy");
@@ -92,6 +94,19 @@ export function Settings({ onError, onLogout, layout, onLayout, onOrder }: {
             <p className="profile-meta">{myClass ? `${myClass} · ` : ""}Přihlášeno přes SIS SSAKHK</p>
           </div>
         </div>
+
+        {/* Right under the profile, so a broken screen is two taps from being reported. */}
+        <Section footer="Přijde to rovnou autorovi appky.">
+          <button className="row more-row tint-report" onClick={() => setReport(true)}>
+            <span className="more-icon">
+              <BugIcon />
+            </span>
+            <span className="row-main">
+              <span className="row-title">Nahlásit chybu nebo nápad</span>
+            </span>
+            <Chevron />
+          </button>
+        </Section>
 
         <Section>
           <label className="row">
@@ -240,6 +255,7 @@ export function Settings({ onError, onLogout, layout, onLayout, onOrder }: {
           <span className="diag">{layoutInfo()}</span>
         </p>
       </div>
+      {report && <ReportSheet onClose={() => setReport(false)} onError={onError} />}
     </div>
   );
 }

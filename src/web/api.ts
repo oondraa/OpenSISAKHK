@@ -56,6 +56,8 @@ export const api = {
   pushSubscribe: (subscription: PushSubscriptionJSON) => post("/push/subscribe", { subscription }),
   pushUnsubscribe: (endpoint: string) => post("/push/unsubscribe", { endpoint }),
   pushTest: () => call<{ sent: number }>("/push/test", { method: "POST" }),
+  /** Bug report or idea, sent to the developer's Telegram. */
+  report: (kind: "bug" | "idea", text: string, meta: Record<string, string>) => post("/report", { kind, text, meta }),
 };
 
 export interface ProjectsResponse {
