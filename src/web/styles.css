@@ -597,6 +597,8 @@ p { margin: 0; }
 .field:focus-within > svg { stroke: var(--ember); }
 .field input { flex: 1; min-width: 0; font: inherit; font-size: 1.0625rem; padding: 16px 0; border: 0; background: transparent; color: var(--text); outline: none; }
 .field input::placeholder { color: var(--text-3); }
+.field-hint { margin: -2px 4px 4px; text-align: left; font-size: 0.8125rem; line-height: 1.4; color: var(--text-2); }
+.field-hint b { font-weight: 600; color: var(--text); }
 .field-eye { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 12px; }
 .field-eye:active { background: var(--fill); }
 .login-button {

@@ -192,6 +192,39 @@
       footer a { color: var(--text); text-decoration: none; border-bottom: 1px solid var(--separator); }
       footer a:hover { border-color: var(--ember); }
 
+      /* ---------- detailed lists ---------- */
+      .ticks { list-style: none; margin: 22px 0 0; padding: 0; display: flex; flex-direction: column; gap: 10px; max-width: 46ch; }
+      .ticks li { display: flex; gap: 12px; align-items: flex-start; color: #d8d4cd; font-size: 0.98rem; line-height: 1.45; }
+      .ticks svg { width: 18px; height: 18px; flex: none; margin-top: 2px; padding: 3px; border-radius: 50%; background: rgba(255, 90, 31, 0.16); color: var(--ember); box-sizing: content-box; }
+      .step .ticks li { opacity: 0; transform: translateX(-12px); transition: opacity 500ms var(--spring), transform 500ms var(--spring); }
+      .step.on .ticks li { opacity: 1; transform: none; }
+      .step.on .ticks li:nth-child(2) { transition-delay: 70ms; }
+      .step.on .ticks li:nth-child(3) { transition-delay: 140ms; }
+      .step.on .ticks li:nth-child(4) { transition-delay: 210ms; }
+
+      /* ---------- nav links ---------- */
+      .nav-links { display: flex; align-items: center; gap: 18px; }
+      .nav-link { font-size: 0.9rem; font-weight: 600; color: var(--muted); text-decoration: none; transition: color 200ms; }
+      .nav-link:hover { color: var(--text); }
+      @media (max-width: 520px) { .nav-link { display: none; } }
+
+      /* ---------- install ---------- */
+      .os-switch { position: relative; display: inline-grid; grid-template-columns: 1fr 1fr; margin-top: 36px; padding: 5px; border-radius: 999px; background: var(--surface); border: 1px solid var(--separator); }
+      .os-switch button { position: relative; z-index: 1; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 22px; border: 0; border-radius: 999px; background: none; color: var(--muted); font: inherit; font-weight: 600; cursor: pointer; transition: color 300ms; }
+      .os-switch button[aria-selected="true"] { color: #fff; }
+      .os-switch svg { width: 17px; height: 17px; }
+      .os-thumb { position: absolute; top: 5px; bottom: 5px; left: 5px; width: calc(50% - 5px); border-radius: 999px; background: linear-gradient(180deg, #ff7a45, var(--ember)); box-shadow: 0 8px 24px rgba(255, 90, 31, 0.4); transition: transform 500ms var(--bounce); }
+      .os-switch.android .os-thumb { transform: translateX(100%); }
+      .install { position: relative; margin-top: 28px; display: grid; }
+      .install-steps { grid-area: 1 / 1; list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+      .install-steps li { display: flex; gap: 14px; padding: 22px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--separator); opacity: 0; transform: translateY(24px) scale(0.97); transition: opacity 500ms var(--spring), transform 650ms var(--spring); pointer-events: none; }
+      .install-steps li:nth-child(2) { transition-delay: 60ms; } .install-steps li:nth-child(3) { transition-delay: 120ms; } .install-steps li:nth-child(4) { transition-delay: 180ms; }
+      .install.seen[data-os="ios"] [data-for="ios"] li, .install.seen[data-os="android"] [data-for="android"] li { opacity: 1; transform: none; pointer-events: auto; }
+      .install-steps .n { flex: none; width: 34px; height: 34px; border-radius: 11px; display: grid; place-items: center; font-weight: 800; color: var(--ember); background: rgba(255, 90, 31, 0.14); }
+      .install-steps b { display: block; font-size: 1.02rem; margin-bottom: 4px; }
+      .install-steps p { margin: 0; color: var(--muted); font-size: 0.92rem; }
+      .install-steps a { color: var(--ember); font-weight: 600; text-decoration: none; }
+
       /* ---------- small screens ---------- */
       @media (max-width: 860px) {
         .hero { padding-top: 32px; }
@@ -208,7 +241,7 @@
       }
       @media (prefers-reduced-motion: reduce) {
         *, *::before, *::after { animation-duration: 1ms !important; animation-iteration-count: 1 !important; transition-duration: 1ms !important; scroll-behavior: auto !important; }
-        .reveal, .row { opacity: 1; transform: none; }
+        .reveal, .row, .ticks li, .install-steps li { opacity: 1; transform: none; }
       }
     </style>
   </head>
@@ -218,7 +251,7 @@
     <nav class="top" id="nav">
       <div class="wrap">
         <a class="brand" href="#"><img src="favicon.svg" alt="" /><span>Open</span><b>SISAKHK</b></a>
-        <a class="nav-cta app-link" href="#">Otevřít appku</a>
+        <span class="nav-links"><a class="nav-link" href="#instalace">Jak nainstalovat</a><a class="nav-cta app-link" href="#">Otevřít appku</a></span>
       </div>
     </nav>
 
@@ -237,11 +270,11 @@
               Otevřít aplikaci
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
             </a>
-            <a class="ghost" href="#funkce">Co umí ↓</a>
+            <a class="ghost" href="#instalace">Jak nainstalovat ↓</a>
           </div>
           <p class="note fade-in" style="animation-delay: 680ms">
             <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>Zdarma</span>
-            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>Jako appka na telefonu</span>
+            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>Bez App Storu, přidáš si ji na plochu</span>
             <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>Přihlášení jen zašifrované</span>
           </p>
         </div>
@@ -294,35 +327,35 @@
               <div class="num">01</div>
               <h3>Rozvrh, který ví, co je teď.</h3>
               <p>Nahoře běžící hodina a kolik zbývá, pod ní celý den. Suplování a změny vidíš hned a oběd máš přímo mezi hodinami.</p>
-              <div class="pills"><span>Teď a další hodina</span><span>Změny</span><span>Odkaz na Meet</span></div>
+              <ul class="ticks"><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg><span>Nahoře běžící hodina, kolik zbývá do konce a kam jdeš potom</span></li><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg><span>Suplování a změny označené, odkaz na Meet u online hodin</span></li><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg><span>Delší pauzy jako volno, oběd přímo mezi hodinami i s tím, co máš objednané</span></li><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg><span>Přepínání dnů tažením, šipkami další týdny</span></li></ul>
               <img class="inline-phone" src="shots/timetable.webp" alt="Obrazovka Rozvrh" loading="lazy" />
             </div>
             <div class="step" data-i="1">
               <div class="num">02</div>
               <h3>Absence pod kontrolou.</h3>
               <p>Procenta po předmětech s hranicí 30 %. Kalkulačka ti v rozvrhu ukáže, které hodiny ještě můžeš vynechat.</p>
-              <div class="pills"><span>Hranice 30 %</span><span>Co můžu vynechat</span></div>
+              <ul class="ticks"><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg><span>Zameškané procento u každého předmětu s čárou na hranici 30 %</span></li><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg><span>Kolik hodin ještě můžeš vynechat do konce pololetí, nebo kolik musíš odchodit</span></li><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg><span>Kalkulačka: rozvrh po dnech a u každé hodiny, jestli ji můžeš vynechat</span></li><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg><span>Seznam zameškaných hodin, omluvené i neomluvené</span></li></ul>
               <img class="inline-phone" src="shots/absence.webp" alt="Obrazovka Absence" loading="lazy" />
             </div>
             <div class="step" data-i="2">
               <div class="num">03</div>
               <h3>Obědy na jedno klepnutí.</h3>
-              <p>Jídelníček ze Strávy, co máš objednané, a oběd změníš jedním klepnutím.</p>
-              <div class="pills"><span>Strava</span><span>Objednávky</span><span>Alergeny</span></div>
+              <p>Propoj účet ze Stravy a jídelníček s objednávkami máš přímo v appce. Oběd si objednáš nebo změníš jedním klepnutím.</p>
+              <ul class="ticks"><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg><span>Jídelníček na další týdny s cenou a alergeny</span></li><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg><span>Co máš na který den objednané</span></li><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg><span>Objednání, změna i zrušení oběda jedním klepnutím</span></li><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg><span>Do kdy jde objednávka ještě změnit</span></li></ul>
               <img class="inline-phone" src="shots/lunch.webp" alt="Obrazovka Obědy" loading="lazy" />
             </div>
             <div class="step" data-i="3">
               <div class="num">04</div>
               <h3>Je posilovna volná?</h3>
-              <p>Podle rozvrhu školy hned vidíš, kdy je posilovna obsazená a kdy na ni můžeš.</p>
-              <div class="pills"><span>Teď volno / obsazeno</span><span>Celý den</span></div>
+              <p>Nemusíš chodit zkoušet, jestli je volno. Appka ze školního rozvrhu pozná, kdy v posilovně zrovna probíhá hodina.</p>
+              <ul class="ticks"><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg><span>Hned nahoře, jestli je posilovna teď volná, a do kdy</span></li><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg><span>Celý den po hodinách: volno, nebo která skupina tam má hodinu</span></li><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg><span>Podle veřejného rozvrhu školy, aktualizuje se sám</span></li></ul>
               <img class="inline-phone" src="shots/gym.webp" alt="Obrazovka Posilovna" loading="lazy" />
             </div>
             <div class="step" data-i="4">
               <div class="num">05</div>
               <h3>Dá vědět, co je nového.</h3>
               <p>Nová známka, absence nebo rozvrh přeházený ve 3 ráno. Přijde ti notifikace, i když appku nemáš otevřenou.</p>
-              <div class="pills"><span>Push notifikace</span><span>Změny přes noc</span></div>
+              <ul class="ticks"><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg><span>Nová známka nebo absence přijde jako notifikace</span></li><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg><span>Změna tvého rozvrhu, i když ho škola přepíše ve 3 ráno</span></li><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg><span>Kontroluje se každou půlhodinu přes den, appku nemusíš mít otevřenou</span></li><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg><span>Zapíná se v Nastavení, vypnutím se uložené přihlášení smaže</span></li></ul>
               <img class="inline-phone" src="shots/settings.webp" alt="Nastavení notifikací" loading="lazy" />
             </div>
           </div>
@@ -332,7 +365,7 @@
           <div class="card reveal">
             <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20v-7M12 20V5M19 20v-10" /></svg></div>
             <h3>Známky a cílové známky</h3>
-            <p>Všechny předměty, váhy a komentáře. Řekne ti, co potřebuješ z další písemky na známku, kterou chceš.</p>
+            <p>Průměr každého předmětu, všechny známky s vahou a komentářem. Nastavíš si cílovou známku a appka řekne, co potřebuješ z další písemky.</p>
           </div>
           <div class="card reveal" style="--d: 100ms">
             <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z" /></svg></div>
@@ -342,8 +375,52 @@
           <div class="card reveal" style="--d: 200ms">
             <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="14" rx="3" /><path d="M3 10h18M16 15h2" /></svg></div>
             <h3>Finance</h3>
-            <p>Školné a fond na jednom místě, bez hledání v SIS.</p>
+            <p>Školné a fond na jednom místě, co máš zaplacené a co ještě zbývá.</p>
           </div>
+          <div class="card reveal">
+            <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7.5" height="7.5" rx="2" /><rect x="13.5" y="3" width="7.5" height="7.5" rx="2" /><rect x="3" y="13.5" width="7.5" height="7.5" rx="2" /><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2" /></svg></div>
+            <h3>Plocha podle tebe</h3>
+            <p>Dlaždice rovnou ukazují to důležité: hodinu, průměr, absenci, oběd. Pořadí si zvolíš, místo plochy můžeš mít lištu dole.</p>
+          </div>
+          <div class="card reveal" style="--d: 100ms">
+            <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4 14h7l-1 8 9-12h-7z" /></svg></div>
+            <h3>Rychlá i bez signálu</h3>
+            <p>Poslední data se ukážou hned po otevření a v pozadí se obnoví. Rozvrh vidíš, i když ve sklepě nechytáš.</p>
+          </div>
+          <div class="card reveal" style="--d: 200ms">
+            <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4" /><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4" /></svg></div>
+            <h3>Světlý i tmavý vzhled</h3>
+            <p>Podle telefonu, nebo si ho nastavíš sám.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="instalace">
+      <div class="wrap">
+        <p class="kicker reveal">Instalace</p>
+        <h2 class="reveal" style="--d: 80ms">Žádný obchod s aplikacemi.</h2>
+        <p class="sub reveal" style="--d: 160ms">OpenSISAKHK je webová aplikace (PWA). Nestahuješ ji z App Storu ani z Google Play: otevřeš ji v prohlížeči a přidáš si ji na plochu. Pak se spouští z ikony jako každá jiná appka, přes celou obrazovku, a umí posílat notifikace. Nezabírá skoro žádné místo a aktualizuje se sama.</p>
+
+        <div class="os-switch reveal" style="--d: 220ms" role="tablist" aria-label="Telefon">
+          <span class="os-thumb" aria-hidden="true"></span>
+          <button role="tab" aria-selected="true" data-os="ios"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16.4 12.6c0-2.6 2.1-3.8 2.2-3.9-1.2-1.8-3.1-2-3.8-2-1.6-.2-3.1.9-3.9.9-.8 0-2-.9-3.4-.9-1.7 0-3.3 1-4.2 2.6-1.8 3.1-.5 7.7 1.3 10.2.9 1.2 1.9 2.6 3.2 2.6 1.3-.1 1.8-.8 3.3-.8 1.6 0 2 .8 3.4.8 1.4 0 2.3-1.3 3.1-2.5 1-1.4 1.4-2.8 1.4-2.9-.1 0-2.6-1-2.6-4.1zM13.9 5.1c.7-.9 1.2-2.1 1.1-3.3-1 0-2.3.7-3 1.6-.7.8-1.3 2-1.1 3.2 1.1.1 2.3-.6 3-1.5z"/></svg>iPhone</button>
+          <button role="tab" aria-selected="false" data-os="android"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.6 9.5l1.8-3.1a.4.4 0 0 0-.7-.4l-1.8 3.1a11 11 0 0 0-9.8 0L5.3 6a.4.4 0 1 0-.7.4l1.8 3.1A8.6 8.6 0 0 0 2 16.5h20a8.6 8.6 0 0 0-4.4-7zM7.5 14a1 1 0 1 1 0-2 1 1 0 0 1 0 2zm9 0a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/></svg>Android</button>
+        </div>
+
+        <div class="install" data-os="ios">
+          <ol class="install-steps" data-for="ios">
+            <li><span class="n">1</span><div><b>Otevři appku v Safari</b><p>Na iPhonu to musí být Safari. Klepni na <a class="app-link" href="#">Otevřít aplikaci</a>.</p></div></li>
+            <li><span class="n">2</span><div><b>Klepni na Sdílet</b><p>Ikona čtverečku se šipkou nahoru, dole na liště (na iPadu nahoře).</p></div></li>
+            <li><span class="n">3</span><div><b>Přidat na plochu</b><p>Sjeď v nabídce níž a vyber „Přidat na plochu“, pak „Přidat“.</p></div></li>
+            <li><span class="n">4</span><div><b>Spouštěj z ikony</b><p>Notifikace na iPhonu fungují jen takhle z plochy (od iOS 16.4). Zapneš je v Nastavení appky.</p></div></li>
+          </ol>
+          <ol class="install-steps" data-for="android">
+            <li><span class="n">1</span><div><b>Otevři appku v Chromu</b><p>Klepni na <a class="app-link" href="#">Otevřít aplikaci</a>. Často se rovnou nabídne „Instalovat aplikaci“.</p></div></li>
+            <li><span class="n">2</span><div><b>Otevři menu</b><p>Tři tečky vpravo nahoře.</p></div></li>
+            <li><span class="n">3</span><div><b>Instalovat aplikaci</b><p>Nebo „Přidat na plochu“, podle verze Chromu. Potvrď „Instalovat“.</p></div></li>
+            <li><span class="n">4</span><div><b>Hotovo</b><p>Appka je na ploše i v seznamu aplikací. Notifikace zapneš v Nastavení appky.</p></div></li>
+          </ol>
         </div>
       </div>
     </section>
@@ -475,6 +552,18 @@
         }, { threshold: 0.3 });
         o.observe(el);
       }
+
+      // Install steps: iPhone or Android, guessed from the device, switchable.
+      var install = document.querySelector(".install");
+      var osSwitch = document.querySelector(".os-switch");
+      function pickOs(os) {
+        install.dataset.os = os;
+        osSwitch.classList.toggle("android", os === "android");
+        osSwitch.querySelectorAll("button").forEach(function (b) { b.setAttribute("aria-selected", String(b.dataset.os === os)); });
+      }
+      pickOs(/android/i.test(navigator.userAgent) ? "android" : "ios");
+      osSwitch.addEventListener("click", function (e) { var b = e.target.closest("button"); if (b) pickOs(b.dataset.os); });
+      whenSeen(install, function () { install.classList.add("seen"); });
 
       fetch(API + "/api/stats", { headers: { accept: "application/json" } })
         .then(function (r) {

@@ -67,8 +67,12 @@ export function Login({ onDone }: { onDone: (origin: { x: number; y: number }) =
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
+              aria-describedby="username-hint"
             />
           </label>
+          <p className="field-hint" id="username-hint">
+            Je to část školního e-mailu před zavináčem. Z <b>novak.adam</b>@ssakhk.cz je to <b>novak.adam</b>.
+          </p>
           <label className="field">
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <rect x="4.5" y="10.5" width="15" height="10" rx="2.5" />
