@@ -27,7 +27,7 @@ Web: **[oondraa.github.io/OpenSISAKHK](https://oondraa.github.io/OpenSISAKHK/)**
 
 ## Proč
 
-SIS Kyberny (KybernaIS na sis.ssakhk.cz) je dělaný na počítač. Na telefonu se v něm hledá, přibližuje a ztrácí. OpenSISAKHK bere stejná data a skládá je
+Kyberna nemá Bakaláře, ale vlastní SIS (KybernaIS na sis.ssakhk.cz), a ten je dělaný na počítač. Na telefonu se v něm hledá, přibližuje a ztrácí. OpenSISAKHK je neoficiální studentský klient: bere stejná data a skládá je
 do appky, kterou otevřeš jedním palcem mezi hodinami: co mám teď, kde, co je k obědu a jak jsem na tom s absencí.
 
 ## Co umí
