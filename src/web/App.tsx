@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api, cache, Unauthorized } from "./api";
-import { Login } from "./Login";
+import { Login, Welcome } from "./Login";
 import { Timetable } from "./Timetable";
 import { Gym } from "./Gym";
 import { Grades } from "./Grades";
@@ -43,6 +43,8 @@ export function App() {
   const home = useRef<HTMLDivElement>(null);
   const layer = useRef<LayerHandle>(null);
   const swiped = useRef(false);
+  // Signing in plays the welcome over the switch from Login to the app (Login.tsx).
+  const [welcome, setWelcome] = useState<{ x: number; y: number } | null>(null);
 
   // Each open screen is a history entry, so the system back (Android, browser) closes it like the back button.
   useEffect(() => {
@@ -100,14 +102,24 @@ export function App() {
     [signOut],
   );
 
+  // Always the second child of the top fragment, so it stays mounted while Login is swapped for the app under it.
+  const overlay = welcome && (
+    <Welcome
+      origin={welcome}
+      onCovered={() => {
+        cache.set("loggedIn", true);
+        setLoggedIn(true);
+      }}
+      onDone={() => setWelcome(null)}
+    />
+  );
+
   if (!loggedIn)
     return (
-      <Login
-        onDone={() => {
-          cache.set("loggedIn", true);
-          setLoggedIn(true);
-        }}
-      />
+      <>
+        <Login onDone={setWelcome} />
+        {overlay}
+      </>
     );
 
   // Switched in Settings, so Settings stays on screen: as the selected tab, or opened over the home grid.
@@ -155,37 +167,43 @@ export function App() {
     const bar: Tab[] = [...tabOrder().slice(0, TAB_SLOTS), "more"];
     const inMore = !bar.includes(tab);
     return (
-      <div className="app">
-        <main className="tab-content" key={tab}>
-          {inMore ? <BackContext.Provider value={moreBack}>{content(tab)}</BackContext.Provider> : content(tab)}
-        </main>
-        <nav className="tabbar" aria-label="Hlavní navigace">
-          {bar.map((t) => {
-            const active = tab === t || (t === "more" && inMore);
-            return (
-              <button key={t} className={active ? "active" : ""} aria-current={active ? "page" : undefined} onClick={() => setTab(t)}>
-                {TAB_ICONS[t]}
-                <span>{BAR_LABELS[t] ?? LABELS[t]}</span>
-              </button>
-            );
-          })}
-        </nav>
-        <ClassPrompt onError={onError} />
-      </div>
+      <>
+        <div className="app">
+          <main className="tab-content" key={tab}>
+            {inMore ? <BackContext.Provider value={moreBack}>{content(tab)}</BackContext.Provider> : content(tab)}
+          </main>
+          <nav className="tabbar" aria-label="Hlavní navigace">
+            {bar.map((t) => {
+              const active = tab === t || (t === "more" && inMore);
+              return (
+                <button key={t} className={active ? "active" : ""} aria-current={active ? "page" : undefined} onClick={() => setTab(t)}>
+                  {TAB_ICONS[t]}
+                  <span>{BAR_LABELS[t] ?? LABELS[t]}</span>
+                </button>
+              );
+            })}
+          </nav>
+          <ClassPrompt onError={onError} />
+        </div>
+        {overlay}
+      </>
     );
   }
 
   return (
     <>
-      <Home homeRef={home} onOpen={open} onError={onError} inert={!!screen} />
-      {screen && (
-        <BackContext.Provider value={back}>
-          <ScreenLayer key={screen.tab} tile={screen.tab} home={home} animate={screen.animate} handle={layer} onClosed={closed}>
-            {content(screen.tab)}
-          </ScreenLayer>
-        </BackContext.Provider>
-      )}
-      <ClassPrompt onError={onError} />
+      <>
+        <Home homeRef={home} onOpen={open} onError={onError} inert={!!screen} />
+        {screen && (
+          <BackContext.Provider value={back}>
+            <ScreenLayer key={screen.tab} tile={screen.tab} home={home} animate={screen.animate} handle={layer} onClosed={closed}>
+              {content(screen.tab)}
+            </ScreenLayer>
+          </BackContext.Provider>
+        )}
+        <ClassPrompt onError={onError} />
+      </>
+      {overlay}
     </>
   );
 }
