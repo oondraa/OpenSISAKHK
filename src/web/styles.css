@@ -772,3 +772,19 @@ p { margin: 0; }
 .skip-card.planned.skip-no .skip-note { color: var(--red); font-weight: 500; }
 .skip-actions { margin-top: 16px; }
 @media (prefers-reduced-motion: reduce) { .subscreen { animation: fade-in 160ms ease-out both; } }
+
+/* ---------- Target grades ---------- */
+.calc-entry-bottom { margin: 0 0 16px; }
+.goal-line { display: flex; align-items: center; gap: 6px; font-size: 0.8125rem; color: var(--text-2); }
+.goal-line .chip { font-size: 0.75rem; }
+.goal-need { margin-left: 4px; font-weight: 600; font-family: var(--num); }
+.goal-safe { color: var(--green); }
+.goal-grade { color: var(--text); }
+.goal-ones { color: var(--red); }
+.goal-body { padding: 0 16px 14px 76px; display: flex; flex-direction: column; gap: 6px; }
+.goal-body .segmented { min-width: 0; }
+.goal-label { font-size: 0.75rem; color: var(--text-2); margin-top: 4px; }
+.goal-sentence { font-size: 0.9375rem; line-height: 1.4; margin-top: 6px; }
+.goal-sentence.goal-grade { color: var(--text); }
+.goal-now { font-size: 0.8125rem; color: var(--text-2); }
+@media (max-width: 380px) { .goal-body { padding-left: 16px; } }

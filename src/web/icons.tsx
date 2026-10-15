@@ -81,6 +81,14 @@ export const CalculatorIcon = ({ size }: { size?: number }) => (
   </Icon>
 );
 
+export const TargetIcon = ({ size }: { size?: number }) => (
+  <Icon size={size}>
+    <circle cx="12" cy="12" r="8.5" />
+    <circle cx="12" cy="12" r="4.5" />
+    <circle cx="12" cy="12" r="0.8" />
+  </Icon>
+);
+
 export const SunIcon = ({ size }: { size?: number }) => (
   <Icon size={size}>
     <circle cx="12" cy="12" r="4" />

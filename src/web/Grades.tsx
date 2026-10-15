@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { api, type GradesResponse } from "./api";
 import type { Subject } from "../worker/parse";
 import { Chevron, Empty, LargeHeader, SkeletonList } from "./ui";
 import { useCachedFetch } from "./useFetch";
-import { BookIcon } from "./icons";
+import { BookIcon, TargetIcon } from "./icons";
+import { BackContext } from "./layer";
+import { GradeGoals } from "./GradeGoals";
 
 export function tone(n: number | null) {
   if (n === null) return "neutral";
@@ -20,6 +22,18 @@ export function Grades({ onError }: { onError: (e: unknown) => boolean }) {
   const averages = subjects.map((s) => s.average).filter((a): a is number => a !== null);
   const overall = averages.length ? averages.reduce((a, b) => a + b, 0) / averages.length : null;
   const gradeCount = subjects.reduce((n, s) => n + s.grades.length, 0);
+  // Target grades open inside this screen, like the absence calculator.
+  const [goals, setGoals] = useState(false);
+  const goalsBack = useMemo(() => ({ go: () => setGoals(false), label: "Známky" }), []);
+
+  if (goals)
+    return (
+      <BackContext.Provider value={goalsBack}>
+        <div className="subscreen">
+          <GradeGoals subjects={subjects} />
+        </div>
+      </BackContext.Provider>
+    );
 
   return (
     <div className="screen">
@@ -36,6 +50,20 @@ export function Grades({ onError }: { onError: (e: unknown) => boolean }) {
               <span>{subjects.length} předmětů</span>
               <span>{gradeCount} známek</span>
             </div>
+          </div>
+        )}
+        {subjects.length > 0 && (
+          <div className="list calc-entry calc-entry-bottom">
+            <button className="row more-row tint-grades" onClick={() => setGoals(true)}>
+              <span className="more-icon">
+                <TargetIcon />
+              </span>
+              <span className="row-main">
+                <span className="row-title">Cílové známky</span>
+                <span className="row-sub">Co potřebuješ z dalších písemek</span>
+              </span>
+              <Chevron />
+            </button>
           </div>
         )}
         {subjects.length > 0 ? (
