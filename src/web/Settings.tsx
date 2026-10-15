@@ -7,7 +7,7 @@ import { useCachedFetch } from "./useFetch";
 import { BUILT, VERSION } from "./version";
 import type { Layout } from "./App";
 import { LABELS, TAB_SLOTS, homeOrder, saveHomeOrder, saveTabOrder, tabOrder, type Part } from "./sections";
-import { BugIcon, TAB_ICONS } from "./icons";
+import { BugIcon, CoffeeIcon, TAB_ICONS } from "./icons";
 import { ReportSheet } from "./Report";
 
 const b64ToBytes = (b64: string) => Uint8Array.from(atob(b64.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0));
@@ -241,6 +241,18 @@ export function Settings({ onError, onLogout, layout, onLayout, onOrder }: {
           </div>
         </Section>
 
+        <Section footer="Appka je zdarma a bez reklam. Když ti šetří nervy, můžeš autorovi koupit kafe.">
+          <a className="row more-row tint-support" href="https://ko-fi.com/oondraa" target="_blank" rel="noreferrer">
+            <span className="more-icon">
+              <CoffeeIcon />
+            </span>
+            <span className="row-main">
+              <span className="row-title">Podpořit na Ko-fi</span>
+            </span>
+            <Chevron />
+          </a>
+        </Section>
+
         <Section>
           <button className="row row-button destructive" onClick={onLogout}>
             Odhlásit se
@@ -250,7 +262,7 @@ export function Settings({ onError, onLogout, layout, onLayout, onOrder }: {
         <p className="list-footer center">
           OpenSISAKHK {VERSION} · sestaveno {BUILT}
           <br />
-          neoficiální aplikace, není spojená se školou
+          studentská aplikace, není spojená se školou
           <br />
           <span className="diag">{layoutInfo()}</span>
         </p>

@@ -788,6 +788,8 @@ p { margin: 0; }
 
 /* ---------- Bug reports (Report.tsx) ---------- */
 .tint-report { --tint: var(--red); }
+.tint-support { --tint: var(--orange); }
+a.row { color: inherit; text-decoration: none; }
 .report-text {
   width: 100%; min-height: 140px; resize: vertical; font: inherit; font-size: 1rem; line-height: 1.45; padding: 14px 16px;
   border: 0; border-radius: 16px; background: var(--fill); color: var(--text); outline: none; transition: box-shadow 200ms ease;

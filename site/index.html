@@ -202,6 +202,12 @@
       .faq summary::after { content: "+"; color: var(--ember); font-weight: 700; transition: transform 300ms var(--spring); }
       .faq details[open] summary::after { transform: rotate(45deg); }
       .faq p { margin: 0 0 18px; color: var(--muted); font-size: 0.96rem; }
+      .support { margin-top: 28px; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 14px 20px; color: var(--muted); font-size: 0.95rem; text-align: center; }
+      .support-btn { display: inline-flex; align-items: center; gap: 9px; padding: 11px 20px; border-radius: 999px; border: 1px solid var(--separator); background: var(--surface); color: var(--text); font-weight: 600; text-decoration: none; transition: border-color 300ms, transform 300ms var(--spring); }
+      .support-btn svg { width: 18px; height: 18px; color: var(--ember); transition: transform 500ms var(--bounce); }
+      .support-btn:hover { border-color: rgba(255, 90, 31, 0.45); }
+      .support-btn:hover svg { transform: rotate(-10deg) scale(1.12); }
+      .support-btn:active { transform: scale(0.96); }
       footer { padding: 48px 0 64px; color: var(--muted); font-size: 0.88rem; text-align: center; }
       footer a { color: var(--text); text-decoration: none; border-bottom: 1px solid var(--separator); }
       footer a:hover { border-color: var(--ember); }
@@ -508,13 +514,17 @@
             </a>
           </div>
         </div>
+        <div class="support reveal">
+          <span>Appka je zdarma a bez reklam. Když ti šetří nervy, kup autorovi kafe.</span>
+          <a class="support-btn" href="https://ko-fi.com/oondraa" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 9h12v5.5a5 5 0 0 1-5 5h-2a5 5 0 0 1-5-5z" /><path d="M16.5 10.5h1.5a2.5 2.5 0 0 1 0 5h-1.6M8.5 3.5v2.5M12.5 3.5v2.5" /></svg>Podpořit na Ko-fi</a>
+        </div>
       </div>
     </section>
 
     <footer>
       <div class="wrap">
         <p>OpenSISAKHK je nezávislá studentská appka k systému SIS (KybernaIS) Kyberny, Střední školy a vyšší odborné školy aplikované kybernetiky v Hradci Králové. Není oficiální produkt školy.</p>
-        <p><a href="https://github.com/oondraa/OpenSISAKHK" target="_blank" rel="noopener">Zdrojový kód na GitHubu</a></p>
+        <p><a href="https://github.com/oondraa/OpenSISAKHK" target="_blank" rel="noopener">Zdrojový kód na GitHubu</a> · <a href="https://ko-fi.com/oondraa" target="_blank" rel="noopener">Podpořit na Ko-fi</a></p>
       </div>
     </footer>
 

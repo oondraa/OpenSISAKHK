@@ -96,6 +96,13 @@ export const BugIcon = ({ size }: { size?: number }) => (
   </Icon>
 );
 
+export const CoffeeIcon = ({ size }: { size?: number }) => (
+  <Icon size={size}>
+    <path d="M4.5 9h12v5.5a5 5 0 0 1-5 5h-2a5 5 0 0 1-5-5z" />
+    <path d="M16.5 10.5h1.5a2.5 2.5 0 0 1 0 5h-1.6M8.5 3.5v2.5M12.5 3.5v2.5" />
+  </Icon>
+);
+
 export const SunIcon = ({ size }: { size?: number }) => (
   <Icon size={size}>
     <circle cx="12" cy="12" r="4" />

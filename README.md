@@ -16,6 +16,7 @@ Web: **[oondraa.github.io/OpenSISAKHK](https://oondraa.github.io/OpenSISAKHK/)**
   <a href="https://opensisakhk.opensisakhk.workers.dev"><img alt="Otevřít aplikaci" src="https://img.shields.io/badge/Otev%C5%99%C3%ADt_aplikaci-FF5A1F?style=for-the-badge&labelColor=0E0E10"></a>
   <img alt="iPhone i Android" src="https://img.shields.io/badge/iPhone_%C2%B7_Android_%C2%B7_web-0E0E10?style=for-the-badge">
   <img alt="Zdarma" src="https://img.shields.io/badge/zdarma-0E0E10?style=for-the-badge">
+  <a href="https://ko-fi.com/oondraa"><img alt="Podpořit na Ko-fi" src="https://img.shields.io/badge/Podpo%C5%99it_na_Ko--fi-0E0E10?style=for-the-badge&logo=kofi&logoColor=FF5A1F"></a>
 </p>
 
 <a href="brand/promo.mp4"><img alt="Ukázka OpenSISAKHK: rozvrh se změnami a obědem, volná posilovna, hlídání absence" src="brand/promo.gif" width="100%"></a>
@@ -85,6 +86,10 @@ frontendu, Hono na serveru, vlastní OCR, které čte rozvrh školy z obrázků 
 šifrovaný bez knihoven. Všechno o architektuře, vývoji a nasazení je v
 [technické dokumentaci](docs/TECHNICKA-DOKUMENTACE.md).
 
+## Podpora
+
+Appka je zdarma a bez reklam. Když ti šetří nervy, můžeš autorovi **[koupit kafe na Ko-fi](https://ko-fi.com/oondraa)**.
+
 ## Licence
 
 Kód je veřejný k nahlédnutí, ale **není open source**. Platí
@@ -95,4 +100,4 @@ licence, viz [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).
 ---
 
 <sub>Studentská aplikace. Není spojená se školou, s autory SIS ani se Strava.cz. Vytvořil
-[Ondra](https://github.com/oondraa).</sub>
+[Ondra](https://github.com/oondraa) · [Ko-fi](https://ko-fi.com/oondraa).</sub>
