@@ -32,24 +32,33 @@ do appky, kterou otevřeš jedním palcem mezi hodinami: co mám teď, kde, co j
 
 ## Co umí
 
-### Rozvrh Kyberny, který ví, co je teď
+### Rozvrh a suplování na Kyberně
 Rozvrh i se suplováním přímo ze SIS. Otevře se rovnou na aktuální hodině. Nahoře karta **Teď / Další** s učebnou a odpočtem, změny od školy jsou
 zvýrazněné. Po poslední hodině ti rovnou ukáže zítřek. Mezi dny se přejíždí prstem, u hodin na dálku je odkaz na Meet.
 
-### Oběd přímo v rozvrhu
-Propoj účet ve Strava.cz a u oběda uvidíš, jaké číslo máš objednané a co to je. Nebo že nemáš objednáno, dokud je
-ještě čas to změnit.
+### Jídelna: oběd přímo v rozvrhu
+Propoj účet ve Strava.cz, přes který školní jídelna funguje, a u oběda uvidíš, jaké číslo máš objednané a co to je.
+Nebo že nemáš objednáno, dokud je ještě čas to změnit. V záložce Obědy je jídelníček na další dny a oběd si tam
+objednáš nebo změníš i s tím, do kdy to jde.
 
 ### Absence pod kontrolou
 Od 30–35 % absence v předmětu tě vyučující nemusí klasifikovat a jdeš na opravky. OpenSISAKHK to hlídá za tebe: u
 každého předmětu ukáže, kolik máš, jak blízko jsi hranici, a hlavně **kolik hodin ještě musíš odchodit**, aby ses
-dostal pod ni, nebo kolik si jich můžeš dovolit vynechat do konce pololetí.
+dostal pod ni, nebo kolik si jich můžeš dovolit vynechat do konce pololetí. Plánovač ti u konkrétních hodin v
+rozvrhu ukáže, které ještě vynechat jde a které už ne.
 
-### Známky na jednom místě
-Všechny známky ze SIS Kyberny po předmětech s vahou, typem a komentářem a průměr, který počítá SIS.
+### Známky a co potřebuješ z příští písemky
+Všechny známky ze SIS Kyberny po předmětech s vahou, typem a komentářem a průměr, který počítá SIS. Vybereš si,
+jakou známku z předmětu chceš, a appka spočítá, co potřebuješ z příští písemky, nebo kolik jedniček za sebou.
 
 ### Je posilovna volná?
 Jedním pohledem. Appka čte rozvrh celé školy a ukáže, jestli je posilovna teď volná a kdy tam která třída je.
+
+### Projekty
+Nabídka projektů z projektových voleb s rolemi, počty zapsaných a volnými místy, a tvůj schválený projekt i s rolí.
+
+### Finance
+Školné a fond s přeplatkem nebo nedoplatkem podle SIS. Nikde se neukládá, načte se jen při otevření.
 
 ### Notifikace, které stojí za to
 Jeden přepínač a víš o všem: **změna tvého rozvrhu**, **nová známka**, **nová absence**. Škola přepisuje rozvrh
@@ -57,8 +66,42 @@ hlavně večer a v noci, appka to hlídá nepřetržitě a pošle ti přesně to
 *„Út 13. 10.: 8:00 MAT · 105, 8:55 odpadá“*.
 
 ### Funguje jako aplikace
-Přidáš ji na plochu a chová se jako normální appka: vlastní ikona, celá obrazovka, tmavý režim, a i bez signálu
-ukáže poslední načtená data.
+Přidáš ji na plochu a chová se jako normální appka: vlastní ikona, celá obrazovka, světlý i tmavý vzhled, a i bez
+signálu ukáže poslední načtená data. Plochu a lištu si poskládáš po svém.
+
+## Co umí navíc oproti webu SIS
+
+Web SIS Kyberny data ukazuje, OpenSISAKHK s nimi i počítá a hlídá je:
+
+- notifikace o změně rozvrhu, nové známce a nové absenci
+- výpočet známky, kterou potřebuješ z příští písemky
+- hlídání 30% hranice absence, kolik hodin musíš odchodit a kolik si můžeš dovolit vynechat
+- plánovač absence po jednotlivých hodinách
+- obědy ze Stravy přímo v rozvrhu, jídelníček a objednávání
+- volná posilovna podle rozvrhu celé školy
+- běžící hodina s odpočtem a co máš dál
+- dělaná na telefon, ne na počítač
+
+## Časté otázky
+
+**Používá Kyberna Bakaláře?**
+Ne. Kyberna (SŠ a VOŠ aplikované kybernetiky Hradec Králové) nemá Bakaláře, ale vlastní školní informační systém SIS
+(KybernaIS) na sis.ssakhk.cz, takže aplikace Bakaláři s ním nefunguje. OpenSISAKHK je k němu neoficiální studentský
+klient pro telefon.
+
+**Má Kyberna aplikaci na mobil?**
+Oficiální mobilní aplikaci SIS Kyberny nemá, web je dělaný hlavně na počítač. OpenSISAKHK funguje na iPhonu i
+Androidu jako webová aplikace (PWA), nic se nestahuje z App Storu ani z Google Play.
+
+**Je to oficiální SIS Kyberny?**
+Ne. Oficiální je KybernaIS na sis.ssakhk.cz. OpenSISAKHK z něj jen čte tvoje data a zobrazuje je přehledněji. Napsal
+ji student Kyberny a škola ji nespravuje.
+
+**Jak se přihlásím?**
+Stejným jménem a heslem jako do SIS Kyberny. Uživatelské jméno je část školního e-mailu před zavináčem.
+
+**Kolik to stojí?**
+Nic. Je zdarma a bez reklam.
 
 ## Jak začít
 
