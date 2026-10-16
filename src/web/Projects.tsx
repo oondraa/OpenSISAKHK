@@ -99,7 +99,7 @@ export function Projects({ onError }: { onError: (e: unknown) => boolean }) {
         )}
 
         {projects.length > 0 ? (
-          <Section title={`Všechny projekty · ${projects.length}`}>
+          <Section grid title={`Všechny projekty · ${projects.length}`}>
             {projects.map((p) => (
               <ProjectRow key={p.number} p={p} mine={mine.some((c) => c.number === p.number)} open={open === p.number} onToggle={() => setOpen(open === p.number ? null : p.number)} />
             ))}

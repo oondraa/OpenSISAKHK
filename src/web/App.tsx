@@ -17,6 +17,7 @@ import { ClassPrompt } from "./ClassPrompt";
 import { NotifyPrompt } from "./NotifyPrompt";
 import { BackContext, ScreenLayer, type LayerHandle } from "./layer";
 import { TAB_ICONS } from "./icons";
+import { useDesktop } from "./hooks";
 
 /** "home": the tile grid, screens grow out of their tile. "tabs": a tab bar with the first few parts and "Více"
  * for the rest and Settings. Both orders are picked in Settings. */
@@ -47,6 +48,7 @@ export function App() {
   const swiped = useRef(false);
   // Signing in plays the welcome over the switch from Login to the app (Login.tsx).
   const [welcome, setWelcome] = useState<{ x: number; y: number } | null>(null);
+  const desktop = useDesktop();
 
   // Each open screen is a history entry, so the system back (Android, browser) closes it like the back button.
   useEffect(() => {
@@ -165,6 +167,39 @@ export function App() {
       )}
     </>
   );
+
+  // A computer: every part in a sidebar, whatever the phone layout says. Nothing here runs on a phone.
+  if (desktop) {
+    const shown = tab === "more" ? "timetable" : tab;
+    return (
+      <>
+        <div className="desk">
+          <nav className="sidebar" aria-label="Hlavní navigace">
+            <p className="sidebar-brand">
+              Open<b>SISAKHK</b>
+            </p>
+            {[...tabOrder(), "settings" as const].map((t) => (
+              <button
+                key={t}
+                className={`sidebar-item tint-${t} ${shown === t ? "active" : ""}`}
+                aria-current={shown === t ? "page" : undefined}
+                onClick={() => setTab(t)}
+              >
+                <span className="more-icon">{TAB_ICONS[t]}</span>
+                {LABELS[t]}
+              </button>
+            ))}
+          </nav>
+          <main className="desk-content" key={shown}>
+            {content(shown)}
+          </main>
+          <ClassPrompt onError={onError} />
+          <NotifyPrompt onError={onError} />
+        </div>
+        {overlay}
+      </>
+    );
+  }
 
   if (layout === "tabs") {
     const bar: Tab[] = [...tabOrder().slice(0, TAB_SLOTS), "more"];

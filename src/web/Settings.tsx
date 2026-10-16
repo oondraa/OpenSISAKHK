@@ -4,6 +4,7 @@ import { CLASSES } from "../shared/schoolOcr";
 import { Chevron, LargeHeader, Section, Segmented, Switch } from "./ui";
 import { savedTheme, setTheme, type Theme } from "./theme";
 import { useCachedFetch } from "./useFetch";
+import { useDesktop } from "./hooks";
 import { BUILT, VERSION } from "./version";
 import type { Layout } from "./App";
 import { LABELS, TAB_SLOTS, homeOrder, saveHomeOrder, saveTabOrder, tabOrder, type Part } from "./sections";
@@ -22,6 +23,7 @@ export function Settings({ onError, onLogout, layout, onLayout, onOrder }: {
   onOrder: () => void;
 }) {
   const me = useCachedFetch<Me>("me", api.me, onError);
+  const desktop = useDesktop();
   const [cls, setCls] = useState<string | null>(null);
   const [report, setReport] = useState(false);
   const myClass = cls ?? me.data?.class ?? null;
@@ -120,7 +122,7 @@ export function Settings({ onError, onLogout, layout, onLayout, onOrder }: {
           </label>
         </Section>
 
-        <Section title="Vzhled" footer="Plocha: dlaždice na hlavní obrazovce, sekce se z nich otevírají. Lišta: sekce v liště dole.">
+        <Section title="Vzhled" footer={desktop ? undefined : "Plocha: dlaždice na hlavní obrazovce, sekce se z nich otevírají. Lišta: sekce v liště dole."}>
           <div className="row">
             <span className="row-title">Režim</span>
             <Segmented<Theme>
@@ -137,7 +139,7 @@ export function Settings({ onError, onLogout, layout, onLayout, onOrder }: {
               ]}
             />
           </div>
-          <div className="row">
+          {!desktop && <div className="row">
             <span className="row-title">Navigace</span>
             <Segmented<Layout>
               label="Navigace v aplikaci"
@@ -148,10 +150,17 @@ export function Settings({ onError, onLogout, layout, onLayout, onOrder }: {
                 { value: "tabs", label: "Lišta" },
               ]}
             />
-          </div>
+          </div>}
         </Section>
 
-        {layout === "home" ? (
+        {desktop ? (
+          <OrderSection
+            title="Postranní panel"
+            footer="Na počítači je všechno v panelu vlevo. Na telefonu si plochu nebo lištu nastavíš zvlášť."
+            load={tabOrder}
+            save={(o) => (saveTabOrder(o), onOrder())}
+          />
+        ) : layout === "home" ? (
           <OrderSection
             title="Pořadí na ploše"
             footer="Rozvrh je vždycky nahoře, ostatní dlaždice jdou pod ním po dvou."

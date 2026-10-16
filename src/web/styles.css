@@ -904,3 +904,64 @@ a.row { color: inherit; text-decoration: none; }
 .goal-sentence.goal-grade { color: var(--text); }
 .goal-now { font-size: 0.8125rem; color: var(--text-2); }
 @media (max-width: 380px) { .goal-body { padding-left: 16px; } }
+
+/* ---------- Computer: sidebar, whole week, cards side by side ----------
+   Same query as DESKTOP in hooks.ts. A phone has no fine pointer, so none of this ever reaches one. */
+@media (min-width: 1024px) and (hover: hover) and (pointer: fine) {
+  .desk { height: 100%; display: grid; grid-template-columns: 248px 1fr; }
+  .sidebar {
+    display: flex; flex-direction: column; gap: 2px; padding: 28px 12px; overflow-y: auto;
+    border-right: 0.5px solid var(--separator); background: color-mix(in srgb, var(--surface) 55%, var(--bg));
+  }
+  .sidebar-brand { margin: 0 10px 20px; font-size: 1.25rem; font-weight: 300; letter-spacing: -0.02em; }
+  .sidebar-brand b { font-weight: 800; color: var(--accent-text); }
+  .sidebar-item {
+    display: flex; align-items: center; gap: 12px; width: 100%; padding: 7px 10px; border-radius: 12px;
+    font-size: 0.9375rem; font-weight: 500; color: var(--text); text-align: left; transition: background-color 150ms ease;
+  }
+  .sidebar-item .more-icon { width: 30px; height: 30px; border-radius: 9px; }
+  .sidebar-item .more-icon .icon { width: 18px; height: 18px; }
+  .sidebar-item:hover { background: var(--fill); }
+  .sidebar-item.active { background: var(--accent-fill); color: var(--accent-text); font-weight: 600; }
+  .sidebar-item:last-child { margin-top: auto; }
+  .desk-content { min-width: 0; min-height: 0; display: flex; animation: fade-in 160ms ease-out; }
+  .desk-content .screen { max-width: 1180px; padding: 0 24px; }
+  .desk-content .large-header { padding-top: 32px; }
+  .desk-content :is(.large-header > .day-strip, .large-header > .segmented) { max-width: 520px; }
+  .desk-content .scroll { padding-bottom: 48px; }
+  .desk-content .now-wrap { max-width: none; margin: 0; padding: 0 16px 12px; }
+  .desk-content .now-card { max-width: 728px; }
+  /* Single-column screens (settings, lists that read top to bottom) don't stretch into long lines. */
+  .desk-content .scroll > :not(.week-grid):not(.list-section:has(> .grid)):not(.grid) { max-width: 760px; }
+
+  /* Timetable: five columns, each day a compact list; time and room on one line, subject under it. */
+  .week-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; align-items: start; }
+  .week-day { min-width: 0; display: flex; flex-direction: column; gap: 8px; padding: 8px; border-radius: 20px; }
+  .week-day.selected { background: var(--fill); }
+  .week-day-head { padding: 4px 6px 2px; font-size: 1rem; font-weight: 650; text-align: left; letter-spacing: -0.01em; }
+  .week-day-head span { font-family: var(--num); font-weight: 500; color: var(--text-2); }
+  .week-day.today .week-day-head { color: var(--accent-text); }
+  .week-day .timeline { gap: 6px; }
+  .week-day .lesson-card { grid-template-columns: 1fr auto; grid-template-areas: "time room" "main main"; gap: 2px 8px; padding: 10px 12px; border-radius: 14px; }
+  .week-day .lesson-time { grid-area: time; flex-direction: row; gap: 4px; }
+  .week-day .lesson-time span { font-size: 0.8125rem; font-weight: 500; color: var(--text-2); }
+  .week-day .lesson-time span:last-child::before { content: "– "; }
+  .week-day .lesson-main { grid-area: main; }
+  .week-day .lesson-subject { font-size: 1rem; }
+  .week-day .lesson-teacher { font-size: 0.8125rem; }
+  .week-day .lesson-room, .week-day .lunch-icon { grid-area: room; font-size: 0.875rem; padding: 2px 8px; border-radius: 8px; }
+  .week-day .lunch-icon { width: auto; height: auto; padding: 0; }
+  .week-day .free-slot { font-size: 0.8125rem; }
+  .week-day .empty { padding: 32px 8px; }
+
+  /* Lists marked .grid: separate cards, as many columns as fit. */
+  .list.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; align-items: start; background: none; box-shadow: none; overflow: visible; }
+  .list.grid > * { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+  .list.grid > *::before, .list.grid > * > .row:first-child::before { display: none; }
+  .list.grid:has(.room-row) { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+
+  /* A mouse gets feedback before the click. */
+  :is(.row, .subject-head, .week-day-head, .lesson-card, .period-chip, .week-arrow):is(button, a):hover { background-color: color-mix(in srgb, var(--text) 5%, var(--surface)); }
+  :is(button, a, [role="tab"]) { cursor: pointer; }
+  :is(button:disabled) { cursor: default; }
+}

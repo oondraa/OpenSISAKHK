@@ -126,7 +126,7 @@ export function Absence({ onError }: { onError: (e: unknown) => boolean }) {
 
             <h2 className="list-title">Podle předmětů</h2>
             {subjects.length > 0 && (
-              <div className="list">
+              <div className="list grid">
                 {subjects.map((s) => (
                   <SubjectRow key={s.subject} s={s} p={plan(s, remaining ? (remaining.get(s.subject) ?? null) : null)} />
                 ))}

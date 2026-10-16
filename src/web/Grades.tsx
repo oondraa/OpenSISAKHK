@@ -67,7 +67,7 @@ export function Grades({ onError }: { onError: (e: unknown) => boolean }) {
           </div>
         )}
         {subjects.length > 0 ? (
-          <div className="list">
+          <div className="list grid">
             {subjects.map((s) => (
               <div key={s.name}>
                 <SubjectRow s={s} open={open === s.name} onToggle={() => setOpen(open === s.name ? null : s.name)} />

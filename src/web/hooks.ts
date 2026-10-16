@@ -1,5 +1,20 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import { nowMinutesPrague } from "./time";
+
+/** A computer: wide window and a mouse. A phone never has a fine pointer, so turned sideways it stays a phone.
+ * styles.css uses the same query; keep the two in step. */
+export const DESKTOP = "(min-width: 1024px) and (hover: hover) and (pointer: fine)";
+
+export function useDesktop() {
+  return useSyncExternalStore(
+    (onChange) => {
+      const mq = matchMedia(DESKTOP);
+      mq.addEventListener("change", onChange);
+      return () => mq.removeEventListener("change", onChange);
+    },
+    () => matchMedia(DESKTOP).matches,
+  );
+}
 
 export function useNow() {
   const [now, setNow] = useState(nowMinutesPrague);

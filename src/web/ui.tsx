@@ -162,11 +162,12 @@ export function Switch({ checked, onChange, disabled, label }: { checked: boolea
   );
 }
 
-export function Section({ title, footer, children }: { title?: string; footer?: ReactNode; children: ReactNode }) {
+/** `grid`: on a computer the rows become separate cards side by side (styles.css, .list.grid). */
+export function Section({ title, footer, grid, children }: { title?: string; footer?: ReactNode; grid?: boolean; children: ReactNode }) {
   return (
     <section className="list-section">
       {title && <h2 className="list-title">{title}</h2>}
-      <div className="list">{children}</div>
+      <div className={`list ${grid ? "grid" : ""}`}>{children}</div>
       {footer && <p className="list-footer">{footer}</p>}
     </section>
   );

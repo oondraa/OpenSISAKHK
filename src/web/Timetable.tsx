@@ -3,9 +3,9 @@ import { api, cache, type LunchResponse, type TimetableDay, type TimetableRespon
 import type { Lesson } from "../worker/parse";
 import type { LunchDay } from "../worker/strava";
 import { DayPager, DayStrip, Empty, LargeHeader, SkeletonList } from "./ui";
-import { addDays, defaultSchoolDay, inMinutes, longDate, minutes, mondayOf, nextSchoolDay, nowMinutesPrague, todayPrague, weekdayIndex } from "./time";
+import { WEEKDAYS, addDays, defaultSchoolDay, inMinutes, longDate, minutes, mondayOf, nextSchoolDay, nowMinutesPrague, todayPrague, weekdayIndex } from "./time";
 import { useCachedFetch } from "./useFetch";
-import { useNow, useScrollToFocus } from "./hooks";
+import { useDesktop, useNow, useScrollToFocus } from "./hooks";
 import { CalendarOffIcon, SunIcon, UtensilsIcon } from "./icons";
 
 /** Today until its last lesson is over, then the next school day: nobody opens the app to see what already was. */
@@ -48,6 +48,7 @@ export function Timetable({ onError }: { onError: (e: unknown) => boolean }) {
   const todayDay = selected === today ? days.find((d) => d.date === today) : undefined;
   const current = todayDay?.lessons.find((l) => minutes(l.start) <= now && now < minutes(l.end));
   const next = todayDay?.lessons.find((l) => minutes(l.start) > now);
+  const desktop = useDesktop();
   const shown = useRef<{ current?: Lesson; next?: Lesson } | null>(null);
   if (current || next) shown.current = { current, next };
 
@@ -62,13 +63,39 @@ export function Timetable({ onError }: { onError: (e: unknown) => boolean }) {
       <div className="collapse now-collapse" data-open={!!(current || next)} aria-hidden={!(current || next)}>
         <div className="collapse-inner">{shown.current && <NowCard {...shown.current} now={now} />}</div>
       </div>
-      <DayPager index={weekdayIndex(selected)} onIndex={(i) => setSelected(addDays(monday, i))}>
-        {[0, 1, 2, 3, 4].map((i) => {
-          const day = days.find((d) => d.date === addDays(monday, i));
-          if (day) return <DayView key={day.date} day={day} live={day.date === today} now={now} meal={lunchFor(day.date)} />;
-          return loading ? <SkeletonList key={i} count={7} side /> : <Empty key={i} icon={<CalendarOffIcon size={40} />} title="Žádná data" />;
-        })}
-      </DayPager>
+      {desktop ? (
+        // A computer has room for the whole week side by side; the day strip still moves weeks and marks a day.
+        <div className="scroll">
+          <div className="week-grid">
+            {[0, 1, 2, 3, 4].map((i) => {
+              const date = addDays(monday, i);
+              const day = days.find((d) => d.date === date);
+              return (
+                <section key={date} className={`week-day ${date === selected ? "selected" : ""} ${date === today ? "today" : ""}`}>
+                  <button className="week-day-head" onClick={() => setSelected(date)}>
+                    {WEEKDAYS[i]} <span>{Number(date.slice(8))}. {Number(date.slice(5, 7))}.</span>
+                  </button>
+                  {day ? (
+                    <DayView day={day} live={date === today} now={now} meal={lunchFor(date)} scroll={false} />
+                  ) : loading ? (
+                    <SkeletonList count={6} />
+                  ) : (
+                    <Empty icon={<CalendarOffIcon size={32} />} title="Žádná data" />
+                  )}
+                </section>
+              );
+            })}
+          </div>
+        </div>
+      ) : (
+        <DayPager index={weekdayIndex(selected)} onIndex={(i) => setSelected(addDays(monday, i))}>
+          {[0, 1, 2, 3, 4].map((i) => {
+            const day = days.find((d) => d.date === addDays(monday, i));
+            if (day) return <DayView key={day.date} day={day} live={day.date === today} now={now} meal={lunchFor(day.date)} />;
+            return loading ? <SkeletonList key={i} count={7} side /> : <Empty key={i} icon={<CalendarOffIcon size={40} />} title="Žádná data" />;
+          })}
+        </DayPager>
+      )}
     </div>
   );
 }
@@ -116,12 +143,13 @@ export function dayItems(day: TimetableDay): Item[] {
   return items;
 }
 
-function DayView({ day, live, now, meal }: { day: TimetableDay; live: boolean; now: number; meal?: LunchDay }) {
+/** `scroll`: today's list jumps to what's on now. Off in the week view, where it would shift the other days too. */
+function DayView({ day, live, now, meal, scroll = true }: { day: TimetableDay; live: boolean; now: number; meal?: LunchDay; scroll?: boolean }) {
   const items = dayItems(day);
 
   // First item that hasn't ended yet = what's on now, or next.
   const focus = live ? items.findIndex((it) => now < minutes(it.end)) : -1;
-  const focusRef = useScrollToFocus(focus > 0);
+  const focusRef = useScrollToFocus(scroll && focus > 0);
 
   if (!day.lessons.length) return <Empty icon={<SunIcon size={40} />} title="Volno" text="Tenhle den nemáš žádnou hodinu." />;
 

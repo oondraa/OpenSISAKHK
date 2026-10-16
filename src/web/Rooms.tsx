@@ -88,6 +88,7 @@ export function Rooms({ onError }: { onError: (e: unknown) => boolean }) {
           <Empty icon={<DoorIcon size={40} />} title="Všechno obsazeno" text={`V ${period}. hodině se učí ve všech ${rooms.length} učebnách.`} />
         ) : (
           <Section
+            grid
             title={`${isNow ? "Teď volné" : "Volné"} · ${start}–${end}`}
             footer={
               blocks.length
