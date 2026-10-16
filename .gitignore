@@ -15,7 +15,7 @@ test/fixtures/*.jpg
 *.local.html
 
 # /brag-slim working files (the video itself is brand/promo.mp4)
-brag-output/
+brag-output*/
 
 # Internal notes, never published
 internal/
