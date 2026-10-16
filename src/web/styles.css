@@ -930,6 +930,8 @@ a.row { color: inherit; text-decoration: none; }
   .desk-content :is(.large-header > .day-strip, .large-header > .segmented) { max-width: 520px; }
   .desk-content .scroll { padding-bottom: 48px; }
   .desk-content .now-wrap { max-width: none; margin: 0; padding: 0 16px 12px; }
+  /* Cards pinned above the list (gym status) line up with the list under them, not with the wide screen. */
+  .desk-content .pinned { max-width: calc(760px + 32px); margin: 0; }
   .desk-content .now-card { max-width: 728px; }
   /* Single-column screens (settings, lists that read top to bottom) don't stretch into long lines. */
   .desk-content .scroll > :not(.week-grid):not(.list-section:has(> .grid)):not(.grid) { max-width: 760px; }
