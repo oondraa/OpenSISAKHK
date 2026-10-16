@@ -49,6 +49,7 @@ const FONT_SRC: [string, string][] = [
   ["2", "####. ....# ....# ....# ...#. ..#.. .#... #.... #####"],
   ["2", "####.. ....#. ....#. ....#. ...#.. ..##.. .#.... #..... ######"],
   ["3", "####. ....# ....# ....# ..##. ....# ....# ....# ####."],
+  ["3", ".####. .....# .....# .....# ...##. .....# .....# #....# .####."],
   ["4", "....#. ...##. ..#.#. .#..#. #...#. ###### ....#. ....#. ....#."],
   ["4", "...#. ..##. .#.#. #..#. ...#. ##### ...#. ...#. ...#."],
   ["5", "##### #.... #.... ####. ....# ....# ....# ...## ####."],
@@ -178,8 +179,10 @@ export function readSchoolDay(img: Rgba): Cell[] {
       const x0 = COLS[c] + 2;
       const x1 = COLS[c + 1] - 1;
       const top = ROW_TOP + r * ROW_HEIGHT;
-      const [subject, teacher, room] = LINE_OFFSETS.map((off) => readLine(bm, x0, x1, top + off));
-      if (!subject && !teacher && !room) continue;
+      const [subject, teacher, rawRoom] = LINE_OFFSETS.map((off) => readLine(bm, x0, x1, top + off));
+      if (!subject && !teacher && !rawRoom) continue;
+      // The narrow "1" leaves a gap wide enough to read as a space ("21 1"); a room number never has one.
+      const room = rawRoom.replace(/ /g, "");
       // SIS highlights only the changed line (e.g. just the room), so check each line separately.
       const changed = LINE_OFFSETS.some((off) => {
         let pink = 0;

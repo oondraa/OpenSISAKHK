@@ -3,6 +3,7 @@ import { api, cache, Unauthorized } from "./api";
 import { Login, Welcome } from "./Login";
 import { Timetable } from "./Timetable";
 import { Gym } from "./Gym";
+import { Rooms } from "./Rooms";
 import { Grades } from "./Grades";
 import { Settings } from "./Settings";
 import { Absence } from "./Absence";
@@ -22,7 +23,7 @@ import { TAB_ICONS } from "./icons";
 export type Layout = "home" | "tabs";
 
 /** Shorter names where the tab bar is narrow. */
-const BAR_LABELS: Partial<Record<Tab, string>> = { gym: "Gym" };
+const BAR_LABELS: Partial<Record<Tab, string>> = { gym: "Gym", rooms: "Učebny" };
 
 export function App() {
   // The session cookie is HttpOnly, so "logged in" is remembered locally and corrected by the first 401.
@@ -141,6 +142,7 @@ export function App() {
     <>
       {t === "timetable" && <Timetable onError={onError} />}
       {t === "gym" && <Gym onError={onError} />}
+      {t === "rooms" && <Rooms onError={onError} />}
       {t === "grades" && <Grades onError={onError} />}
       {t === "absence" && <Absence onError={onError} />}
       {t === "projects" && <Projects onError={onError} />}

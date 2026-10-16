@@ -54,6 +54,10 @@ jakou známku z předmětu chceš, a appka spočítá, co potřebuješ z příš
 ### Je posilovna volná?
 Jedním pohledem. Appka čte rozvrh celé školy a ukáže, jestli je posilovna teď volná a kdy tam která třída je.
 
+### Volné učebny
+Kde se teď dá sednout. Z rozvrhu celé školy appka vezme všechny učebny, odečte ty, kde zrovna probíhá hodina,
+a u každé volné řekne, do kdy volná zůstane. Vybereš si den i hodinu.
+
 ### Projekty
 Nabídka projektů z projektových voleb s rolemi, počty zapsaných a volnými místy, a tvůj schválený projekt i s rolí.
 
@@ -79,6 +83,7 @@ Web SIS Kyberny data ukazuje, OpenSISAKHK s nimi i počítá a hlídá je:
 - plánovač absence po jednotlivých hodinách
 - obědy ze Stravy přímo v rozvrhu, jídelníček a objednávání
 - volná posilovna podle rozvrhu celé školy
+- volné učebny v kterékoli hodině a do kdy zůstanou volné
 - běžící hodina s odpočtem a co máš dál
 - dělaná na telefon, ne na počítač
 

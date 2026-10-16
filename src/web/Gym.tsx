@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { api, cache } from "./api";
-import { PERIODS, readSchoolDay, type Cell } from "../shared/schoolOcr";
+import { PERIODS, type Cell } from "../shared/schoolOcr";
+import { DAY_CODES, readSchoolFile } from "./school";
 import { DayStrip, Empty, LargeHeader, SkeletonList } from "./ui";
 import { defaultSchoolDay, inMinutes, longDate, minutes, mondayOf, nextSchoolDay, nowMinutesPrague, todayPrague, weekdayIndex } from "./time";
 import { useCachedFetch } from "./useFetch";
@@ -9,16 +10,8 @@ import { AlertIcon, CalendarOffIcon, DumbbellIcon } from "./icons";
 
 // Weight room. (T0 is the sports hall; nobody asked for it, but readSchoolDay sees it too.)
 const ROOM = "P0";
-const DAY_CODES = ["PO", "UT", "ST", "CT", "PA"];
 
-async function readGym(file: string): Promise<Cell[]> {
-  const blob = await (await fetch(`/api/school/${file}.jpg`)).blob();
-  const bmp = await createImageBitmap(blob);
-  const canvas = new OffscreenCanvas(bmp.width, bmp.height);
-  const ctx = canvas.getContext("2d", { willReadFrequently: true })!;
-  ctx.drawImage(bmp, 0, 0);
-  return readSchoolDay(ctx.getImageData(0, 0, bmp.width, bmp.height)).filter((c) => c.room === ROOM);
-}
+const readGym = async (file: string) => (await readSchoolFile(file)).filter((c) => c.room === ROOM);
 
 const lastPeriodOf = (cells: Cell[]) => Math.max(8, ...cells.map((c) => c.period));
 

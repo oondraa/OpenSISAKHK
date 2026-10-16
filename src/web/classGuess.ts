@@ -1,18 +1,10 @@
 import { api, cache, type TimetableResponse } from "./api";
-import { CLASSES, PERIODS, readSchoolDay, type Cell } from "../shared/schoolOcr";
+import { CLASSES, PERIODS } from "../shared/schoolOcr";
+import { DAY_CODES, readSchoolFile } from "./school";
 import { minutes, mondayOf, todayPrague } from "./time";
 import type { Lesson } from "../worker/parse";
 
-const DAY_CODES = ["PO", "UT", "ST", "CT", "PA"];
 const base = (s: string) => s.replace(/[0-9a-z]+$/, "");
-
-async function readFile(file: string): Promise<Cell[]> {
-  const bmp = await createImageBitmap(await (await fetch(`/api/school/${file}.jpg`)).blob());
-  const canvas = new OffscreenCanvas(bmp.width, bmp.height);
-  const ctx = canvas.getContext("2d", { willReadFrequently: true })!;
-  ctx.drawImage(bmp, 0, 0);
-  return readSchoolDay(ctx.getImageData(0, 0, bmp.width, bmp.height));
-}
 
 /** School-grid period whose start is closest to the lesson start (personal times are sometimes shifted). */
 function periodOf(l: Lesson) {
@@ -40,7 +32,7 @@ export async function guessClass(): Promise<string | null> {
   for (const day of days) {
     const idx = timetable.days.indexOf(day);
     if (idx < 0 || idx > 4 || !day.lessons.length) continue;
-    const cells = await readFile(`${DAY_CODES[idx]}${week.week}`);
+    const cells = await readSchoolFile(`${DAY_CODES[idx]}${week.week}`);
     for (const l of day.lessons) {
       const p = periodOf(l);
       for (const c of cells) if (c.period === p && base(c.subject) === base(l.subject)) score.set(c.cls, score.get(c.cls)! + 1);

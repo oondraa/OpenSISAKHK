@@ -25,6 +25,13 @@ export const DumbbellIcon = ({ size }: { size?: number }) => (
   </Icon>
 );
 
+export const DoorIcon = ({ size }: { size?: number }) => (
+  <Icon size={size}>
+    <path d="M4 21h16M6.5 21V4.5A1.5 1.5 0 0 1 8 3h8a1.5 1.5 0 0 1 1.5 1.5V21" />
+    <path d="M14.5 12.5h.01" />
+  </Icon>
+);
+
 export const GradesIcon = ({ size }: { size?: number }) => (
   <Icon size={size}>
     <path d="M5 20v-7M12 20V5M19 20v-10" />
@@ -134,6 +141,7 @@ export const TAB_ICONS: Record<Tab, ReactNode> = {
   timetable: <CalendarIcon />,
   lunch: <UtensilsIcon />,
   gym: <DumbbellIcon />,
+  rooms: <DoorIcon />,
   grades: <GradesIcon />,
   absence: <AbsenceIcon />,
   projects: <ProjectIcon />,

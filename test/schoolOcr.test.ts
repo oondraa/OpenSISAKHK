@@ -29,3 +29,31 @@ describe.skipIf(!existsSync(fixture))("readSchoolDay (Monday 12.10.2026)", () =>
     expect(gym.every((c) => c.subject.startsWith("TEV"))).toBe(true);
   });
 });
+
+// Rooms the free-room finder subtracts: a misread room would show a taken classroom as free.
+const tuesday = "test/fixtures/UT1-2026-10-13.jpg";
+const wednesday = "test/fixtures/ST1-2026-10-14.jpg";
+
+describe.skipIf(!existsSync(tuesday) || !existsSync(wednesday))("readSchoolDay rooms (13. and 14.10.2026)", () => {
+  const read = (f: string) => (existsSync(f) ? readSchoolDay(jpeg.decode(readFileSync(f))) : []);
+  const tue = read(tuesday);
+  const wed = read(wednesday);
+  const at = (cells: typeof tue, cls: string, period: number) => cells.find((c) => c.cls === cls && c.period === period && c.slot === 0);
+
+  it("reads the 3 drawn one pixel wider", () => {
+    expect(at(tue, "G1", 4)?.room).toBe("317");
+    expect(at(tue, "G2", 9)?.room).toBe("403");
+    expect(at(wed, "I4", 8)?.room).toBe("302");
+    expect(at(wed, "G3", 3)?.room).toBe("B13");
+  });
+
+  it("doesn't split 211 at the narrow 1", () => {
+    expect(at(tue, "G3", 4)?.room).toBe("211");
+    expect(at(wed, "T4", 4)?.room).toBe("211");
+  });
+
+  it("only reads room numbers of the usual shape", () => {
+    const rooms = new Set([...tue, ...wed].map((c) => c.room).filter(Boolean));
+    expect([...rooms].filter((r) => !/^(\d{3}|B1\d|[PT]0)$/.test(r))).toEqual([]);
+  });
+});

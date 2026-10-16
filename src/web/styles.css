@@ -226,6 +226,7 @@ p { margin: 0; }
 .tile-projects, .tint-projects { --tint: var(--teal); }
 .tile-lunch, .tint-lunch { --tint: #ff375f; }
 .tile-finance, .tint-finance { --tint: #0a84ff; }
+.tile-rooms, .tint-rooms { --tint: #af52de; }
 .tint-timetable { --tint: var(--ember); }
 .tile-settings, .tint-settings { --tint: var(--graphite); }
 /* Settings: a slim full-width bar under the grid, nobody needs it at a glance. */
@@ -238,7 +239,7 @@ p { margin: 0; }
 .tile-body { width: 100%; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
 .tile-value { font-family: var(--num); font-size: 1.75rem; font-weight: 600; line-height: 1.05; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; margin-bottom: 6px; }
 .tile-value:is(.great, .good, .meh, .bad), .tile-value[class*="absence-"] { color: var(--tone); }
-:is(.tile-gym, .tile-lunch) .tile-value { font-family: var(--font); font-size: 1.5rem; font-weight: 700; letter-spacing: -0.03em; }
+:is(.tile-gym, .tile-lunch, .tile-rooms) .tile-value { font-family: var(--font); font-size: 1.5rem; font-weight: 700; letter-spacing: -0.03em; }
 .tile-value.free { color: var(--green); }
 .tile-value.busy { color: var(--red); }
 .tile-label { font-size: 1.0625rem; font-weight: 650; letter-spacing: -0.015em; line-height: 1.2; }
@@ -280,7 +281,7 @@ p { margin: 0; }
   .tile-icon { width: 34px; height: 34px; border-radius: 11px; }
   .tile-icon .icon { width: 20px; height: 20px; }
   .tile-value { font-size: 1.5rem; margin-bottom: 2px; }
-  :is(.tile-gym, .tile-lunch) .tile-value { font-size: 1.3125rem; }
+  :is(.tile-gym, .tile-lunch, .tile-rooms) .tile-value { font-size: 1.3125rem; }
   .tile-label { font-size: 1rem; }
   .tile-slim { padding: 7px 12px 7px 7px; }
   .tile-slim .tile-icon { width: 32px; height: 32px; border-radius: 10px; }
@@ -481,6 +482,21 @@ p { margin: 0; }
 .gym-period { display: flex; align-items: baseline; gap: 10px; font-variant-numeric: tabular-nums; }
 .gym-period b { width: 1.6rem; font-weight: 600; }
 .gym-period span { color: var(--text-2); font-size: 0.9375rem; }
+
+/* Free rooms: a scrolling row of periods under the day strip, then the rooms free in the chosen one. */
+.period-strip { display: flex; gap: 6px; margin: 12px -20px 0; padding: 2px 20px; overflow-x: auto; scrollbar-width: none; }
+.period-strip::-webkit-scrollbar { display: none; }
+.period-chip {
+  flex: none; min-width: 54px; display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 7px 8px; border-radius: 14px;
+  background: var(--fill); font-family: var(--num); font-variant-numeric: tabular-nums; transition: background-color 200ms ease, color 200ms ease;
+}
+.period-chip b { font-size: 1rem; font-weight: 600; }
+.period-chip span { font-size: 0.75rem; color: var(--text-2); }
+.period-chip.past { opacity: 0.5; }
+.period-chip.active { background: var(--accent); color: #fff; opacity: 1; }
+.period-chip.active span { color: rgba(255, 255, 255, 0.85); }
+.room-row { min-height: 50px; }
+.room-name { font-family: var(--num); font-size: 1.125rem; font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
 .pill-status { display: inline-flex; align-items: baseline; gap: 6px; padding: 6px 12px; border-radius: 99px; font-size: 0.9375rem; font-weight: 600; }
 .pill-status small { font-size: 0.8125rem; font-weight: 500; opacity: 0.8; }
 .pill-status.free { color: var(--green); background: color-mix(in srgb, var(--green) 13%, transparent); }

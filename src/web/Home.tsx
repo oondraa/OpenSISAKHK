@@ -1,14 +1,17 @@
-import type { ReactNode, Ref } from "react";
+import { createContext, useContext, type ReactNode, type Ref } from "react";
 import { api, cache, type CanteenResponse, type GradesResponse, type ProjectsResponse, type TimetableResponse } from "./api";
 import type { Absence } from "../worker/parse";
 import { PERIODS, type Cell } from "../shared/schoolOcr";
 import { startDay } from "./Timetable";
+import { autoPeriod, roomsKey } from "./Rooms";
+import { allRooms, freeRooms } from "./freeRooms";
+import type { SchoolWeeks } from "./school";
 import { tone } from "./Grades";
 import { LIMIT } from "./absencePlan";
 import { WEEKDAYS, addDays, inMinutes, minutes, mondayOf, nowMinutesPrague, todayPrague, weekdayIndex } from "./time";
 import { useCachedFetch } from "./useFetch";
 import { useNow } from "./hooks";
-import { AbsenceIcon, CalendarIcon, DumbbellIcon, GearIcon, GradesIcon, ProjectIcon, UtensilsIcon, WalletIcon } from "./icons";
+import { AbsenceIcon, CalendarIcon, DoorIcon, DumbbellIcon, GearIcon, GradesIcon, ProjectIcon, UtensilsIcon, WalletIcon } from "./icons";
 import { Chevron } from "./ui";
 
 import { homeOrder, type Part, type Tab } from "./sections";
@@ -37,8 +40,10 @@ export function Home({ onOpen, onError, homeRef, inert }: {
     <div className="home" ref={homeRef} inert={inert}>
       <nav className="tiles" aria-label="Aplikace">
         <TimetableTile day={day} days={week.data?.week === mondayOf(day) ? week.data.days : undefined} now={now} loading={week.loading} onOpen={onOpen} />
-        {homeOrder().map((part) => (
-          <PartTile key={part} part={part} now={now} onOpen={onOpen} />
+        {homeOrder().map((part, i, all) => (
+          <Slim.Provider key={part} value={all.length % 2 === 1 && i === all.length - 1}>
+            <PartTile part={part} now={now} onOpen={onOpen} />
+          </Slim.Provider>
         ))}
         <button className="tile glass tile-settings tile-slim" data-tile="settings" onClick={() => onOpen("settings")}>
           <span className="tile-icon">
@@ -55,6 +60,9 @@ export function Home({ onOpen, onError, homeRef, inert }: {
   );
 }
 
+/** The tiles go in pairs; an odd last one becomes a slim full-width bar like Settings. */
+const Slim = createContext(false);
+
 function Tile({ id, label, icon, value, valueClass, sub, onOpen }: {
   id: Tab;
   label: string;
@@ -64,6 +72,17 @@ function Tile({ id, label, icon, value, valueClass, sub, onOpen }: {
   sub?: string;
   onOpen: (tab: Tab) => void;
 }) {
+  if (useContext(Slim))
+    return (
+      <button className={`tile glass tile-${id} tile-slim`} data-tile={id} onClick={() => onOpen(id)}>
+        <span className="tile-icon">{icon}</span>
+        <span className="tile-body">
+          <span className="tile-label">{label}</span>
+          <span className="tile-sub">{[value, sub].filter(Boolean).join(" · ")}</span>
+        </span>
+        <Chevron />
+      </button>
+    );
   return (
     <button className={`tile glass tile-${id}`} data-tile={id} onClick={() => onOpen(id)}>
       <span className="tile-icon">{icon}</span>
@@ -79,6 +98,7 @@ function Tile({ id, label, icon, value, valueClass, sub, onOpen }: {
 /** The tiles under the timetable, in the order picked in Settings. */
 function PartTile({ part, now, onOpen }: { part: Part; now: number; onOpen: (tab: Tab) => void }) {
   if (part === "gym") return <GymTile now={now} onOpen={onOpen} />;
+  if (part === "rooms") return <RoomsTile now={now} onOpen={onOpen} />;
   if (part === "grades") return <GradesTile onOpen={onOpen} />;
   if (part === "absence") return <AbsenceTile onOpen={onOpen} />;
   if (part === "projects") return <ProjectsTile onOpen={onOpen} />;
@@ -205,6 +225,26 @@ function GymTile({ now, onOpen }: { now: number; onOpen: (tab: Tab) => void }) {
     }
   }
   return <Tile id="gym" label="Posilovna" icon={<DumbbellIcon />} value={value} valueClass={cls} sub={sub} onOpen={onOpen} />;
+}
+
+/** How many classrooms are free in the period on now (or next), from the last read of this week's school timetable. */
+function RoomsTile({ now, onOpen }: { now: number; onOpen: (tab: Tab) => void }) {
+  const today = todayPrague();
+  const key = roomsKey(cache.get<SchoolWeeks>("school-weeks"), today);
+  const week = key ? cache.get<Cell[][]>(key) : null;
+  const day = week?.[weekdayIndex(today)];
+  let value: string | undefined;
+  let sub = "Kde je volno";
+  if (week && day?.length) {
+    const p = autoPeriod(day, true, now);
+    const [start, end] = PERIODS[p];
+    if (now < minutes(end)) {
+      const n = freeRooms(allRooms(week), day, p).length;
+      value = `${n} ${plural(n, "volná", "volné", "volných")}`;
+      sub = minutes(start) <= now ? "Právě teď" : `Od ${start}`;
+    }
+  }
+  return <Tile id="rooms" label="Volné učebny" icon={<DoorIcon />} value={value} valueClass="free" sub={sub} onOpen={onOpen} />;
 }
 
 function GradesTile({ onOpen }: { onOpen: (tab: Tab) => void }) {
