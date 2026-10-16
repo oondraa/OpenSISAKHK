@@ -5,121 +5,79 @@
   </picture>
 </h1>
 
-**Studentská appka pro Kybernu: školní SIS tak, jak má vypadat v telefonu.**
+### Kyberna v jedné appce.
 
-Rozvrh, který ví, co máš teď. Absence, která tě varuje dřív, než je pozdě. Posilovna, oběd a notifikace, i když
+Co máš teď a kde. Kolik hodin ještě můžeš vynechat. Kde si sednout ve volné hodině. Co je k obědu. A notifikace, i když
 škola přepíše rozvrh ve tři ráno. Pro studenty Kyberny, SŠ a VOŠ aplikované kybernetiky v Hradci Králové.
 
-Web: **[oondraa.github.io/OpenSISAKHK](https://oondraa.github.io/OpenSISAKHK/)**
-
 <p>
-  <a href="https://opensisakhk.opensisakhk.workers.dev"><img alt="Otevřít aplikaci" src="https://img.shields.io/badge/Otev%C5%99%C3%ADt_aplikaci-FF5A1F?style=for-the-badge&labelColor=0E0E10"></a>
-  <img alt="iPhone i Android" src="https://img.shields.io/badge/iPhone_%C2%B7_Android_%C2%B7_web-0E0E10?style=for-the-badge">
-  <img alt="Zdarma" src="https://img.shields.io/badge/zdarma-0E0E10?style=for-the-badge">
-  <a href="https://ko-fi.com/oondraa"><img alt="Podpořit na Ko-fi" src="https://img.shields.io/badge/Podpo%C5%99it_na_Ko--fi-0E0E10?style=for-the-badge&logo=kofi&logoColor=FF5A1F"></a>
+  <a href="https://opensisakhk.opensisakhk.workers.dev"><img alt="Otevřít aplikaci" src="https://img.shields.io/badge/Otev%C5%99%C3%ADt_aplikaci-0088FF?style=for-the-badge&labelColor=0088FF"></a>
+  <a href="https://oondraa.github.io/OpenSISAKHK/"><img alt="Web" src="https://img.shields.io/badge/web-1C1C1E?style=for-the-badge"></a>
+  <img alt="iPhone, Android, počítač" src="https://img.shields.io/badge/iPhone_%C2%B7_Android_%C2%B7_po%C4%8D%C3%ADta%C4%8D-1C1C1E?style=for-the-badge">
+  <img alt="Zdarma" src="https://img.shields.io/badge/zdarma_a_bez_reklam-1C1C1E?style=for-the-badge">
 </p>
 
-<a href="brand/promo.mp4"><img alt="Ukázka OpenSISAKHK: rozvrh se změnami a obědem, volná posilovna, hlídání absence" src="brand/promo.gif" width="100%"></a>
+<a href="brand/promo.mp4"><img alt="Ukázka OpenSISAKHK: přehled, rozvrh, volné učebny, absence" src="brand/promo.gif" width="100%"></a>
 
-<sub>Celé video se zvukem (21 s): [promo.mp4](brand/promo.mp4)</sub>
+<sub>Celé video se zvukem: [promo.mp4](brand/promo.mp4)</sub>
+
+<table>
+  <tr>
+    <td><img src="site/shots/home.webp" alt="Přehled: právě běžící hodina, průměr, absence, oběd, volné učebny"></td>
+    <td><img src="site/shots/timetable.webp" alt="Rozvrh se suplováním a obědem"></td>
+    <td><img src="site/shots/rooms.webp" alt="Volné učebny"></td>
+    <td><img src="site/shots/home-dark.webp" alt="Přehled v tmavém režimu"></td>
+  </tr>
+</table>
 
 ---
 
 ## Proč
 
-Kyberna nemá Bakaláře, ale vlastní SIS (KybernaIS na sis.ssakhk.cz), a ten je dělaný na počítač. Na telefonu se v něm hledá, přibližuje a ztrácí. OpenSISAKHK je neoficiální studentský klient: bere stejná data a skládá je
-do appky, kterou otevřeš jedním palcem mezi hodinami: co mám teď, kde, co je k obědu a jak jsem na tom s absencí.
+Kyberna nemá Bakaláře, ale vlastní SIS (KybernaIS na sis.ssakhk.cz). Je dělaný na počítač, takže se v něm na
+telefonu hledá, přibližuje a ztrácí. OpenSISAKHK bere stejná data a skládá z nich appku, kterou otevřeš jedním
+palcem mezi hodinami. Web SIS data jen ukazuje, OpenSISAKHK s nimi počítá a hlídá je za tebe.
 
 ## Co umí
 
-### Rozvrh a suplování na Kyberně
-Rozvrh i se suplováním přímo ze SIS. Otevře se rovnou na aktuální hodině. Nahoře karta **Teď / Další** s učebnou a odpočtem, změny od školy jsou
-zvýrazněné. Po poslední hodině ti rovnou ukáže zítřek. Mezi dny se přejíždí prstem, u hodin na dálku je odkaz na Meet.
+**Rozvrh, který ví, co je teď.** Otevře se na aktuální hodině: učebna, odpočet do konce, kam jdeš potom. Suplování a
+přesunuté učebny jsou označené, oběd máš přímo mezi hodinami. Po poslední hodině rovnou ukáže zítřek.
 
-### Jídelna: oběd přímo v rozvrhu
-Propoj účet ve Strava.cz, přes který školní jídelna funguje, a u oběda uvidíš, jaké číslo máš objednané a co to je.
-Nebo že nemáš objednáno, dokud je ještě čas to změnit. V záložce Obědy je jídelníček na další dny a oběd si tam
-objednáš nebo změníš i s tím, do kdy to jde.
+**Absence dřív, než je pozdě.** Od 30 % v předmětu tě vyučující nemusí klasifikovat. Appka u každého předmětu ukáže,
+jak blízko hranice jsi, **kolik hodin si ještě můžeš dovolit vynechat** a v kalkulačce i které konkrétně.
 
-### Absence pod kontrolou
-Od 30–35 % absence v předmětu tě vyučující nemusí klasifikovat a jdeš na opravky. OpenSISAKHK to hlídá za tebe: u
-každého předmětu ukáže, kolik máš, jak blízko jsi hranici, a hlavně **kolik hodin ještě musíš odchodit**, aby ses
-dostal pod ni, nebo kolik si jich můžeš dovolit vynechat do konce pololetí. Plánovač ti u konkrétních hodin v
-rozvrhu ukáže, které ještě vynechat jde a které už ne.
+**Známky a cíl.** Všechny známky s vahou a komentářem. Vybereš si, co chceš mít na vysvědčení, a appka spočítá, co
+potřebuješ z další písemky.
 
-### Známky a co potřebuješ z příští písemky
-Všechny známky ze SIS Kyberny po předmětech s vahou, typem a komentářem a průměr, který počítá SIS. Vybereš si,
-jakou známku z předmětu chceš, a appka spočítá, co potřebuješ z příští písemky, nebo kolik jedniček za sebou.
+**Volné učebny.** Všechny učebny z rozvrhu celé školy mínus ty, kde se zrovna učí. U každé volné vidíš, do kdy volná
+zůstane. Vybereš si den i hodinu.
 
-### Je posilovna volná?
-Jedním pohledem. Appka čte rozvrh celé školy a ukáže, jestli je posilovna teď volná a kdy tam která třída je.
+**Obědy na jedno klepnutí.** Propoj účet ze Stravy a jídelníček s objednávkami máš v appce. Objednáš, změníš nebo
+zrušíš jedním klepnutím a víš, do kdy to jde.
 
-### Volné učebny
-Kde se teď dá sednout. Z rozvrhu celé školy appka vezme všechny učebny, odečte ty, kde zrovna probíhá hodina,
-a u každé volné řekne, do kdy volná zůstane. Vybereš si den i hodinu.
+**Posilovna.** Jestli je teď volná a kdy tam která třída je, ze školního rozvrhu.
 
-### Projekty
-Nabídka projektů z projektových voleb s rolemi, počty zapsaných a volnými místy, a tvůj schválený projekt i s rolí.
-
-### Finance
-Školné a fond s přeplatkem nebo nedoplatkem podle SIS. Nikde se neukládá, načte se jen při otevření.
-
-### Notifikace, které stojí za to
-Jeden přepínač a víš o všem: **změna tvého rozvrhu**, **nová známka**, **nová absence**. Škola přepisuje rozvrh
-hlavně večer a v noci, appka to hlídá nepřetržitě a pošle ti přesně to, co se změnilo u tebe, třeba
+**Notifikace, které stojí za to.** Změna tvého rozvrhu, nová známka, nová absence. Škola přepisuje rozvrh hlavně
+večer a v noci, appka hlídá nepřetržitě a pošle přesně to, co se změnilo u tebe, třeba
 *„Út 13. 10.: 8:00 MAT · 105, 8:55 odpadá“*.
 
-### Funguje jako aplikace
-Přidáš ji na plochu a chová se jako normální appka: vlastní ikona, celá obrazovka, světlý i tmavý vzhled, a i bez
-signálu ukáže poslední načtená data. Plochu a lištu si poskládáš po svém.
+**Projekty a finance.** Projektové volby s obsazeností rolí a tvůj schválený projekt. Školné a fond.
 
-## Co umí navíc oproti webu SIS
+**Po svém.** Nový vzhled ze skla, nebo ten původní černooranžový. Světlý, tmavý, nebo podle telefonu. Deset ikon,
+plocha seřazená tak, jak ji používáš. Poslední data ukáže i bez signálu.
 
-Web SIS Kyberny data ukazuje, OpenSISAKHK s nimi i počítá a hlídá je:
+**Na počítači celý týden.** V prohlížeči na počítači dostaneš panel se všemi sekcemi a rozvrh na pět dní vedle sebe.
 
-- notifikace o změně rozvrhu, nové známce a nové absenci
-- výpočet známky, kterou potřebuješ z příští písemky
-- hlídání 30% hranice absence, kolik hodin musíš odchodit a kolik si můžeš dovolit vynechat
-- plánovač absence po jednotlivých hodinách
-- obědy ze Stravy přímo v rozvrhu, jídelníček a objednávání
-- volná posilovna podle rozvrhu celé školy
-- volné učebny v kterékoli hodině a do kdy zůstanou volné
-- běžící hodina s odpočtem a co máš dál
-- dělaná na telefon, ne na počítač
-
-## Časté otázky
-
-**Používá Kyberna Bakaláře?**
-Ne. Kyberna (SŠ a VOŠ aplikované kybernetiky Hradec Králové) nemá Bakaláře, ale vlastní školní informační systém SIS
-(KybernaIS) na sis.ssakhk.cz, takže aplikace Bakaláři s ním nefunguje. OpenSISAKHK je k němu neoficiální studentský
-klient pro telefon.
-
-**Má Kyberna aplikaci na mobil?**
-Oficiální mobilní aplikaci SIS Kyberny nemá, web je dělaný hlavně na počítač. OpenSISAKHK funguje na iPhonu i
-Androidu jako webová aplikace (PWA), nic se nestahuje z App Storu ani z Google Play.
-
-**Kde najdu rozvrh Kyberny?**
-Rozvrh celé školy je v KybernaIS na sis.ssakhk.cz/TimeTable/School, osobní rozvrh se suplováním v SIS po
-přihlášení. Na telefonu ho OpenSISAKHK ukáže i s během aktuální hodiny a notifikacemi o změnách.
-
-**Je to oficiální SIS Kyberny?**
-Ne. Oficiální je KybernaIS na sis.ssakhk.cz. OpenSISAKHK z něj jen čte tvoje data a zobrazuje je přehledněji. Napsal
-ji student Kyberny a škola ji nespravuje.
-
-**Jak se přihlásím?**
-Stejným jménem a heslem jako do SIS Kyberny. Uživatelské jméno je část školního e-mailu před zavináčem.
-
-**Kolik to stojí?**
-Nic. Je zdarma a bez reklam.
+<img src="site/shots/desk.webp" alt="Verze pro počítač: rozvrh na celý týden" width="100%">
 
 ## Jak začít
 
-1. Otevři **[opensisakhk.opensisakhk.workers.dev](https://opensisakhk.opensisakhk.workers.dev)** v telefonu.
-2. Přihlas se stejným jménem a heslem jako do SIS Kyberny.
-3. Přidej si ji na plochu:
+1. Otevři **[opensisakhk.opensisakhk.workers.dev](https://opensisakhk.opensisakhk.workers.dev)**.
+2. Přihlas se stejným jménem a heslem jako do SIS Kyberny (jméno je část školního e-mailu před zavináčem).
+3. Na telefonu si ji přidej na plochu:
    - **iPhone:** Safari → Sdílet → *Přidat na plochu*
-   - **Android:** Chrome → menu → *Nainstalovat aplikaci*
-4. V Nastavení si zapni notifikace a případně propoj Stravu.
+   - **Android:** Chrome → menu → *Instalovat aplikaci*
+4. V Nastavení zapni notifikace a případně propoj Stravu.
 
 ## Soukromí
 
@@ -131,12 +89,37 @@ Nic. Je zdarma a bez reklam.
 
 Podrobně v [technické dokumentaci](docs/TECHNICKA-DOKUMENTACE.md#co-se-ukládá).
 
+## Časté otázky
+
+**Používá Kyberna Bakaláře?**
+Ne. Kyberna (SŠ a VOŠ aplikované kybernetiky Hradec Králové) nemá Bakaláře, ale vlastní školní informační systém SIS
+(KybernaIS) na sis.ssakhk.cz, takže aplikace Bakaláři s ním nefunguje. OpenSISAKHK je k němu neoficiální studentský
+klient.
+
+**Má Kyberna aplikaci na mobil?**
+Oficiální mobilní aplikaci SIS Kyberny nemá, web je dělaný hlavně na počítač. OpenSISAKHK funguje na iPhonu,
+Androidu i na počítači jako webová aplikace (PWA), nic se nestahuje z App Storu ani z Google Play.
+
+**Kde najdu rozvrh Kyberny?**
+Rozvrh celé školy je v KybernaIS na sis.ssakhk.cz/TimeTable/School, osobní rozvrh se suplováním v SIS po
+přihlášení. OpenSISAKHK ho ukáže i s během aktuální hodiny a notifikacemi o změnách.
+
+**Jak najdu volnou učebnu?**
+V sekci Volné učebny vybereš den a hodinu a uvidíš všechny učebny, kde se zrovna neučí, i s tím, do kdy zůstanou
+volné.
+
+**Je to oficiální SIS Kyberny?**
+Ne. Oficiální je KybernaIS na sis.ssakhk.cz. OpenSISAKHK z něj jen čte tvoje data a zobrazuje je přehledněji. Napsal
+ji student Kyberny a škola ji nespravuje.
+
+**Kolik to stojí?**
+Nic. Je zdarma a bez reklam.
+
 ## Pod kapotou
 
 Běží celé zdarma na [Cloudflare Workers](https://workers.cloudflare.com) a GitHub Actions. React a Vite na
-frontendu, Hono na serveru, vlastní OCR, které čte rozvrh školy z obrázků přímo v telefonu za ~150 ms, a Web Push
-šifrovaný bez knihoven. Všechno o architektuře, vývoji a nasazení je v
-[technické dokumentaci](docs/TECHNICKA-DOKUMENTACE.md).
+frontendu, Hono na serveru, vlastní OCR, které čte rozvrh celé školy z obrázků přímo v telefonu, a Web Push šifrovaný
+bez knihoven. Architektura, vývoj a nasazení jsou v [technické dokumentaci](docs/TECHNICKA-DOKUMENTACE.md).
 
 ## Podpora
 

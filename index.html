@@ -14,16 +14,20 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <title>OpenSISAKHK</title>
     <script>
-      // Splash in the app's theme from the first frame: the saved choice (Settings), else the system's.
+      // Splash in the app's style and theme from the first frame: the saved choices (Settings), else "Nový" and the system's.
       (function () {
         var t = "system";
+        var ui = "new";
         try {
           t = JSON.parse(localStorage.getItem("osis:theme")) || "system";
+          ui = JSON.parse(localStorage.getItem("osis:ui")) || "new";
         } catch (e) {}
         var light = t === "light" || (t === "system" && !matchMedia("(prefers-color-scheme: dark)").matches);
-        if (!light) return;
-        document.documentElement.classList.add("sp-light");
-        document.querySelector('meta[name="theme-color"]').setAttribute("content", "#f6f3ee");
+        var root = document.documentElement;
+        root.setAttribute("data-ui", ui);
+        if (light) root.classList.add("sp-light");
+        var bar = ui === "new" ? (light ? "#b38a64" : "#2a2522") : light ? "#f6f3ee" : "#0e0e10";
+        document.querySelector('meta[name="theme-color"]').setAttribute("content", bar);
       })();
     </script>
     <!-- Splash lives here, not in React, so it paints on the very first frame. main.tsx hides it. -->
@@ -61,6 +65,32 @@
       @keyframes sp-grow { to { grid-template-columns: 1fr; } }
       @keyframes sp-slide { to { transform: none; } }
       @keyframes sp-fallback { to { opacity: 0; visibility: hidden; } }
+      /* Styl "Nový": the app's wallpaper (dimmed in dark mode), the update bar in its blue. Same marks and motion. */
+      [data-ui="new"] body, [data-ui="new"] #splash {
+        background:
+          linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)),
+          radial-gradient(60% 40% at 10% 8%, rgb(214, 160, 92) 0%, rgba(214, 160, 92, 0) 100%),
+          radial-gradient(55% 35% at 95% 30%, rgb(120, 86, 64) 0%, rgba(120, 86, 64, 0) 100%),
+          radial-gradient(60% 40% at 90% 85%, rgb(96, 110, 140) 0%, rgba(96, 110, 140, 0) 100%),
+          linear-gradient(165deg, rgb(168, 128, 92), rgb(206, 196, 184) 50%, rgb(120, 118, 138));
+      }
+      [data-ui="new"].sp-light body, [data-ui="new"].sp-light #splash {
+        background:
+          radial-gradient(60% 40% at 10% 8%, rgb(214, 160, 92) 0%, rgba(214, 160, 92, 0) 100%),
+          radial-gradient(55% 35% at 95% 30%, rgb(120, 86, 64) 0%, rgba(120, 86, 64, 0) 100%),
+          radial-gradient(60% 40% at 90% 85%, rgb(96, 110, 140) 0%, rgba(96, 110, 140, 0) 100%),
+          linear-gradient(165deg, rgb(168, 128, 92), rgb(206, 196, 184) 50%, rgb(120, 118, 138));
+      }
+      [data-ui="new"] .sp-open-text { color: #ffffff; }
+      [data-ui="new"].sp-light .sp-open-text { color: #000000; }
+      [data-ui="new"] .sp-note { color: rgba(235, 235, 245, 0.7); }
+      [data-ui="new"].sp-light .sp-note { color: rgba(60, 60, 67, 0.75); }
+      [data-ui="new"] .sp-version { color: rgba(235, 235, 245, 0.45); }
+      [data-ui="new"].sp-light .sp-version { color: rgba(60, 60, 67, 0.5); }
+      [data-ui="new"] .sp-bar { background: rgba(118, 118, 128, 0.36); }
+      [data-ui="new"].sp-light .sp-bar { background: rgba(118, 118, 128, 0.2); }
+      [data-ui="new"] .sp-bar i { background: #0091ff; }
+      [data-ui="new"].sp-light .sp-bar i { background: #0088ff; }
       @media (prefers-reduced-motion: reduce) {
         .sp-sis, .sp-open, .sp-open-text { animation: none; opacity: 1; transform: none; grid-template-columns: 1fr; }
         .sp-bar i { width: 100%; animation: sp-glow 1.6s ease-in-out infinite alternate; }
