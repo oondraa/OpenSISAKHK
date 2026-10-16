@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { api, cache, type Me } from "./api";
 import { CLASSES } from "../shared/schoolOcr";
 import { Chevron, LargeHeader, Section, Segmented, Switch } from "./ui";
-import { savedTheme, setTheme, type Theme } from "./theme";
+import { savedTheme, setTheme, setUi, useLook, useUi, type Theme, type Ui } from "./theme";
+import { ICON_GROUPS, ICONS, iconUrl, resolveIcon, savedIcon, setIcon, type IconChoice } from "./appIcon";
 import { useCachedFetch } from "./useFetch";
 import { useDesktop } from "./hooks";
 import { BUILT, VERSION } from "./version";
@@ -24,6 +25,7 @@ export function Settings({ onError, onLogout, layout, onLayout, onOrder }: {
 }) {
   const me = useCachedFetch<Me>("me", api.me, onError);
   const desktop = useDesktop();
+  const ui = useUi();
   const [cls, setCls] = useState<string | null>(null);
   const [report, setReport] = useState(false);
   const myClass = cls ?? me.data?.class ?? null;
@@ -124,6 +126,18 @@ export function Settings({ onError, onLogout, layout, onLayout, onOrder }: {
 
         <Section title="Vzhled" footer={desktop ? undefined : "Plocha: dlaždice na hlavní obrazovce, sekce se z nich otevírají. Lišta: sekce v liště dole."}>
           <div className="row">
+            <span className="row-title">Styl</span>
+            <Segmented<Ui>
+              label="Styl aplikace"
+              value={ui}
+              onChange={setUi}
+              options={[
+                { value: "new", label: "Nový" },
+                { value: "og", label: "Původní" },
+              ]}
+            />
+          </div>
+          <div className="row">
             <span className="row-title">Režim</span>
             <Segmented<Theme>
               label="Režim zobrazení"
@@ -153,6 +167,8 @@ export function Settings({ onError, onLogout, layout, onLayout, onOrder }: {
           </div>}
         </Section>
 
+        <IconSection />
+
         {desktop ? (
           <OrderSection
             title="Postranní panel"
@@ -163,7 +179,11 @@ export function Settings({ onError, onLogout, layout, onLayout, onOrder }: {
         ) : layout === "home" ? (
           <OrderSection
             title="Pořadí na ploše"
-            footer="Rozvrh je vždycky nahoře, ostatní dlaždice jdou pod ním po dvou."
+            footer={
+              ui === "new"
+                ? "Rozvrh je vždycky nahoře, první čtyři jsou velké dlaždice, ostatní v seznamu pod nimi."
+                : "Rozvrh je vždycky nahoře, ostatní dlaždice jdou pod ním po dvou."
+            }
             load={homeOrder}
             save={(o) => (saveHomeOrder(o), onOrder())}
           />
@@ -262,6 +282,44 @@ export function Settings({ onError, onLogout, layout, onLayout, onOrder }: {
       </div>
       {report && <ReportSheet onClose={() => setReport(false)} onError={onError} />}
     </div>
+  );
+}
+
+/** The app icon: every variant from the design, or one that follows the style and light/dark mode. */
+function IconSection() {
+  useLook(); // "Automaticky" previews whichever icon the style and mode resolve to right now
+  const [choice, setChoice] = useState<IconChoice>(savedIcon);
+  const pick = (c: IconChoice) => {
+    setChoice(c);
+    setIcon(c);
+  };
+  const option = (c: IconChoice, label: string) => {
+    const id = c === "auto" ? resolveIcon("auto") : c;
+    return (
+      <button key={c} className={`icon-option ${id.endsWith("clear") ? "clear" : ""}`} role="radio" aria-checked={choice === c} onClick={() => pick(c)}>
+        <img src={iconUrl(id)} alt="" width={56} height={56} />
+        <span>{label}</span>
+      </button>
+    );
+  };
+  return (
+    <Section
+      title="Ikona"
+      footer="Mění ikonu v prohlížeči a ikonu, kterou dostane appka nově přidaná na plochu. Na už přidanou appku webová aplikace sáhnout nemůže: odeber ji z plochy a přidej znovu."
+    >
+      <div className="icon-picker" role="radiogroup" aria-label="Ikona aplikace">
+        <div className="icon-group">
+          <p className="icon-group-title">Podle stylu a režimu</p>
+          <div className="icon-row">{option("auto", "Automaticky")}</div>
+        </div>
+        {ICON_GROUPS.map((g) => (
+          <div key={g.title} className="icon-group">
+            <p className="icon-group-title">{g.title}</p>
+            <div className="icon-row">{g.ids.map((id) => option(id, ICONS[id].label))}</div>
+          </div>
+        ))}
+      </div>
+    </Section>
   );
 }
 

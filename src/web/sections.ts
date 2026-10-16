@@ -21,7 +21,7 @@ export const LABELS: Record<Tab, string> = {
 export const LINKABLE: Tab[] = ["timetable", "lunch", "gym", "rooms", "grades", "absence", "projects", "settings"];
 
 /** Home: the timetable is always the big tile on top, these follow in pairs (an odd last one as a slim bar). */
-export const HOME_DEFAULT: Part[] = ["lunch", "grades", "absence", "gym", "projects", "finance", "rooms"];
+export const HOME_DEFAULT: Part[] = ["grades", "absence", "lunch", "rooms", "gym", "projects", "finance"];
 /** Tab bar: the first TAB_SLOTS are in the bar, the rest under "Více" (with Settings). */
 export const TABS_DEFAULT: Part[] = ["timetable", "lunch", "grades", "absence", "gym", "rooms", "projects", "finance"];
 export const TAB_SLOTS = 4;

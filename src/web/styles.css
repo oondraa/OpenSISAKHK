@@ -965,3 +965,166 @@ a.row { color: inherit; text-decoration: none; }
   :is(button, a, [role="tab"]) { cursor: pointer; }
   :is(button:disabled) { cursor: default; }
 }
+
+/* ======================================================================================================
+   Styl "Nový" (Nastavení → Styl, data-ui="new" on <html>): liquid glass over a warm wallpaper, blue accent.
+   Everything above is the original look; this only overrides it, so "Původní" stays exactly as it was.
+   Glass blur only where content moves underneath (tab bar, back button, sheets): over the smooth wallpaper
+   a blur behind a still card changes no pixel and costs every frame on Android.
+   ====================================================================================================== */
+:root[data-ui="new"] {
+  --wall:
+    radial-gradient(60% 40% at 10% 8%, rgb(214, 160, 92) 0%, rgba(214, 160, 92, 0) 100%),
+    radial-gradient(55% 35% at 95% 30%, rgb(120, 86, 64) 0%, rgba(120, 86, 64, 0) 100%),
+    radial-gradient(70% 40% at 20% 62%, rgb(196, 176, 158) 0%, rgba(196, 176, 158, 0) 100%),
+    radial-gradient(60% 40% at 90% 85%, rgb(96, 110, 140) 0%, rgba(96, 110, 140, 0) 100%),
+    radial-gradient(60% 35% at 5% 98%, rgb(52, 44, 66) 0%, rgba(52, 44, 66, 0) 100%),
+    linear-gradient(165deg, rgb(168, 128, 92), rgb(206, 196, 184) 50%, rgb(120, 118, 138));
+  --bg: #c4ab92;
+  --surface: rgba(255, 255, 255, 0.55);
+  --surface-2: rgba(255, 255, 255, 0.4);
+  --sheet: rgba(255, 255, 255, 0.82);
+  --text: #000000;
+  --text-2: rgba(60, 60, 67, 0.6);
+  --text-3: rgba(60, 60, 67, 0.3);
+  --separator: rgba(60, 60, 67, 0.18);
+  --fill: rgba(118, 118, 128, 0.14);
+  --accent: #0088ff;
+  --accent-text: #0071e3;
+  --accent-fill: rgba(0, 136, 255, 0.14);
+  --chrome: rgba(255, 255, 255, 0.55);
+  --chrome-edge: transparent;
+  --ring: 1.25px 0 0 -0.75px rgb(219, 219, 219), -1.25px 0 0 -0.75px rgb(219, 219, 219), 0 0 0 0.5px rgba(219, 219, 219, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 8px 32px rgba(0, 0, 0, 0.1);
+  --ring-bar: 1.25px 0 0 -0.75px rgb(219, 219, 219), -1.25px 0 0 -0.75px rgb(219, 219, 219), 0 0 0 0.5px rgb(219, 219, 219), 0 8px 48px rgba(0, 0, 0, 0.25);
+  --shadow: var(--ring);
+  --glass-tint: rgba(255, 255, 255, 0.55);
+  --ambient-1: transparent;
+  --ambient-2: transparent;
+  --rounded: ui-rounded, "SF Pro Rounded", var(--font);
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-ui="new"]:not([data-theme="light"]) {
+    --wall: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), radial-gradient(60% 40% at 10% 8%, rgb(214, 160, 92) 0%, rgba(214, 160, 92, 0) 100%), radial-gradient(55% 35% at 95% 30%, rgb(120, 86, 64) 0%, rgba(120, 86, 64, 0) 100%), radial-gradient(70% 40% at 20% 62%, rgb(196, 176, 158) 0%, rgba(196, 176, 158, 0) 100%), radial-gradient(60% 40% at 90% 85%, rgb(96, 110, 140) 0%, rgba(96, 110, 140, 0) 100%), radial-gradient(60% 35% at 5% 98%, rgb(52, 44, 66) 0%, rgba(52, 44, 66, 0) 100%), linear-gradient(165deg, rgb(168, 128, 92), rgb(206, 196, 184) 50%, rgb(120, 118, 138));
+    --bg: #2a2522;
+    --surface: rgba(26, 26, 26, 0.5);
+    --surface-2: rgba(26, 26, 26, 0.4);
+    --sheet: rgba(26, 26, 26, 0.85);
+    --text: #ffffff;
+    --text-2: rgba(235, 235, 245, 0.6);
+    --text-3: rgba(235, 235, 245, 0.3);
+    --separator: rgba(84, 84, 88, 0.65);
+    --fill: rgba(118, 118, 128, 0.28);
+    --accent: #0091ff;
+    --accent-text: #3aa5ff;
+    --accent-fill: rgba(0, 145, 255, 0.2);
+    --chrome: rgba(26, 26, 26, 0.5);
+    --ring: 1.25px 0 0 -0.75px rgba(166, 166, 166, 0.6), -1.25px 0 0 -0.75px rgba(166, 166, 166, 0.6), 0 0 0 0.5px rgba(166, 166, 166, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 8px 32px rgba(0, 0, 0, 0.3);
+    --ring-bar: 1.25px 0 0 -0.75px rgb(166, 166, 166), -1.25px 0 0 -0.75px rgb(166, 166, 166), 0 0 0 0.5px rgba(166, 166, 166, 0.7), 0 8px 48px rgba(0, 0, 0, 0.45);
+    --glass-tint: rgba(26, 26, 26, 0.5);
+  }
+}
+:root[data-ui="new"][data-theme="dark"] {
+  --wall: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), radial-gradient(60% 40% at 10% 8%, rgb(214, 160, 92) 0%, rgba(214, 160, 92, 0) 100%), radial-gradient(55% 35% at 95% 30%, rgb(120, 86, 64) 0%, rgba(120, 86, 64, 0) 100%), radial-gradient(70% 40% at 20% 62%, rgb(196, 176, 158) 0%, rgba(196, 176, 158, 0) 100%), radial-gradient(60% 40% at 90% 85%, rgb(96, 110, 140) 0%, rgba(96, 110, 140, 0) 100%), radial-gradient(60% 35% at 5% 98%, rgb(52, 44, 66) 0%, rgba(52, 44, 66, 0) 100%), linear-gradient(165deg, rgb(168, 128, 92), rgb(206, 196, 184) 50%, rgb(120, 118, 138));
+  --bg: #2a2522;
+  --surface: rgba(26, 26, 26, 0.5);
+  --surface-2: rgba(26, 26, 26, 0.4);
+  --sheet: rgba(26, 26, 26, 0.85);
+  --text: #ffffff;
+  --text-2: rgba(235, 235, 245, 0.6);
+  --text-3: rgba(235, 235, 245, 0.3);
+  --separator: rgba(84, 84, 88, 0.65);
+  --fill: rgba(118, 118, 128, 0.28);
+  --accent: #0091ff;
+  --accent-text: #3aa5ff;
+  --accent-fill: rgba(0, 145, 255, 0.2);
+  --chrome: rgba(26, 26, 26, 0.5);
+  --ring: 1.25px 0 0 -0.75px rgba(166, 166, 166, 0.6), -1.25px 0 0 -0.75px rgba(166, 166, 166, 0.6), 0 0 0 0.5px rgba(166, 166, 166, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 8px 32px rgba(0, 0, 0, 0.3);
+  --ring-bar: 1.25px 0 0 -0.75px rgb(166, 166, 166), -1.25px 0 0 -0.75px rgb(166, 166, 166), 0 0 0 0.5px rgba(166, 166, 166, 0.7), 0 8px 48px rgba(0, 0, 0, 0.45);
+  --glass-tint: rgba(26, 26, 26, 0.5);
+}
+
+/* Wallpaper: one fixed layer behind everything; screens that cover the home paint it too, aligned with it. */
+[data-ui="new"] body::before { content: ""; position: fixed; inset: 0; z-index: -1; background: var(--wall); }
+[data-ui="new"] :is(.home, .layer-card) { background: var(--wall); }
+
+/* Type: rounded figures for the big numbers, a calmer large title. */
+[data-ui="new"] .large-title { font-weight: 700; letter-spacing: 0.01em; }
+[data-ui="new"] :is(.summary-value, .hero-subject, .now-subject, .tile-value) { font-family: var(--rounded); }
+
+/* Glass surfaces: a hairline ring instead of the bright rim, bigger corners. */
+[data-ui="new"] .glass { box-shadow: var(--ring); }
+[data-ui="new"] .glass::before { display: none; }
+[data-ui="new"] .list { border-radius: 28px; box-shadow: var(--ring); }
+@media (min-width: 1024px) and (hover: hover) and (pointer: fine) {
+  [data-ui="new"] .list.grid { box-shadow: none; border-radius: 0; }
+  [data-ui="new"] .list.grid > * { border-radius: 24px; box-shadow: var(--ring); }
+}
+[data-ui="new"] :is(.summary-card, .gym-status, .profile-card, .balance-card, .project-card, .room-card) { border-radius: 28px; box-shadow: var(--ring); }
+[data-ui="new"] .lesson-card { border-radius: 24px; box-shadow: var(--ring); }
+[data-ui="new"] .lesson-card.now { box-shadow: 0 0 0 1.5px var(--accent), 0 8px 32px rgba(0, 0, 0, 0.12); }
+[data-ui="new"] .lesson-card.past { opacity: 0.6; }
+[data-ui="new"] .lesson-room { background: var(--fill); }
+[data-ui="new"] .more-icon { background: var(--fill); color: var(--text); border-radius: 10px; }
+[data-ui="new"] .sheet { background: var(--sheet); border-radius: 42px; box-shadow: var(--ring-bar); -webkit-backdrop-filter: blur(40px) saturate(1.8); backdrop-filter: blur(40px) saturate(1.8); }
+
+/* Back: a glass pill in the text colour. */
+[data-ui="new"] .back { min-height: 44px; padding: 0 16px 0 10px; color: var(--text); font-weight: 500; box-shadow: var(--ring-bar); -webkit-backdrop-filter: blur(24px) saturate(1.8); backdrop-filter: blur(24px) saturate(1.8); }
+
+/* Day strip: one round pill, the chosen day solid accent. */
+[data-ui="new"] .day-strip { border-radius: 100px; padding: 4px 6px; }
+[data-ui="new"] .day-thumb { border-radius: 100px; box-shadow: 0 6px 16px color-mix(in srgb, var(--accent) 35%, transparent); }
+[data-ui="new"] :is(.day, .week-arrow, .period-chip) { border-radius: 100px; }
+
+/* Now card: glass, the accent only where it says "now". */
+[data-ui="new"] .now-card { color: var(--text); background: var(--surface); border-radius: 28px; box-shadow: var(--ring); }
+[data-ui="new"] .now-card .eyebrow { color: var(--accent-text); font-weight: 600; }
+[data-ui="new"] .now-meta { color: var(--text-2); }
+[data-ui="new"] .now-progress { background: var(--fill); }
+[data-ui="new"] .now-progress span { background: var(--accent); }
+
+/* Tab bar: a floating glass capsule, the chosen tab a soft pill. */
+[data-ui="new"] .tabbar {
+  left: max(21px, env(safe-area-inset-left)); right: max(21px, env(safe-area-inset-right)); bottom: max(16px, env(safe-area-inset-bottom));
+  height: 62px; padding: 4px; border-radius: 31px; border-top: 0; background: var(--chrome); box-shadow: var(--ring-bar);
+}
+[data-ui="new"] .tabbar button { justify-content: center; gap: 2px; padding: 0; border-radius: 27px; font-size: 0.625rem; font-weight: 600; color: var(--text); }
+[data-ui="new"] .tabbar .icon { width: 24px; height: 24px; }
+[data-ui="new"] .tabbar .active { color: var(--accent-text); background: var(--fill); }
+[data-ui="new"] .app :is(.scroll, .page) { padding-bottom: calc(110px + env(safe-area-inset-bottom)); }
+
+/* ---------- Přehled (the new home): the timetable card, four widgets, then one list ---------- */
+.overview { width: 100%; max-width: 560px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; animation: fade-in 220ms ease-out both; }
+.overview .tile-timetable { min-height: 0; padding: 20px; gap: 14px; border-radius: 32px; color: var(--text); background: var(--surface); box-shadow: var(--ring); }
+.overview .tile-timetable :is(.tile-icon, .tile-label) { display: none; }
+.overview .tile-eyebrow { margin-left: 0; display: flex; align-items: center; gap: 8px; font-family: var(--font); font-size: 0.8125rem; font-weight: 600; letter-spacing: 0; text-transform: none; color: var(--accent-text); }
+.overview .tile-eyebrow::before { content: ""; width: 8px; height: 8px; border-radius: 4px; background: var(--accent); }
+.overview .hero-subject { font-size: 3.25rem; font-weight: 700; letter-spacing: -0.01em; }
+.overview .hero-room { font-family: var(--rounded); font-size: 1.75rem; }
+.overview .tile-timetable .tile-sub { margin-top: 4px; font-size: 0.9375rem; color: var(--text-2); }
+.hero-segments { display: flex; gap: 4px; margin-top: 14px; }
+.hero-segments > span { flex: 1; height: 6px; border-radius: 3px; overflow: hidden; background: var(--fill); }
+.hero-segments > span > span { display: block; height: 100%; border-radius: 3px; background: var(--text); opacity: 0.75; transform-origin: left; transition: transform 600ms var(--ease-spring); }
+.hero-segments > span.now > span { background: var(--accent); opacity: 1; }
+.widgets { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.tile-widget { height: 160px; padding: 16px; border-radius: 28px; color: var(--text); }
+.widget-head { display: flex; align-items: center; gap: 6px; font-size: 0.8125rem; font-weight: 600; color: var(--text-2); }
+.widget-head .icon { width: 16px; height: 16px; stroke-width: 2.2; }
+[data-ui="new"] .tile-widget .tile-value { max-width: 100%; margin-bottom: 4px; font-size: 2.25rem; font-weight: 600; line-height: 1.05; letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+[data-ui="new"] :is(.tile-gym, .tile-lunch, .tile-rooms).tile-widget .tile-value { font-size: 1.625rem; }
+.tile-widget .tile-sub { font-size: 0.8125rem; }
+.home-list .home-row { min-height: 60px; }
+.home-list .more-icon { width: 32px; height: 32px; }
+.home-list .row-main { gap: 1px; }
+.home-list .row-sub { font-size: 0.8125rem; }
+
+/* Settings → Ikona */
+.icon-picker { display: flex; flex-direction: column; gap: 14px; padding: 14px 16px 16px; }
+.icon-group-title { font-size: 0.8125rem; font-weight: 600; color: var(--text-2); margin-bottom: 8px; }
+.icon-row { display: flex; flex-wrap: wrap; gap: 12px; }
+.icon-option { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 68px; font-size: 0.75rem; color: var(--text-2); }
+.icon-option img { width: 56px; height: 56px; border-radius: 13px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12); transition: transform 300ms var(--ease-spring), box-shadow 200ms ease; }
+.icon-option[aria-checked="true"] { color: var(--accent-text); font-weight: 600; }
+.icon-option[aria-checked="true"] img { box-shadow: 0 0 0 2.5px var(--bg), 0 0 0 4.5px var(--accent); }
+.icon-option:active img { transform: scale(0.94); }
+/* The clear icon is see-through: show it over the wallpaper it is meant for. */
+.icon-option.clear img { background: linear-gradient(165deg, rgb(168, 128, 92), rgb(120, 118, 138)); }

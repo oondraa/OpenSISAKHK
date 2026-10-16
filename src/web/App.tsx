@@ -18,6 +18,7 @@ import { NotifyPrompt } from "./NotifyPrompt";
 import { BackContext, ScreenLayer, type LayerHandle } from "./layer";
 import { TAB_ICONS } from "./icons";
 import { useDesktop } from "./hooks";
+import { useUi } from "./theme";
 
 /** "home": the tile grid, screens grow out of their tile. "tabs": a tab bar with the first few parts and "Více"
  * for the rest and Settings. Both orders are picked in Settings. */
@@ -49,6 +50,7 @@ export function App() {
   // Signing in plays the welcome over the switch from Login to the app (Login.tsx).
   const [welcome, setWelcome] = useState<{ x: number; y: number } | null>(null);
   const desktop = useDesktop();
+  const ui = useUi();
 
   // Each open screen is a history entry, so the system back (Android, browser) closes it like the back button.
   useEffect(() => {
@@ -73,7 +75,7 @@ export function App() {
     history.pushState({ screen: tab }, "", "/");
     setScreen({ tab, animate: true });
   }, []);
-  const back = useMemo(() => ({ go: () => history.back(), label: "Domů" }), []);
+  const back = useMemo(() => ({ go: () => history.back(), label: ui === "new" ? "Přehled" : "Domů" }), [ui]);
   // Tab bar layout: what's opened from "Více" leads back there.
   const moreBack = useMemo(() => ({ go: () => setTab("more"), label: "Více" }), []);
   const closed = useCallback((bySwipe: boolean) => {

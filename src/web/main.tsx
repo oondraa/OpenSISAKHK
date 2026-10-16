@@ -2,11 +2,11 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { registerSW } from "virtual:pwa-register";
 import { App } from "./App";
-import { applyTheme, savedTheme } from "./theme";
+import { applyUi, savedUi } from "./theme";
 import { initGlass } from "./glass";
 import "./styles.css";
 
-applyTheme(savedTheme());
+applyUi(savedUi());
 initGlass();
 
 // A new version was downloaded in the background: put the splash back up with "Aktualizace", then reload into it.

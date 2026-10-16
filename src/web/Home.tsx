@@ -15,6 +15,7 @@ import { AbsenceIcon, CalendarIcon, DoorIcon, DumbbellIcon, GearIcon, GradesIcon
 import { Chevron } from "./ui";
 
 import { homeOrder, type Part, type Tab } from "./sections";
+import { useUi } from "./theme";
 
 const MORNING = 7 * 60; // from 7:00 the home tile names the day's subjects, before that only its span
 const plural = (n: number, one: string, few: string, many: string) => (n === 1 ? one : n > 1 && n < 5 ? few : many);
@@ -35,15 +36,44 @@ export function Home({ onOpen, onError, homeRef, inert }: {
   const day = startDay(cache.get<TimetableResponse>(`timetable:${mondayOf(today)}`)?.days);
   const week = useCachedFetch<TimetableResponse>(`timetable:${mondayOf(day)}`, () => api.timetable(mondayOf(day)), onError);
   const me = cache.get<{ name: string | null }>("me");
+  const ui = useUi();
+  const order = homeOrder();
+
+  if (ui === "new")
+    // The new look: the timetable card, the first four parts as widgets, the rest (and Settings) as one list.
+    return (
+      <div className="home" ref={homeRef} inert={inert}>
+        <nav className="overview" aria-label="Aplikace">
+          <TimetableTile day={day} days={week.data?.week === mondayOf(day) ? week.data.days : undefined} now={now} loading={week.loading} onOpen={onOpen} />
+          <div className="widgets">
+            {order.slice(0, 4).map((part) => (
+              <Mode.Provider key={part} value="widget">
+                <PartTile part={part} now={now} onOpen={onOpen} />
+              </Mode.Provider>
+            ))}
+          </div>
+          <div className="list home-list">
+            {order.slice(4).map((part) => (
+              <Mode.Provider key={part} value="row">
+                <PartTile part={part} now={now} onOpen={onOpen} />
+              </Mode.Provider>
+            ))}
+            <Mode.Provider value="row">
+              <Tile id="settings" label="Nastavení" icon={<GearIcon />} sub={me?.name ?? "Notifikace, Strava, vzhled"} onOpen={onOpen} />
+            </Mode.Provider>
+          </div>
+        </nav>
+      </div>
+    );
 
   return (
     <div className="home" ref={homeRef} inert={inert}>
       <nav className="tiles" aria-label="Aplikace">
         <TimetableTile day={day} days={week.data?.week === mondayOf(day) ? week.data.days : undefined} now={now} loading={week.loading} onOpen={onOpen} />
-        {homeOrder().map((part, i, all) => (
-          <Slim.Provider key={part} value={all.length % 2 === 1 && i === all.length - 1}>
+        {order.map((part, i, all) => (
+          <Mode.Provider key={part} value={all.length % 2 === 1 && i === all.length - 1 ? "slim" : "tile"}>
             <PartTile part={part} now={now} onOpen={onOpen} />
-          </Slim.Provider>
+          </Mode.Provider>
         ))}
         <button className="tile glass tile-settings tile-slim" data-tile="settings" onClick={() => onOpen("settings")}>
           <span className="tile-icon">
@@ -60,8 +90,9 @@ export function Home({ onOpen, onError, homeRef, inert }: {
   );
 }
 
-/** The tiles go in pairs; an odd last one becomes a slim full-width bar like Settings. */
-const Slim = createContext(false);
+/** How a part shows on the home screen. Original look: tiles in pairs, an odd last one a slim full-width bar like
+ * Settings. New look: a widget (big value) or a row of the list under them. */
+const Mode = createContext<"tile" | "slim" | "widget" | "row">("tile");
 
 function Tile({ id, label, icon, value, valueClass, sub, onOpen }: {
   id: Tab;
@@ -72,7 +103,32 @@ function Tile({ id, label, icon, value, valueClass, sub, onOpen }: {
   sub?: string;
   onOpen: (tab: Tab) => void;
 }) {
-  if (useContext(Slim))
+  const mode = useContext(Mode);
+  if (mode === "widget")
+    return (
+      <button className={`tile glass tile-widget tile-${id}`} data-tile={id} onClick={() => onOpen(id)}>
+        <span className="widget-head">
+          {icon}
+          {label}
+        </span>
+        <span className="tile-body">
+          {value && <span className={`tile-value ${valueClass ?? ""}`}>{value}</span>}
+          {sub && <span className="tile-sub">{sub}</span>}
+        </span>
+      </button>
+    );
+  if (mode === "row")
+    return (
+      <button className={`row more-row home-row tint-${id}`} data-tile={id} onClick={() => onOpen(id)}>
+        <span className="more-icon">{icon}</span>
+        <span className="row-main">
+          <span className="row-title">{label}</span>
+          <span className="row-sub">{[value, sub].filter(Boolean).join(" · ")}</span>
+        </span>
+        <Chevron />
+      </button>
+    );
+  if (mode === "slim")
     return (
       <button className={`tile glass tile-${id} tile-slim`} data-tile={id} onClick={() => onOpen(id)}>
         <span className="tile-icon">{icon}</span>
@@ -136,6 +192,7 @@ function TimetableTile({ day, days, now, loading, onOpen }: {
   onOpen: (tab: Tab) => void;
 }) {
   const today = todayPrague();
+  const ui = useUi();
   const lessons = days?.find((d) => d.date === day)?.lessons ?? [];
   const live = day === today;
   const current = live ? lessons.find((l) => minutes(l.start) <= now && now < minutes(l.end)) : undefined;
@@ -187,10 +244,21 @@ function TimetableTile({ day, days, now, loading, onOpen }: {
           {room && <span className="hero-room">{room}</span>}
         </span>
         <span className="tile-sub">{meta}</span>
-        {progress !== null && (
-          <span className="hero-progress" aria-hidden="true">
-            <span style={{ transform: `scaleX(${progress})` }} />
+        {ui === "new" && live && lessons.length > 0 ? (
+          // New look: the whole day as one segment per lesson, filled as it passes.
+          <span className="hero-segments" aria-hidden="true">
+            {lessons.map((l) => (
+              <span key={l.start} className={minutes(l.start) <= now && now < minutes(l.end) ? "now" : ""}>
+                <span style={{ transform: `scaleX(${Math.min(1, Math.max(0, (now - minutes(l.start)) / (minutes(l.end) - minutes(l.start))))})` }} />
+              </span>
+            ))}
           </span>
+        ) : (
+          progress !== null && (
+            <span className="hero-progress" aria-hidden="true">
+              <span style={{ transform: `scaleX(${progress})` }} />
+            </span>
+          )
         )}
       </span>
     </button>
