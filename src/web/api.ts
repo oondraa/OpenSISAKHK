@@ -94,12 +94,16 @@ export const cache = {
       return null;
     }
   },
+  /** false when the stored value was already the same (nothing written). */
   set(key: string, value: unknown) {
     try {
-      localStorage.setItem(`osis:${key}`, JSON.stringify(value));
+      const raw = JSON.stringify(value);
+      if (localStorage.getItem(`osis:${key}`) === raw) return false;
+      localStorage.setItem(`osis:${key}`, raw);
     } catch {
       /* storage full or blocked */
     }
+    return true;
   },
   clear() {
     try {

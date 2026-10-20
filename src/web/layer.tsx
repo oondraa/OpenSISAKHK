@@ -59,6 +59,7 @@ export function ScreenLayer({ tile, home, animate, handle, onClosed, children }:
     const moving = p < 0.9995 || d > 0;
     root.current!.classList.toggle("moving", moving);
     home.current?.classList.toggle("moving", moving);
+    home.current?.classList.toggle("behind", shown > 0);
     const hs = 1 - 0.06 * shown;
     if (home.current) home.current.style.transform = hs < 0.9999 ? `scale(${hs})` : "";
     scrim.current!.style.opacity = String(0.3 * shown);
@@ -118,7 +119,7 @@ export function ScreenLayer({ tile, home, animate, handle, onClosed, children }:
       sp.d.stop();
       handle.current = null;
       if (home.current) home.current.style.transform = "";
-      home.current?.classList.remove("moving");
+      home.current?.classList.remove("moving", "behind");
     };
   }, []);
 

@@ -40,8 +40,9 @@ export function useCachedFetch<T>(key: string | null, load: () => Promise<T>, on
     load()
       .then((v) => {
         if (stale) return;
-        setData(v);
-        if (key) cache.set(key, v);
+        // Usually the refresh brings what the cache already showed. Rendering it again would rebuild and repaint
+        // the whole screen, often mid-way through the animation that opens it.
+        if (!key || cache.set(key, v)) setData(v);
       })
       .catch((e) => {
         if (!stale && !onError(e)) setError(true);

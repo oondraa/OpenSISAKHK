@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { api, cache, Unauthorized } from "./api";
 import { Login, Welcome } from "./Login";
 import { Timetable } from "./Timetable";
@@ -43,7 +43,7 @@ export function App() {
   // Tab bar layout: the selected tab.
   const [tab, setTab] = useState<Tab>(linked ?? "timetable");
   // Home is in render state too, so it re-reads the cached glances once a screen closes (and the orders once changed).
-  const [, setClosedAt] = useState(0);
+  const [closedAt, setClosedAt] = useState(0);
   const home = useRef<HTMLDivElement>(null);
   const layer = useRef<LayerHandle>(null);
   const swiped = useRef(false);
@@ -51,6 +51,10 @@ export function App() {
   const [welcome, setWelcome] = useState<{ x: number; y: number } | null>(null);
   const desktop = useDesktop();
   const ui = useUi();
+  // Set directly, not as a prop: Home is memoized and must not render again just because a screen opened.
+  useLayoutEffect(() => {
+    if (home.current) home.current.inert = !!screen;
+  });
 
   // Each open screen is a history entry, so the system back (Android, browser) closes it like the back button.
   useEffect(() => {
@@ -234,7 +238,7 @@ export function App() {
   return (
     <>
       <>
-        <Home homeRef={home} onOpen={open} onError={onError} inert={!!screen} />
+        <Home homeRef={home} onOpen={open} onError={onError} refresh={closedAt} />
         {screen && (
           <BackContext.Provider value={back}>
             <ScreenLayer key={screen.tab} tile={screen.tab} home={home} animate={screen.animate} handle={layer} onClosed={closed}>

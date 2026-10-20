@@ -1,4 +1,4 @@
-import { createContext, useContext, type ReactNode, type Ref } from "react";
+import { createContext, memo, useContext, type ReactNode, type Ref } from "react";
 import { api, cache, type CanteenResponse, type GradesResponse, type ProjectsResponse, type TimetableResponse } from "./api";
 import type { Absence } from "../worker/parse";
 import { PERIODS, type Cell } from "../shared/schoolOcr";
@@ -24,12 +24,16 @@ const plural = (n: number, one: string, few: string, many: string) => (n === 1 ?
  * The launcher: every part of the app is a tile on one full-screen grid, and each tile already answers the
  * question it stands for (what's on now, is the weight room free, the average, the absence), from the last
  * loaded data. Only the timetable is refreshed here; the rest refresh when opened.
+ *
+ * Memoized: rendering reads every cached glance from localStorage (the free rooms from the whole school week),
+ * which on the frame a screen starts growing out of its tile is a dropped frame. It renders again when `refresh`
+ * changes (a screen closed, the order changed); App sets `inert` on it directly.
  */
-export function Home({ onOpen, onError, homeRef, inert }: {
+export const Home = memo(function Home({ onOpen, onError, homeRef }: {
   onOpen: (tab: Tab) => void;
   onError: (e: unknown) => boolean;
   homeRef: Ref<HTMLDivElement>;
-  inert: boolean;
+  refresh: number;
 }) {
   const now = useNow();
   const today = todayPrague();
@@ -42,7 +46,7 @@ export function Home({ onOpen, onError, homeRef, inert }: {
   if (ui === "new")
     // The new look: the timetable card, the first four parts as widgets, the rest (and Settings) as one list.
     return (
-      <div className="home" ref={homeRef} inert={inert}>
+      <div className="home" ref={homeRef}>
         <nav className="overview" aria-label="Aplikace">
           <TimetableTile day={day} days={week.data?.week === mondayOf(day) ? week.data.days : undefined} now={now} loading={week.loading} onOpen={onOpen} />
           <div className="widgets">
@@ -67,7 +71,7 @@ export function Home({ onOpen, onError, homeRef, inert }: {
     );
 
   return (
-    <div className="home" ref={homeRef} inert={inert}>
+    <div className="home" ref={homeRef}>
       <nav className="tiles" aria-label="Aplikace">
         <TimetableTile day={day} days={week.data?.week === mondayOf(day) ? week.data.days : undefined} now={now} loading={week.loading} onOpen={onOpen} />
         {order.map((part, i, all) => (
@@ -88,7 +92,7 @@ export function Home({ onOpen, onError, homeRef, inert }: {
       </nav>
     </div>
   );
-}
+});
 
 /** How a part shows on the home screen. Original look: tiles in pairs, an odd last one a slim full-width bar like
  * Settings. New look: a widget (big value) or a row of the list under them. */

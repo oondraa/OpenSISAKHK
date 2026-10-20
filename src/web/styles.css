@@ -305,6 +305,10 @@ p { margin: 0; }
    scaled: without this Chrome repaints them at every new scale, every frame (the stutter on Android). layer.tsx sets
    .moving for the animation only, so the settled screen is painted sharp at full size. */
 .layer.moving .layer-content, .layer.moving .layer-card, .home.moving { will-change: transform; }
+/* A home behind a screen drops the tiles' backdrop blur: under the moving or open screen it would still be blurred
+   again on every frame, in device pixels, once per tile (the stutter of the home layout that the tab bar doesn't
+   have). Over the smooth wallpaper the tint alone looks the same. */
+.home.behind .glass { -webkit-backdrop-filter: none; backdrop-filter: none; }
 /* Back swipe starts here; touch-action keeps the browser (and the day pager) from taking the gesture. */
 .edge { position: absolute; left: 0; top: 0; bottom: 0; z-index: 5; touch-action: none; }
 .large-header-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
