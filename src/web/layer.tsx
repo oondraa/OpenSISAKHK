@@ -57,10 +57,12 @@ export function ScreenLayer({ tile, home, animate, handle, onClosed, children }:
     const shown = clamp01(p) * (1 - d);
     // Own GPU layers while anything moves (styles.css, .moving), back to plain paint once settled.
     const moving = p < 0.9995 || d > 0;
+    // Android scales nothing (see `slide` below), so the home needs no layer of its own either.
+    const slide = lite();
     root.current!.classList.toggle("moving", moving);
-    home.current?.classList.toggle("moving", moving);
+    home.current?.classList.toggle("moving", moving && !slide);
     home.current?.classList.toggle("behind", shown > 0);
-    const hs = 1 - 0.06 * shown;
+    const hs = slide ? 1 : 1 - 0.06 * shown;
     if (home.current) home.current.style.transform = hs < 0.9999 ? `scale(${hs})` : "";
     scrim.current!.style.opacity = String(0.3 * shown);
 
@@ -77,18 +79,22 @@ export function ScreenLayer({ tile, home, animate, handle, onClosed, children }:
     // The tile as it looks right now, on the scaled-down home screen.
     const at = (v: number, center: number) => (v - center) * hs + center;
     const t = { l: at(origin.left, W / 2), t: at(origin.top, H / 2), r: at(origin.right, W / 2), b: at(origin.bottom, H / 2) };
+    const q = 1 - p;
+    if (slide) {
+      // Android: the screen slides in a little from the tile's side and fades in, at full size. Any change of scale
+      // makes Chrome raster the scrolling content again at the new size, on every frame (measured on a phone: each
+      // screen rastered some 40 times while opening, the GPU at 100 %). Moving it keeps the tiles it rastered once.
+      const sx = ((t.l + t.r) / 2 - W / 2) * 0.15 * q;
+      const sy = ((t.t + t.b) / 2 - H / 2) * 0.15 * q;
+      c.style.transform = `translate(${(sx + d * W).toFixed(2)}px, ${sy.toFixed(2)}px)`;
+      c.style.opacity = String(clamp01(p / 0.5));
+      return;
+    }
     // Content scales uniformly (text never squashes) and stays centred in the growing rect.
     const scale = lerp((t.r - t.l) / W, 1, p);
     const cx = lerp((t.l + t.r) / 2, W / 2, p) - W / 2;
     const cy = lerp((t.t + t.b) / 2, H / 2, p) - H / 2;
     const move = `translate(${cx.toFixed(2)}px, ${cy.toFixed(2)}px) scale(${scale.toFixed(4)})`;
-    if (lite()) {
-      // Android: the whole card grows from the tile and fades in, one GPU layer moved and scaled, nothing repainted.
-      c.style.transform = (d > 0 ? `translateX(${d * W}px) ` : "") + move;
-      c.style.opacity = String(clamp01(p / 0.35));
-      return;
-    }
-    const q = 1 - p;
     const px = (n: number) => `${Math.max(0, n).toFixed(2)}px`;
     c.style.clipPath = `inset(${px(t.t * q)} ${px((W - t.r) * q)} ${px((H - t.b) * q)} ${px(t.l * q)} round ${px(TILE_RADIUS * q)})`;
     c.style.opacity = String(clamp01(p / 0.18));

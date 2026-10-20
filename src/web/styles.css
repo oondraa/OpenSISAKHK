@@ -1138,7 +1138,7 @@ a.row { color: inherit; text-decoration: none; }
 /* ---------- Lite: Android (main.tsx sets data-lite on <html>) ----------
    The same look without backdrop blur: on Android Chrome re-blurs whatever is under the glass on every frame of a
    scroll or a screen animation, and that is the stutter. The wallpaper is a smooth gradient, so the tint alone looks
-   the same; bars that float over moving content get a denser fill instead. layer.tsx skips clip-path here. */
+   the same; bars that float over moving content get a denser fill instead. layer.tsx slides screens in, no clip-path, no scaling. */
 [data-lite] :is(.glass, .tabbar, .back, .sheet, .day-thumb.lifted, .segmented-thumb.lifted, .switch:active .switch-knob) { -webkit-backdrop-filter: none; backdrop-filter: none; }
 [data-lite] .tabbar { background: var(--surface); }
 [data-lite][data-ui="new"] :is(.tabbar, .back) { background: var(--sheet); }

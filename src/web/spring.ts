@@ -82,7 +82,7 @@ export const reducedMotion = () => matchMedia("(prefers-reduced-motion: reduce)"
 /**
  * Android: the same look, painted cheaply. Chrome on Android (PWA and WebAPK alike) pays for every backdrop blur and
  * every clip-path frame, so styles.css drops the blur under `data-lite` (main.tsx sets it) and layer.tsx opens
- * screens with transform and opacity only.
+ * screens by sliding and fading them, never scaling (a scaled scroller is rastered again on every frame).
  */
 export const lite = () => /Android/i.test(navigator.userAgent);
 
