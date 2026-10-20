@@ -1,5 +1,5 @@
 import { createContext, useContext, useLayoutEffect, useRef, type PointerEvent, type ReactNode, type RefObject } from "react";
-import { SpringValue, project } from "./spring";
+import { SpringValue, lite, project } from "./spring";
 
 /** The back action of the open screen and where it leads (LargeHeader shows a back button when there is one). */
 export const BackContext = createContext<{ go: () => void; label: string } | null>(null);
@@ -76,15 +76,22 @@ export function ScreenLayer({ tile, home, animate, handle, onClosed, children }:
     // The tile as it looks right now, on the scaled-down home screen.
     const at = (v: number, center: number) => (v - center) * hs + center;
     const t = { l: at(origin.left, W / 2), t: at(origin.top, H / 2), r: at(origin.right, W / 2), b: at(origin.bottom, H / 2) };
-    const q = 1 - p;
-    const px = (n: number) => `${Math.max(0, n).toFixed(2)}px`;
-    c.style.clipPath = `inset(${px(t.t * q)} ${px((W - t.r) * q)} ${px((H - t.b) * q)} ${px(t.l * q)} round ${px(TILE_RADIUS * q)})`;
-    c.style.opacity = String(clamp01(p / 0.18));
     // Content scales uniformly (text never squashes) and stays centred in the growing rect.
     const scale = lerp((t.r - t.l) / W, 1, p);
     const cx = lerp((t.l + t.r) / 2, W / 2, p) - W / 2;
     const cy = lerp((t.t + t.b) / 2, H / 2, p) - H / 2;
-    inner.style.transform = `translate(${cx.toFixed(2)}px, ${cy.toFixed(2)}px) scale(${scale.toFixed(4)})`;
+    const move = `translate(${cx.toFixed(2)}px, ${cy.toFixed(2)}px) scale(${scale.toFixed(4)})`;
+    if (lite()) {
+      // Android: the whole card grows from the tile and fades in, one GPU layer moved and scaled, nothing repainted.
+      c.style.transform = (d > 0 ? `translateX(${d * W}px) ` : "") + move;
+      c.style.opacity = String(clamp01(p / 0.35));
+      return;
+    }
+    const q = 1 - p;
+    const px = (n: number) => `${Math.max(0, n).toFixed(2)}px`;
+    c.style.clipPath = `inset(${px(t.t * q)} ${px((W - t.r) * q)} ${px((H - t.b) * q)} ${px(t.l * q)} round ${px(TILE_RADIUS * q)})`;
+    c.style.opacity = String(clamp01(p / 0.18));
+    inner.style.transform = move;
     inner.style.opacity = String(clamp01((p - 0.08) / 0.5));
   }
 

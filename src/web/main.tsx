@@ -4,8 +4,10 @@ import { registerSW } from "virtual:pwa-register";
 import { App } from "./App";
 import { applyUi, savedUi } from "./theme";
 import { initGlass } from "./glass";
+import { lite } from "./spring";
 import "./styles.css";
 
+if (lite()) document.documentElement.setAttribute("data-lite", "");
 applyUi(savedUi());
 initGlass();
 
