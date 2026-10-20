@@ -233,11 +233,19 @@
       .faq summary::after { content: ""; flex: none; width: 9px; height: 9px; border-right: 2px solid var(--text-3); border-bottom: 2px solid var(--text-3); transform: rotate(45deg) translate(-2px, -2px); transition: transform 300ms var(--spring); }
       .faq details[open] summary::after { transform: rotate(225deg) translate(-2px, -2px); }
       .faq p { margin: 0; padding: 0 22px 20px; color: var(--text-2); font-size: 0.98rem; max-width: 68ch; }
+      .faq p a { color: var(--accent-ink); font-weight: 600; text-decoration: none; }
 
       /* ---------- final ---------- */
       .final .box { padding: 76px 24px; border-radius: 40px; text-align: center; }
       .final img.mark { width: 88px; height: 88px; margin: 0 auto 26px; border-radius: 22px; box-shadow: 0 18px 44px rgba(40, 24, 10, 0.25); }
       .final .sub { margin: 0 auto 32px; }
+      .store-goal { margin-top: 18px; padding: 24px; border-radius: 26px; display: flex; flex-wrap: wrap; align-items: center; gap: 18px 28px; }
+      .store-goal > div { flex: 1 1 320px; }
+      .store-goal b { display: block; margin-bottom: 6px; font-size: 1.08rem; }
+      .store-goal p { margin: 0; color: var(--text-2); font-size: 0.95rem; }
+      .store-goal ul { margin: 12px 0 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 8px; }
+      .store-goal li { padding: 7px 13px; border-radius: 10px; font-size: 0.88rem; font-weight: 500; color: var(--text-2); background: var(--fill); }
+      .store-goal li strong { color: var(--text); font-weight: 600; }
       .support { margin-top: 26px; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px 18px; color: var(--text-2); font-size: 0.96rem; text-align: center; }
       .support-btn { display: inline-flex; align-items: center; gap: 9px; padding: 11px 20px; border-radius: 99px; background: var(--glass); box-shadow: var(--ring); color: var(--text); font-weight: 600; text-decoration: none; transition: transform 300ms var(--spring); }
       .support-btn svg { width: 18px; height: 18px; color: var(--ember); }
@@ -466,6 +474,18 @@
               <li><span class="n">4</span><div><b>Hotovo</b><p>Appka je na ploše i v seznamu aplikací. Notifikace zapneš v Nastavení appky.</p></div></li>
             </ol>
           </div>
+
+          <div class="store-goal glass reveal">
+            <div>
+              <b>Chceš ji jako appku z obchodu?</b>
+              <p>Do Google Play a App Storu se appka dostane jen přes placený vývojářský účet. Když se vybere dost na Ko-fi, vydám ji i nativně.</p>
+              <ul>
+                <li>Google Play: <strong>25 $</strong> jednorázově</li>
+                <li>App Store: <strong>99 $</strong> ročně</li>
+              </ul>
+            </div>
+            <a class="support-btn" href="https://ko-fi.com/oondraa" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 9h12v5.5a5 5 0 0 1-5 5h-2a5 5 0 0 1-5-5z" /><path d="M16.5 10.5h1.5a2.5 2.5 0 0 1 0 5h-1.6M8.5 3.5v2.5M12.5 3.5v2.5" /></svg>Přispět na Ko-fi</a>
+          </div>
         </div>
       </section>
 
@@ -550,7 +570,7 @@
             </details>
             <details>
               <summary>Kolik to stojí?</summary>
-              <p>Nic. OpenSISAKHK je zdarma, bez reklam a její zdrojový kód je veřejně na GitHubu.</p>
+              <p>Nic. OpenSISAKHK je zdarma, bez reklam a její zdrojový kód je veřejně na GitHubu. Kdo chce, může přispět na <a href="https://ko-fi.com/oondraa" target="_blank" rel="noopener">Ko-fi</a>, příspěvky jdou na vývojářské účty pro Google Play (25 $ jednorázově) a App Store (99 $ ročně).</p>
             </details>
           </div>
         </div>
