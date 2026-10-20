@@ -239,13 +239,22 @@
       .final .box { padding: 76px 24px; border-radius: 40px; text-align: center; }
       .final img.mark { width: 88px; height: 88px; margin: 0 auto 26px; border-radius: 22px; box-shadow: 0 18px 44px rgba(40, 24, 10, 0.25); }
       .final .sub { margin: 0 auto 32px; }
-      .store-goal { margin-top: 18px; padding: 24px; border-radius: 26px; display: flex; flex-wrap: wrap; align-items: center; gap: 18px 28px; }
-      .store-goal > div { flex: 1 1 320px; }
-      .store-goal b { display: block; margin-bottom: 6px; font-size: 1.08rem; }
-      .store-goal p { margin: 0; color: var(--text-2); font-size: 0.95rem; }
-      .store-goal ul { margin: 12px 0 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 8px; }
+      .store-goal { margin-top: 28px; padding: 26px; border-radius: 28px; display: flex; flex-wrap: wrap; align-items: center; gap: 20px 32px; box-shadow: var(--ring), 0 0 0 1.5px rgba(255, 92, 26, 0.45), 0 14px 40px rgba(255, 92, 26, 0.16); background: linear-gradient(135deg, rgba(255, 92, 26, 0.14), transparent 60%), var(--glass); scroll-margin-top: 110px; }
+      .store-goal > div { flex: 1 1 340px; }
+      .store-kicker { margin: 0 0 6px !important; font-size: 0.9rem !important; font-weight: 600; color: var(--ember) !important; }
+      .store-goal b { display: block; margin-bottom: 8px; font-size: clamp(1.2rem, 2.4vw, 1.45rem); line-height: 1.25; }
+      .store-goal p { margin: 0; max-width: 62ch; color: var(--text-2); font-size: 0.98rem; }
+      .store-goal ul { margin: 14px 0 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 8px; }
       .store-goal li { padding: 7px 13px; border-radius: 10px; font-size: 0.88rem; font-weight: 500; color: var(--text-2); background: var(--fill); }
       .store-goal li strong { color: var(--text); font-weight: 600; }
+      .kofi-btn { display: inline-flex; align-items: center; gap: 10px; padding: 15px 26px; border-radius: 99px; background: var(--ember); color: #fff; font-weight: 600; font-size: 1.04rem; text-decoration: none; box-shadow: 0 10px 28px rgba(255, 92, 26, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.25); transition: transform 300ms var(--spring); }
+      .kofi-btn svg { width: 20px; height: 20px; }
+      .kofi-btn:hover { transform: translateY(-1px); }
+      .kofi-btn:active { transform: scale(0.97); }
+      .native-teaser { margin-top: 18px; display: inline-flex; align-items: center; gap: 10px; padding: 9px 16px 9px 13px; border-radius: 99px; background: var(--glass); box-shadow: var(--ring); color: var(--text); font-size: 0.92rem; font-weight: 600; text-decoration: none; transition: transform 300ms var(--spring); }
+      .native-teaser .dot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--ember); box-shadow: 0 0 0 4px rgba(255, 92, 26, 0.18); }
+      .native-teaser svg { flex: none; width: 15px; height: 15px; color: var(--ember); }
+      .native-teaser:hover { transform: translateY(-1px); }
       .support { margin-top: 26px; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px 18px; color: var(--text-2); font-size: 0.96rem; text-align: center; }
       .support-btn { display: inline-flex; align-items: center; gap: 9px; padding: 11px 20px; border-radius: 99px; background: var(--glass); box-shadow: var(--ring); color: var(--text); font-weight: 600; text-decoration: none; transition: transform 300ms var(--spring); }
       .support-btn svg { width: 18px; height: 18px; color: var(--ember); }
@@ -316,6 +325,7 @@
               <li>iPhone, Android, počítač</li>
               <li>Heslo zůstává zašifrované u tebe</li>
             </ul>
+            <a class="native-teaser rise" style="--d: 520ms" href="#nativni"><span class="dot" aria-hidden="true"></span>Chceš ji v Google Play a App Storu? Pomoz ji tam dostat<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg></a>
           </div>
           <div class="hero-phone">
             <div class="phone"><div class="screen"><img src="shots/home.webp" alt="Přehled v aplikaci: právě běžící hodina, průměr známek, absence, oběd a volné učebny" /></div></div>
@@ -454,7 +464,20 @@
           <h2 class="reveal" style="--d: 80ms">Žádný obchod s aplikacemi.</h2>
           <p class="sub reveal" style="--d: 160ms">OpenSISAKHK je webová aplikace. Otevřeš ji v prohlížeči a přidáš si ji na plochu, pak se spouští z ikony přes celou obrazovku a umí posílat notifikace. Nezabírá skoro žádné místo a aktualizuje se sama.</p>
 
-          <div class="os-switch glass reveal" style="--d: 220ms" role="tablist" aria-label="Telefon">
+          <div class="store-goal glass reveal" id="nativni" style="--d: 200ms">
+            <div>
+              <p class="store-kicker">Chceš ji radši z obchodu?</p>
+              <b>Nativní appka pro Android a iPhone</b>
+              <p>Webová verze umí všechno a zůstane zdarma. Do Google Play a App Storu se ale appka dostane jen přes placený vývojářský účet. Když se vybere dost na Ko-fi, vydám ji i nativně.</p>
+              <ul>
+                <li>Google Play: <strong>25 $</strong> jednorázově</li>
+                <li>App Store: <strong>99 $</strong> ročně</li>
+              </ul>
+            </div>
+            <a class="kofi-btn" href="https://ko-fi.com/oondraa" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 9h12v5.5a5 5 0 0 1-5 5h-2a5 5 0 0 1-5-5z" /><path d="M16.5 10.5h1.5a2.5 2.5 0 0 1 0 5h-1.6M8.5 3.5v2.5M12.5 3.5v2.5" /></svg>Přispět na Ko-fi</a>
+          </div>
+
+          <div class="os-switch glass reveal" style="--d: 260ms" role="tablist" aria-label="Telefon">
             <span class="os-thumb" aria-hidden="true"></span>
             <button role="tab" aria-selected="true" data-os="ios"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.4 12.6c0-2.6 2.1-3.8 2.2-3.9-1.2-1.8-3.1-2-3.8-2-1.6-.2-3.1.9-3.9.9-.8 0-2-.9-3.4-.9-1.7 0-3.3 1-4.2 2.6-1.8 3.1-.5 7.7 1.3 10.2.9 1.2 1.9 2.6 3.2 2.6 1.3-.1 1.8-.8 3.3-.8 1.6 0 2 .8 3.4.8 1.4 0 2.3-1.3 3.1-2.5 1-1.4 1.4-2.8 1.4-2.9-.1 0-2.6-1-2.6-4.1zM13.9 5.1c.7-.9 1.2-2.1 1.1-3.3-1 0-2.3.7-3 1.6-.7.8-1.3 2-1.1 3.2 1.1.1 2.3-.6 3-1.5z"/></svg>iPhone</button>
             <button role="tab" aria-selected="false" data-os="android"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.6 9.5l1.8-3.1a.4.4 0 0 0-.7-.4l-1.8 3.1a11 11 0 0 0-9.8 0L5.3 6a.4.4 0 1 0-.7.4l1.8 3.1A8.6 8.6 0 0 0 2 16.5h20a8.6 8.6 0 0 0-4.4-7zM7.5 14a1 1 0 1 1 0-2 1 1 0 0 1 0 2zm9 0a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/></svg>Android</button>
@@ -473,18 +496,6 @@
               <li><span class="n">3</span><div><b>Instalovat aplikaci</b><p>Nebo „Přidat na plochu“, podle verze Chromu. Potvrď „Instalovat“.</p></div></li>
               <li><span class="n">4</span><div><b>Hotovo</b><p>Appka je na ploše i v seznamu aplikací. Notifikace zapneš v Nastavení appky.</p></div></li>
             </ol>
-          </div>
-
-          <div class="store-goal glass reveal">
-            <div>
-              <b>Chceš ji jako appku z obchodu?</b>
-              <p>Do Google Play a App Storu se appka dostane jen přes placený vývojářský účet. Když se vybere dost na Ko-fi, vydám ji i nativně.</p>
-              <ul>
-                <li>Google Play: <strong>25 $</strong> jednorázově</li>
-                <li>App Store: <strong>99 $</strong> ročně</li>
-              </ul>
-            </div>
-            <a class="support-btn" href="https://ko-fi.com/oondraa" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 9h12v5.5a5 5 0 0 1-5 5h-2a5 5 0 0 1-5-5z" /><path d="M16.5 10.5h1.5a2.5 2.5 0 0 1 0 5h-1.6M8.5 3.5v2.5M12.5 3.5v2.5" /></svg>Přispět na Ko-fi</a>
           </div>
         </div>
       </section>
