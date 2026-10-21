@@ -13,6 +13,10 @@ export interface Lesson {
   group: string;
   teacher: string;
   changed: boolean;
+  /** Struck out in SIS (`canceled-card`): stays in the list, but isn't taught. */
+  cancelled: boolean;
+  /** Put in on top of the timetable (`added-card`), often in place of a cancelled one. */
+  added: boolean;
   meet: string | null;
 }
 
@@ -75,6 +79,8 @@ export function parseTimetable(html: string, weekStart: string): Day[] {
         group: text(card.querySelector(".group-name")),
         teacher: text(card.querySelector(".teacher")),
         changed: card.classList.contains("changed-card"),
+        cancelled: card.classList.contains("canceled-card"),
+        added: card.classList.contains("added-card"),
         meet: href.startsWith("https://meet.google.com/") ? href : null,
       };
     });

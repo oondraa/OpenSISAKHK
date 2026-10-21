@@ -2,7 +2,7 @@ import { createContext, memo, useContext, type ReactNode, type Ref } from "react
 import { api, cache, type CanteenResponse, type GradesResponse, type ProjectsResponse, type TimetableResponse } from "./api";
 import type { Absence } from "../worker/parse";
 import { PERIODS, type Cell } from "../shared/schoolOcr";
-import { startDay } from "./Timetable";
+import { held, startDay } from "./Timetable";
 import { autoPeriod, roomsKey } from "./Rooms";
 import { allRooms, freeRooms } from "./freeRooms";
 import type { SchoolWeeks } from "./school";
@@ -197,7 +197,7 @@ function TimetableTile({ day, days, now, loading, onOpen }: {
 }) {
   const today = todayPrague();
   const ui = useUi();
-  const lessons = days?.find((d) => d.date === day)?.lessons ?? [];
+  const lessons = held(days?.find((d) => d.date === day)?.lessons ?? []);
   const live = day === today;
   const current = live ? lessons.find((l) => minutes(l.start) <= now && now < minutes(l.end)) : undefined;
   const next = lessons.find((l) => !live || minutes(l.start) > now);

@@ -12,10 +12,13 @@ import { CalendarOffIcon, SunIcon, UtensilsIcon } from "./icons";
 export function startDay(days: TimetableDay[] | undefined) {
   const today = todayPrague();
   const day = defaultSchoolDay();
-  const lessons = days?.find((d) => d.date === today)?.lessons ?? [];
+  const lessons = held(days?.find((d) => d.date === today)?.lessons ?? []);
   if (day !== today || !lessons.length) return day;
   return nowMinutesPrague() >= Math.max(...lessons.map((l) => minutes(l.end))) ? nextSchoolDay(today) : today;
 }
+
+/** Lessons that actually take place: SIS keeps a cancelled one in the day, struck out. */
+export const held = (lessons: Lesson[]) => lessons.filter((l) => !l.cancelled);
 
 export function Timetable({ onError }: { onError: (e: unknown) => boolean }) {
   const [selected, setSelectedState] = useState(() => startDay(cache.get<TimetableResponse>(`timetable:${mondayOf(todayPrague())}`)?.days));
@@ -46,8 +49,9 @@ export function Timetable({ onError }: { onError: (e: unknown) => boolean }) {
   }, [data]);
 
   const todayDay = selected === today ? days.find((d) => d.date === today) : undefined;
-  const current = todayDay?.lessons.find((l) => minutes(l.start) <= now && now < minutes(l.end));
-  const next = todayDay?.lessons.find((l) => minutes(l.start) > now);
+  const todayLessons = held(todayDay?.lessons ?? []);
+  const current = todayLessons.find((l) => minutes(l.start) <= now && now < minutes(l.end));
+  const next = todayLessons.find((l) => minutes(l.start) > now);
   const desktop = useDesktop();
   const shown = useRef<{ current?: Lesson; next?: Lesson } | null>(null);
   if (current || next) shown.current = { current, next };
@@ -113,9 +117,10 @@ const span = (m: number) => (m >= 60 ? `${Math.floor(m / 60)} h${m % 60 ? ` ${m 
 /**
  * Lessons with what's between them: a long gap shows as free time, and lunch takes only its ~30 minutes of it
  * (at the start of the gap, or when the canteen opens), so a two-hour break doesn't hide behind the lunch card.
+ * Cancelled lessons don't take up time: the gaps go around them and they're slotted in by their start.
  */
 export function dayItems(day: TimetableDay): Item[] {
-  const lessons = [...day.lessons].sort((a, b) => minutes(a.start) - minutes(b.start));
+  const lessons = held(day.lessons).sort((a, b) => minutes(a.start) - minutes(b.start));
   const items: Item[] = [];
   const lunch = day.lunch && { start: minutes(day.lunch.start), end: minutes(day.lunch.end) };
   let lunchPlaced = false;
@@ -136,11 +141,10 @@ export function dayItems(day: TimetableDay): Item[] {
     } else free(g0, g1);
   });
   // Lunch outside the lessons (after the last one, or no gap fits it): where SIS puts it, ~30 minutes long.
-  if (lunch && !lunchPlaced) {
-    items.push({ kind: "lunch", start: hhmm(lunch.start), end: hhmm(Math.min(lunch.start + LUNCH_MIN, lunch.end)) });
-    items.sort((a, b) => minutes(a.start) - minutes(b.start));
-  }
-  return items;
+  if (lunch && !lunchPlaced) items.push({ kind: "lunch", start: hhmm(lunch.start), end: hhmm(Math.min(lunch.start + LUNCH_MIN, lunch.end)) });
+  // Stable sort: a cancelled lesson comes after whatever replaced it at the same time.
+  for (const lesson of day.lessons) if (lesson.cancelled) items.push({ kind: "lesson", lesson, start: lesson.start, end: lesson.end });
+  return items.sort((a, b) => minutes(a.start) - minutes(b.start));
 }
 
 /** `scroll`: today's list jumps to what's on now. Off in the week view, where it would shift the other days too. */
@@ -192,7 +196,13 @@ function DayView({ day, live, now, meal, scroll = true }: { day: TimetableDay; l
           </li>
         ) : (
           // Keyed by content, not SIS's debug id: a refresh must update cards in place, not remount them.
-          <LessonCard key={`${it.start}-${it.lesson.subject}-${it.lesson.group}`} liRef={ref} lesson={it.lesson} state={state(it)} />
+          <LessonCard
+            key={`${it.start}-${it.lesson.subject}-${it.lesson.group}-${it.lesson.cancelled ? "x" : ""}`}
+            liRef={ref}
+            lesson={it.lesson}
+            replaces={it.lesson.added && day.lessons.some((o) => o.cancelled && o.start === it.lesson.start)}
+            state={state(it)}
+          />
         );
       })}
     </ol>
@@ -224,8 +234,10 @@ function NowCard({ current, next, now }: { current?: Lesson; next?: Lesson; now:
   );
 }
 
-function LessonCard({ lesson: l, state, liRef }: {
+/** `replaces`: an added lesson in the slot of a cancelled one, i.e. a substitution. */
+function LessonCard({ lesson: l, state, replaces, liRef }: {
   lesson: Lesson;
+  replaces: boolean;
   state: "past" | "now" | "future";
   liRef?: (el: HTMLLIElement | null) => void;
 }) {
@@ -237,16 +249,22 @@ function LessonCard({ lesson: l, state, liRef }: {
       </div>
       <div className="lesson-main">
         <div className="lesson-subject">
-          {l.subject}
+          <span className="lesson-name">{l.subject}</span>
           {l.group && <span className="tag">sk. {l.group}</span>}
-          {l.changed && <span className="tag tag-accent">změna</span>}
+          {l.cancelled ? (
+            <span className="tag">odpadá</span>
+          ) : l.added ? (
+            <span className="tag tag-accent">{replaces ? "náhrada" : "přidaná"}</span>
+          ) : (
+            l.changed && <span className="tag tag-accent">změna</span>
+          )}
         </div>
         <div className="lesson-teacher">{l.teacher}</div>
       </div>
       <div className="lesson-room">{l.room}</div>
     </>
   );
-  const cls = `lesson-card ${state} ${l.changed ? "changed" : ""}`;
+  const cls = `lesson-card ${state} ${l.cancelled ? "cancelled" : l.changed || l.added ? "changed" : ""}`;
   return (
     <li ref={liRef}>
       {l.meet ? (

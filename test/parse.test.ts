@@ -35,6 +35,20 @@ describe("parseTimetable", () => {
     expect(actual[1].lessons[0]).toMatchObject({ subject: "DIC", meet: null });
   });
 
+  it("marks cancelled and added lessons", () => {
+    const [day] = parseTimetable(
+      timetable(
+        card("CJL", "8:45 - 9:30", "202", "", "RE", "added-card") +
+          `<div class="hour-card canceled-card"><div class="subject-name">CJL</div><div class="time">8:45 - 9:30</div><div class="room-name">317</div><div class="group-name">p</div><div class="teacher">RE</div></div>`,
+      ),
+      "2026-10-19",
+    );
+    expect(day.lessons.map((l) => [l.room, l.added, l.cancelled])).toEqual([
+      ["202", true, false],
+      ["317", false, true],
+    ]);
+  });
+
   it("derives lunch time from card position", () => {
     expect(actual[0].lunch).toEqual({ start: "12:23", end: "12:52" });
   });

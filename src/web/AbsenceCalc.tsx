@@ -5,7 +5,7 @@ import { DayPager, DayStrip, Empty, LargeHeader, SkeletonList } from "./ui";
 import { addDays, longDate, minutes, mondayOf, todayPrague, weekdayIndex } from "./time";
 import { useCachedFetch } from "./useFetch";
 import { CalendarOffIcon, SunIcon } from "./icons";
-import { startDay } from "./Timetable";
+import { held, startDay } from "./Timetable";
 import { LIMIT, blockers, budgets, semesterEnd, verdict } from "./absencePlan";
 
 /** A lesson the student plans to skip; `key` tells it apart from the same subject at another time. */
@@ -65,9 +65,9 @@ function DayCalc({ day, reserves, planned, onPlanned }: {
   planned: PlannedSkip[];
   onPlanned: (p: PlannedSkip[]) => void;
 }) {
-  if (!day.lessons.length) return <Empty icon={<SunIcon size={40} />} title="Volno" text="Tenhle den nemáš žádnou hodinu." />;
+  const lessons = held(day.lessons).sort((a, b) => minutes(a.start) - minutes(b.start));
+  if (!lessons.length) return <Empty icon={<SunIcon size={40} />} title="Volno" text="Tenhle den nemáš žádnou hodinu." />;
 
-  const lessons = [...day.lessons].sort((a, b) => minutes(a.start) - minutes(b.start));
   const subjects = lessons.map((l) => l.subject);
   const isPlanned = new Set(planned.map((p) => p.key));
   const budget = budgets(reserves, planned.map((p) => p.subject));

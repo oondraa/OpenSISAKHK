@@ -40,7 +40,7 @@ describe("messages", () => {
 
 describe("compareTimetable", () => {
   const lesson = (start: string, subject: string, room: string) =>
-    ({ id: null, subject, start, end: "", room, group: "", teacher: "NO", changed: false, meet: null }) as const;
+    ({ id: null, subject, start, end: "", room, group: "", teacher: "NO", changed: false, cancelled: false, added: false, meet: null }) as const;
   const day = (date: string, lessons: ReturnType<typeof lesson>[]) => ({ date, label: "", lessons: [...lessons], lunch: null });
 
   it("reports changed, added and cancelled lessons of days seen before", async () => {
@@ -60,5 +60,12 @@ describe("compareTimetable", () => {
       ["8:55", null],
     ]);
     expect(timetableMessage(r.changes, "2026-10-12").body).toBe("Út 13. 10.: 8:00 MAT · 105 · NO, 8:55 odpadá, 10:00 AGJ · B13 · NO");
+  });
+
+  it("treats a lesson SIS strikes out as cancelled", async () => {
+    const first = await compareTimetable(undefined, [day("2026-10-13", [lesson("8:00", "MAT", "211")])], "2026-10-12");
+    const struck = { ...lesson("8:00", "MAT", "211"), cancelled: true };
+    const r = await compareTimetable(first.next, [{ date: "2026-10-13", label: "", lessons: [struck], lunch: null }], "2026-10-12");
+    expect(r.changes.map((c) => [c.start, c.lesson])).toEqual([["8:00", null]]);
   });
 });
