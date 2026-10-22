@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">OpenSISAKHK</string>
+    <string name="widget_now_label">Teď a další</string>
+    <string name="widget_now_description">Hodina, která právě běží nebo je další, s učebnou</string>
+    <string name="widget_day_label">Rozvrh dne</string>
+    <string name="widget_day_description">Všechny dnešní hodiny, ta probíhající zvýrazněná</string>
+</resources>
