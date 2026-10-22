@@ -262,6 +262,11 @@
       .native-teaser svg { flex: none; width: 15px; height: 15px; color: var(--ember); }
       .native-teaser:hover { transform: translateY(-1px); }
       .support { margin-top: 26px; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px 18px; color: var(--text-2); font-size: 0.96rem; text-align: center; }
+      /* Native Android app: the APK from the latest GitHub release, next to the web app's button. */
+      .apk-btn { display: inline-flex; align-items: center; gap: 9px; padding: 14px 22px; border-radius: 99px; background: var(--glass); box-shadow: var(--ring); color: var(--text); font-weight: 600; font-size: 1.02rem; text-decoration: none; transition: transform 300ms var(--spring); }
+      .apk-btn svg { width: 20px; height: 20px; color: #3ddc84; }
+      .apk-btn:hover { transform: translateY(-1px); }
+      .apk-btn:active { transform: scale(0.97); }
       .support-btn { display: inline-flex; align-items: center; gap: 9px; padding: 11px 20px; border-radius: 99px; background: var(--glass); box-shadow: var(--ring); color: var(--text); font-weight: 600; text-decoration: none; transition: transform 300ms var(--spring); }
       .support-btn svg { width: 18px; height: 18px; color: var(--ember); }
       .support-btn:hover { transform: translateY(-1px); }
@@ -324,6 +329,7 @@
                 Otevřít aplikaci
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
               </a>
+              <a class="apk-btn" href="https://github.com/oondraa/OpenSISAKHK/releases/latest/download/OpenSISAKHK.apk"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.6 9.5l1.8-3.1a.4.4 0 0 0-.7-.4l-1.8 3.1a11 11 0 0 0-9.8 0L5.3 6a.4.4 0 1 0-.7.4l1.8 3.1A8.6 8.6 0 0 0 2 16.5h20a8.6 8.6 0 0 0-4.4-7zM7.5 14a1 1 0 1 1 0-2 1 1 0 0 1 0 2zm9 0a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/></svg>Stáhnout pro Android</a>
               <a class="text-link" href="#instalace">Jak ji přidat na plochu</a>
             </div>
             <ul class="facts rise" style="--d: 440ms">
@@ -503,10 +509,10 @@
               <li><span class="n">4</span><div><b>Spouštěj z ikony</b><p>Notifikace na iPhonu fungují jen takhle z plochy (od iOS 16.4). Zapneš je v Nastavení appky.</p></div></li>
             </ol>
             <ol class="install-steps" data-for="android">
-              <li><span class="n">1</span><div><b>Otevři appku v Chromu</b><p>Klepni na <a class="app-link" href="#">Otevřít aplikaci</a>. Často se rovnou nabídne „Instalovat aplikaci“.</p></div></li>
-              <li><span class="n">2</span><div><b>Otevři menu</b><p>Tři tečky vpravo nahoře.</p></div></li>
-              <li><span class="n">3</span><div><b>Instalovat aplikaci</b><p>Nebo „Přidat na plochu“, podle verze Chromu. Potvrď „Instalovat“.</p></div></li>
-              <li><span class="n">4</span><div><b>Hotovo</b><p>Appka je na ploše i v seznamu aplikací. Notifikace zapneš v Nastavení appky.</p></div></li>
+              <li><span class="n">1</span><div><b>Stáhni appku</b><p>Klepni na <a href="https://github.com/oondraa/OpenSISAKHK/releases/latest/download/OpenSISAKHK.apk">Stáhnout pro Android</a>. Je to nativní appka, ne stránka v prohlížeči. Potřebuje Android 8 nebo novější.</p></div></li>
+              <li><span class="n">2</span><div><b>Otevři stažený soubor</b><p>OpenSISAKHK.apk najdeš v oznámeních nebo ve Stažených souborech.</p></div></li>
+              <li><span class="n">3</span><div><b>Povol instalaci</b><p>Android se zeptá, jestli může prohlížeč instalovat aplikace. Povol to a klepni na „Instalovat“.</p></div></li>
+              <li><span class="n">4</span><div><b>Hotovo</b><p>Přidej si na plochu widget s rozvrhem a v Nastavení appky zapni notifikace. Bez stahování funguje i <a class="app-link" href="#">webová verze</a> v Chromu.</p></div></li>
             </ol>
           </div>
         </div>
