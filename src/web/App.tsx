@@ -4,6 +4,7 @@ import { Login, Welcome } from "./Login";
 import { Timetable } from "./Timetable";
 import { Gym } from "./Gym";
 import { Rooms } from "./Rooms";
+import { Teachers } from "./Teachers";
 import { Grades } from "./Grades";
 import { Settings } from "./Settings";
 import { Absence } from "./Absence";
@@ -151,6 +152,7 @@ export function App() {
       {t === "timetable" && <Timetable onError={onError} />}
       {t === "gym" && <Gym onError={onError} />}
       {t === "rooms" && <Rooms onError={onError} />}
+      {t === "teachers" && <Teachers onError={onError} />}
       {t === "grades" && <Grades onError={onError} />}
       {t === "absence" && <Absence onError={onError} />}
       {t === "projects" && <Projects onError={onError} />}

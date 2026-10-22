@@ -32,6 +32,20 @@ export const DoorIcon = ({ size }: { size?: number }) => (
   </Icon>
 );
 
+export const TeacherIcon = ({ size }: { size?: number }) => (
+  <Icon size={size}>
+    <circle cx="9" cy="7.5" r="3.5" />
+    <path d="M2.5 20.5a6.5 6.5 0 0 1 13 0M14 4.5h7.5v9H17" />
+  </Icon>
+);
+
+export const SearchIcon = ({ size }: { size?: number }) => (
+  <Icon size={size}>
+    <circle cx="10.5" cy="10.5" r="6.5" />
+    <path d="m15.5 15.5 5 5" />
+  </Icon>
+);
+
 export const GradesIcon = ({ size }: { size?: number }) => (
   <Icon size={size}>
     <path d="M5 20v-7M12 20V5M19 20v-10" />
@@ -142,6 +156,7 @@ export const TAB_ICONS: Record<Tab, ReactNode> = {
   lunch: <UtensilsIcon />,
   gym: <DumbbellIcon />,
   rooms: <DoorIcon />,
+  teachers: <TeacherIcon />,
   grades: <GradesIcon />,
   absence: <AbsenceIcon />,
   projects: <ProjectIcon />,

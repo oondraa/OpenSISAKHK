@@ -15,7 +15,7 @@ export const roomsKey = (weeks: SchoolWeeks | null | undefined, iso: string) => 
   return file ? `rooms:${file.slice(2)}:${mondayOf(iso)}` : null;
 };
 
-const lastPeriodOf = (day: Cell[]) => Math.max(8, ...day.map((c) => c.period));
+export const lastPeriodOf = (day: Cell[]) => Math.max(8, ...day.map((c) => c.period));
 
 /** Period to show first: the one on now (or next) today, otherwise the first one anybody has. */
 export function autoPeriod(day: Cell[], live: boolean, now: number) {
@@ -27,7 +27,7 @@ export function autoPeriod(day: Cell[], live: boolean, now: number) {
 }
 
 /** Today until its last period is over, then the next school day; decided from cache so it doesn't flip after a paint. */
-function startDay() {
+export function schoolStartDay() {
   const today = todayPrague();
   const day = defaultSchoolDay();
   const key = roomsKey(cache.get<SchoolWeeks>("school-weeks"), today);
@@ -36,14 +36,11 @@ function startDay() {
   return nowMinutesPrague() >= minutes(PERIODS[lastPeriodOf(week[weekdayIndex(today)])][1]) ? nextSchoolDay(today) : today;
 }
 
-/** Free classrooms: every room the school timetable uses this week, minus the ones taken in the chosen period. */
-export function Rooms({ onError }: { onError: (e: unknown) => boolean }) {
-  const [selected, setSelected] = useState(startDay);
-  const [picked, setPicked] = useState<number | null>(null);
+/** The school timetable of `selected`'s whole week: the room list comes from all of it, and switching days is then instant. */
+export function useSchoolWeek(selected: string, onError: (e: unknown) => boolean) {
   const weeks = useCachedFetch("school-weeks", api.schoolWeeks, onError);
   const key = roomsKey(weeks.data, selected);
   const monday = mondayOf(selected);
-  // The whole week at once: the room list comes from all of it, and switching days is then instant.
   const week = useCachedFetch<Cell[][]>(
     key,
     () => {
@@ -52,6 +49,15 @@ export function Rooms({ onError }: { onError: (e: unknown) => boolean }) {
     },
     onError,
   );
+  return { weeks, key, week };
+}
+
+/** Free classrooms: every room the school timetable uses this week, minus the ones taken in the chosen period. */
+export function Rooms({ onError }: { onError: (e: unknown) => boolean }) {
+  const [selected, setSelected] = useState(schoolStartDay);
+  const [picked, setPicked] = useState<number | null>(null);
+  const { weeks, key, week } = useSchoolWeek(selected, onError);
+  const monday = mondayOf(selected);
   const now = useNow();
 
   const live = selected === todayPrague();
@@ -109,7 +115,7 @@ export function Rooms({ onError }: { onError: (e: unknown) => boolean }) {
   );
 }
 
-function PeriodStrip({ last, period, live, now, onPick }: { last: number; period: number; live: boolean; now: number; onPick: (p: number) => void }) {
+export function PeriodStrip({ last, period, live, now, onPick }: { last: number; period: number; live: boolean; now: number; onPick: (p: number) => void }) {
   const active = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     active.current?.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });

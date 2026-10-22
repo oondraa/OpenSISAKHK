@@ -1,7 +1,7 @@
 import { cache } from "./api";
 
 /** Every part of the app. "more" is the tab bar's overflow list, "settings" has no place in the custom orders. */
-export type Tab = "timetable" | "lunch" | "gym" | "rooms" | "grades" | "absence" | "projects" | "finance" | "settings" | "more";
+export type Tab = "timetable" | "lunch" | "gym" | "rooms" | "teachers" | "grades" | "absence" | "projects" | "finance" | "settings" | "more";
 export type Part = Exclude<Tab, "settings" | "more">;
 
 export const LABELS: Record<Tab, string> = {
@@ -9,6 +9,7 @@ export const LABELS: Record<Tab, string> = {
   lunch: "Obědy",
   gym: "Posilovna",
   rooms: "Volné učebny",
+  teachers: "Učitelé",
   grades: "Známky",
   absence: "Absence",
   projects: "Projekty",
@@ -18,12 +19,12 @@ export const LABELS: Record<Tab, string> = {
 };
 
 /** Screens a notification may open directly (/?tab=grades). Not Finance: nothing links straight to the money. */
-export const LINKABLE: Tab[] = ["timetable", "lunch", "gym", "rooms", "grades", "absence", "projects", "settings"];
+export const LINKABLE: Tab[] = ["timetable", "lunch", "gym", "rooms", "teachers", "grades", "absence", "projects", "settings"];
 
 /** Home: the timetable is always the big tile on top, these follow in pairs (an odd last one as a slim bar). */
-export const HOME_DEFAULT: Part[] = ["grades", "absence", "lunch", "rooms", "gym", "projects", "finance"];
+export const HOME_DEFAULT: Part[] = ["grades", "absence", "lunch", "rooms", "gym", "projects", "teachers", "finance"];
 /** Tab bar: the first TAB_SLOTS are in the bar, the rest under "Více" (with Settings). */
-export const TABS_DEFAULT: Part[] = ["timetable", "lunch", "grades", "absence", "gym", "rooms", "projects", "finance"];
+export const TABS_DEFAULT: Part[] = ["timetable", "lunch", "grades", "absence", "gym", "rooms", "teachers", "projects", "finance"];
 export const TAB_SLOTS = 4;
 
 /** A saved order, repaired: unknown ids dropped, parts added in a later version appended. */

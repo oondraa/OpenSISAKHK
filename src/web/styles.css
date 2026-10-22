@@ -227,6 +227,7 @@ p { margin: 0; }
 .tile-lunch, .tint-lunch { --tint: #ff375f; }
 .tile-finance, .tint-finance { --tint: #0a84ff; }
 .tile-rooms, .tint-rooms { --tint: #af52de; }
+.tile-teachers, .tint-teachers { --tint: #30b0c7; }
 .tint-timetable { --tint: var(--ember); }
 .tile-settings, .tint-settings { --tint: var(--graphite); }
 /* Settings: a slim full-width bar under the grid, nobody needs it at a glance. */
@@ -547,6 +548,15 @@ button.tt-row:active { background-color: var(--fill); transition-duration: 0ms; 
 .pill-status small { font-size: 0.8125rem; font-weight: 500; opacity: 0.8; }
 .pill-status.free { color: var(--green); background: color-mix(in srgb, var(--green) 13%, transparent); }
 .pill-status.busy { color: var(--red); background: color-mix(in srgb, var(--red) 13%, transparent); }
+.pill-status.done { color: var(--text); background: var(--fill); }
+.pill-status.done.past { color: var(--text-2); }
+/* Teachers: who teaches where in the chosen period, found by their initials. */
+.search { display: flex; align-items: center; gap: 10px; margin-top: 12px; padding: 0 14px; border-radius: 14px; background: var(--fill); color: var(--text-2); }
+.search input { flex: 1; min-width: 0; font: inherit; font-size: 1.0625rem; padding: 12px 0; border: 0; background: transparent; color: var(--text); outline: none; }
+.search input::placeholder { color: var(--text-3); }
+.teacher-row { display: grid; grid-template-columns: 3rem 1fr auto; gap: 12px; min-height: 56px; }
+.teacher-what { display: flex; flex-direction: column; min-width: 0; font-weight: 600; }
+.teacher-what small { font-size: 0.8125rem; font-weight: 500; color: var(--text-2); }
 .pill-status.changed { box-shadow: inset 0 0 0 1.5px var(--accent); }
 
 /* ---------- Grades ---------- */
@@ -1109,6 +1119,8 @@ a.row { color: inherit; text-decoration: none; }
 }
 [data-ui="new"] :is(.summary-card, .gym-status, .profile-card, .balance-card, .project-card, .room-card) { border-radius: 28px; box-shadow: var(--ring); }
 [data-ui="new"] .lesson-card { border-radius: 24px; box-shadow: var(--ring); }
+[data-ui="new"] .tt-block { border-radius: 24px; box-shadow: var(--ring); }
+[data-ui="new"] .week-day .tt-block { border-radius: 18px; }
 [data-ui="new"] .lesson-card.now { box-shadow: 0 0 0 1.5px var(--accent), 0 8px 32px rgba(0, 0, 0, 0.12); }
 [data-ui="new"] .lesson-card.past { opacity: 0.6; }
 [data-ui="new"] .lesson-room { background: var(--fill); }
@@ -1119,8 +1131,6 @@ a.row { color: inherit; text-decoration: none; }
 [data-ui="new"] .back { min-height: 44px; padding: 0 16px 0 10px; color: var(--text); font-weight: 500; box-shadow: var(--ring-bar); -webkit-backdrop-filter: blur(24px) saturate(1.8); backdrop-filter: blur(24px) saturate(1.8); }
 
 /* Day strip: one round pill, the chosen day solid accent. */
-[data-ui="new"] .tt-block { border-radius: 24px; box-shadow: var(--ring); }
-[data-ui="new"] .week-day .tt-block { border-radius: 18px; }
 [data-ui="new"] .day-strip { border-radius: 100px; padding: 4px 6px; }
 [data-ui="new"] .day-thumb { border-radius: 100px; box-shadow: 0 6px 16px color-mix(in srgb, var(--accent) 35%, transparent); }
 [data-ui="new"] :is(.day, .week-arrow, .period-chip) { border-radius: 100px; }

@@ -11,7 +11,7 @@ import { LIMIT } from "./absencePlan";
 import { WEEKDAYS, addDays, inMinutes, minutes, mondayOf, nowMinutesPrague, todayPrague, weekdayIndex } from "./time";
 import { useCachedFetch } from "./useFetch";
 import { useNow } from "./hooks";
-import { AbsenceIcon, CalendarIcon, DoorIcon, DumbbellIcon, GearIcon, GradesIcon, ProjectIcon, UtensilsIcon, WalletIcon } from "./icons";
+import { AbsenceIcon, CalendarIcon, DoorIcon, DumbbellIcon, GearIcon, TeacherIcon, GradesIcon, ProjectIcon, UtensilsIcon, WalletIcon } from "./icons";
 import { Chevron } from "./ui";
 
 import { homeOrder, type Part, type Tab } from "./sections";
@@ -159,6 +159,7 @@ function Tile({ id, label, icon, value, valueClass, sub, onOpen }: {
 function PartTile({ part, now, onOpen }: { part: Part; now: number; onOpen: (tab: Tab) => void }) {
   if (part === "gym") return <GymTile now={now} onOpen={onOpen} />;
   if (part === "rooms") return <RoomsTile now={now} onOpen={onOpen} />;
+  if (part === "teachers") return <Tile id="teachers" label="Učitelé" icon={<TeacherIcon />} sub="Kdo kde učí" onOpen={onOpen} />;
   if (part === "grades") return <GradesTile onOpen={onOpen} />;
   if (part === "absence") return <AbsenceTile onOpen={onOpen} />;
   if (part === "projects") return <ProjectsTile onOpen={onOpen} />;
