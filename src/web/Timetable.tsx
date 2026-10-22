@@ -2,9 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import { api, cache, type LunchResponse, type TimetableDay, type TimetableResponse } from "./api";
 import type { Lesson } from "../worker/parse";
 import type { LunchDay } from "../worker/strava";
-import { DayPager, DayStrip, Empty, LargeHeader, SkeletonList } from "./ui";
+import { Chevron, DayPager, DayStrip, Empty, LargeHeader, SkeletonList } from "./ui";
 import { WEEKDAYS, addDays, defaultSchoolDay, inMinutes, longDate, minutes, mondayOf, nextSchoolDay, nowMinutesPrague, todayPrague, weekdayIndex } from "./time";
 import { useCachedFetch } from "./useFetch";
+import { PERIODS } from "../shared/schoolOcr";
 import { useDesktop, useNow, useScrollToFocus } from "./hooks";
 import { CalendarOffIcon, SunIcon, UtensilsIcon } from "./icons";
 
@@ -105,7 +106,7 @@ export function Timetable({ onError }: { onError: (e: unknown) => boolean }) {
 }
 
 type Item =
-  | { kind: "lesson"; lesson: Lesson; start: string; end: string }
+  | { kind: "lesson"; lesson: Lesson; start: string; end: string; was?: Lesson[] }
   | { kind: "lunch"; start: string; end: string }
   | { kind: "free"; start: string; end: string };
 
@@ -117,7 +118,8 @@ const span = (m: number) => (m >= 60 ? `${Math.floor(m / 60)} h${m % 60 ? ` ${m 
 /**
  * Lessons with what's between them: a long gap shows as free time, and lunch takes only its ~30 minutes of it
  * (at the start of the gap, or when the canteen opens), so a two-hour break doesn't hide behind the lunch card.
- * Cancelled lessons don't take up time: the gaps go around them and they're slotted in by their start.
+ * Cancelled lessons don't take up time: one with something else taught in its slot folds into that lesson as `was`
+ * (what it replaced), one with nothing in its place keeps its own row, slotted in by its start.
  */
 export function dayItems(day: TimetableDay): Item[] {
   const lessons = held(day.lessons).sort((a, b) => minutes(a.start) - minutes(b.start));
@@ -142,10 +144,38 @@ export function dayItems(day: TimetableDay): Item[] {
   });
   // Lunch outside the lessons (after the last one, or no gap fits it): where SIS puts it, ~30 minutes long.
   if (lunch && !lunchPlaced) items.push({ kind: "lunch", start: hhmm(lunch.start), end: hhmm(Math.min(lunch.start + LUNCH_MIN, lunch.end)) });
-  // Stable sort: a cancelled lesson comes after whatever replaced it at the same time.
-  for (const lesson of day.lessons) if (lesson.cancelled) items.push({ kind: "lesson", lesson, start: lesson.start, end: lesson.end });
+  for (const lesson of day.lessons) {
+    if (!lesson.cancelled) continue;
+    // Its slot is whatever overlaps it in time: SIS can shift the replacement by a few minutes (12:45 for a 12:55).
+    // Of those, the one of the same subject or group took its place, else the one overlapping it most.
+    const overlap = (it: Item) => Math.min(minutes(it.end), minutes(lesson.end)) - Math.max(minutes(it.start), minutes(lesson.start));
+    const slot = items
+      .filter((it): it is Item & { kind: "lesson" } => it.kind === "lesson" && !it.lesson.cancelled && overlap(it) > 0)
+      .sort((a, b) => overlap(b) - overlap(a));
+    const by = slot.find((it) => it.lesson.subject === lesson.subject) ?? slot.find((it) => lesson.group && it.lesson.group === lesson.group) ?? slot[0];
+    if (by) (by.was ??= []).push(lesson);
+    else items.push({ kind: "lesson", lesson, start: lesson.start, end: lesson.end });
+  }
   return items.sort((a, b) => minutes(a.start) - minutes(b.start));
 }
+
+/**
+ * School periods a lesson spans ("3", "1–2"), the way students count them. Some classes run shifted (12:55–13:40
+ * for the 12:45 period): such a lesson counts as the period it mostly overlaps. Empty when it overlaps none by half.
+ */
+export function periodOf(l: { start: string; end: string }) {
+  const s = minutes(l.start);
+  const e = minutes(l.end);
+  const covered = PERIODS.flatMap(([ps, pe], p) => {
+    const overlap = Math.min(e, minutes(pe)) - Math.max(s, minutes(ps));
+    return overlap * 2 >= minutes(pe) - minutes(ps) ? [p] : [];
+  });
+  if (!covered.length) return "";
+  const [a, b] = [covered[0], covered[covered.length - 1]];
+  return b > a ? `${a}–${b}` : `${a}`;
+}
+
+type State = "past" | "now" | "future";
 
 /** `scroll`: today's list jumps to what's on now. Off in the week view, where it would shift the other days too. */
 function DayView({ day, live, now, meal, scroll = true }: { day: TimetableDay; live: boolean; now: number; meal?: LunchDay; scroll?: boolean }) {
@@ -157,52 +187,67 @@ function DayView({ day, live, now, meal, scroll = true }: { day: TimetableDay; l
 
   if (!day.lessons.length) return <Empty icon={<SunIcon size={40} />} title="Volno" text="Tenhle den nemáš žádnou hodinu." />;
 
-  const state = (it: Item) => (!live ? "future" : now >= minutes(it.end) ? "past" : now >= minutes(it.start) ? "now" : "future");
+  const state = (it: Item): State => (!live ? "future" : now >= minutes(it.end) ? "past" : now >= minutes(it.start) ? "now" : "future");
+  const refAt = (i: number) => (i === focus ? (el: HTMLLIElement | null) => void (focusRef.current = el) : undefined);
+
+  // Lessons that follow each other share one block; free time splits the day into blocks.
+  const groups: ({ free: Item & { kind: "free" }; i: number } | { rows: { it: Item; i: number }[] })[] = [];
+  items.forEach((it, i) => {
+    const last = groups[groups.length - 1];
+    if (it.kind === "free") groups.push({ free: it, i });
+    else if (last && "rows" in last) last.rows.push({ it, i });
+    else groups.push({ rows: [{ it, i }] });
+  });
 
   return (
-    <ol className="timeline stagger">
-      {items.map((it, i) => {
-        const ref = i === focus ? (el: HTMLLIElement | null) => void (focusRef.current = el) : undefined;
-        if (it.kind === "free")
+    <ol className="tt stagger">
+      {groups.map((g) => {
+        if ("free" in g) {
+          const it = g.free;
+          const s = state(it);
           return (
-            <li key={`free-${it.start}`} ref={ref}>
-              <div className={`free-slot ${state(it)}`}>
-                <span className="free-line" aria-hidden="true" />
-                <span className="free-text">
-                  {state(it) === "now" ? `Volno ještě ${span(Math.max(1, Math.ceil(minutes(it.end) - now)))}` : `Volno ${span(minutes(it.end) - minutes(it.start))}`}
-                  <small>
-                    {it.start}–{it.end}
-                  </small>
-                </span>
-                <span className="free-line" aria-hidden="true" />
-              </div>
+            <li key={`free-${it.start}`} ref={refAt(g.i)} className={`tt-free ${s}`}>
+              {s === "now" ? `Volno ještě ${span(Math.max(1, Math.ceil(minutes(it.end) - now)))}` : `Volno ${span(minutes(it.end) - minutes(it.start))}`}
+              <small>
+                {it.start}–{it.end}
+              </small>
             </li>
           );
-        return it.kind === "lunch" ? (
-          <li key="lunch" ref={ref}>
-            <div className={`lesson-card lunch ${state(it)}`}>
-              <div className="lesson-time">
-                <span>{it.start}</span>
-                <span>{it.end}</span>
-              </div>
-              <div className="lesson-main">
-                <div className="lesson-subject">{meal?.ordered?.label ?? "Oběd"}</div>
-                <div className="lesson-teacher">{meal ? (meal.ordered?.name ?? "Nemáš objednáno") : "Jídelna"}</div>
-              </div>
-              <div className={`lunch-icon ${meal && !meal.ordered ? "none" : ""}`}>
-                {meal?.ordered?.number ? <span className="lunch-number">{meal.ordered.number}</span> : <UtensilsIcon size={20} />}
-              </div>
-            </div>
+        }
+        return (
+          <li key={`block-${g.rows[0].it.start}`}>
+            <ol className="tt-block">
+              {g.rows.map(({ it, i }) =>
+                it.kind === "lesson" ? (
+                  // Keyed by content, not SIS's debug id: a refresh must update rows in place, not remount them.
+                  <LessonRow
+                    key={`${it.start}-${it.lesson.subject}-${it.lesson.group}-${it.lesson.cancelled ? "x" : ""}`}
+                    liRef={refAt(i)}
+                    lesson={it.lesson}
+                    was={it.was}
+                    state={state(it)}
+                  />
+                ) : (
+                  <li key="lunch" ref={refAt(i)}>
+                    <div className={`tt-row lunch ${state(it)}`}>
+                      <span className="tt-period" aria-hidden="true">
+                        <UtensilsIcon size={18} />
+                      </span>
+                      <span className="tt-main">
+                        <span className="tt-subject">
+                          <span className="tt-name">{meal?.ordered?.label ?? "Oběd"}</span>
+                        </span>
+                        <span className="tt-meta">
+                          {it.start}–{it.end} · {meal ? (meal.ordered?.name ?? "Nemáš objednáno") : "Jídelna"}
+                        </span>
+                      </span>
+                      <span className="tt-room">{meal?.ordered?.number}</span>
+                    </div>
+                  </li>
+                ),
+              )}
+            </ol>
           </li>
-        ) : (
-          // Keyed by content, not SIS's debug id: a refresh must update cards in place, not remount them.
-          <LessonCard
-            key={`${it.start}-${it.lesson.subject}-${it.lesson.group}-${it.lesson.cancelled ? "x" : ""}`}
-            liRef={ref}
-            lesson={it.lesson}
-            replaces={it.lesson.added && day.lessons.some((o) => o.cancelled && o.start === it.lesson.start)}
-            state={state(it)}
-          />
         );
       })}
     </ol>
@@ -234,46 +279,100 @@ function NowCard({ current, next, now }: { current?: Lesson; next?: Lesson; now:
   );
 }
 
-/** `replaces`: an added lesson in the slot of a cancelled one, i.e. a substitution. */
-function LessonCard({ lesson: l, state, replaces, liRef }: {
+/** What a changed lesson's detail says: field by field what it was and is now, or why there's nothing to compare. */
+function changeLines(l: Lesson, was?: Lesson[]): { label: string; from?: string; to: string }[] {
+  if (l.cancelled) return [{ label: "Odpadá", to: [l.teacher, l.room && `učebna ${l.room}`].filter(Boolean).join(" · ") || "nic za ni není" }];
+  if (was?.length) {
+    return was.flatMap((o) => {
+      const fields = [
+        { label: "Předmět", from: o.subject, to: l.subject },
+        { label: "Učitel", from: o.teacher, to: l.teacher },
+        { label: "Učebna", from: o.room, to: l.room },
+        { label: "Skupina", from: o.group, to: l.group },
+      ].filter((f) => f.from !== f.to && (f.from || f.to));
+      return fields.length ? fields : [{ label: "Odpadá", to: `${o.subject}, místo ní stejná hodina znovu` }];
+    });
+  }
+  if (l.added) return [{ label: "Navíc", to: "v běžném rozvrhu tahle hodina není" }];
+  return [{ label: "Změna", to: "SIS u hodiny hlásí změnu, ale neuvádí, co bylo původně" }];
+}
+
+/** `was`: the cancelled lessons whose slot this one took. A changed row opens to show what's different. */
+function LessonRow({ lesson: l, state, was, liRef }: {
   lesson: Lesson;
-  replaces: boolean;
-  state: "past" | "now" | "future";
+  was?: Lesson[];
+  state: State;
   liRef?: (el: HTMLLIElement | null) => void;
 }) {
+  const [open, setOpen] = useState(false);
+  const period = periodOf(l);
+  const replaced = !!was?.length;
+  const tag = l.cancelled ? "odpadá" : replaced ? (was!.some((o) => o.subject === l.subject) ? "změna" : "náhrada") : l.added ? "přidaná" : l.changed ? "změna" : "";
   const body = (
     <>
-      <div className="lesson-time">
-        <span>{l.start}</span>
-        <span>{l.end}</span>
-      </div>
-      <div className="lesson-main">
-        <div className="lesson-subject">
-          <span className="lesson-name">{l.subject}</span>
-          {l.group && <span className="tag">sk. {l.group}</span>}
-          {l.cancelled ? (
-            <span className="tag">odpadá</span>
-          ) : l.added ? (
-            <span className="tag tag-accent">{replaces ? "náhrada" : "přidaná"}</span>
-          ) : (
-            l.changed && <span className="tag tag-accent">změna</span>
+      <span className={`tt-period ${period.length > 2 ? "range" : ""}`}>{period}</span>
+      <span className="tt-main">
+        <span className="tt-subject">
+          <span className="tt-name">{l.subject}</span>
+          {tag && (
+            <span className={`tag ${l.cancelled ? "" : "tag-accent"}`}>
+              {tag}
+              <Chevron dir={open ? "up" : "down"} />
+            </span>
           )}
-        </div>
-        <div className="lesson-teacher">{l.teacher}</div>
-      </div>
-      <div className="lesson-room">{l.room}</div>
+        </span>
+        <span className="tt-meta">
+          {l.start}–{l.end}
+          {l.teacher && ` · ${l.teacher}`}
+          {l.group && ` · sk. ${l.group}`}
+        </span>
+      </span>
+      <span className="tt-room">{l.room}</span>
     </>
   );
-  const cls = `lesson-card ${state} ${l.cancelled ? "cancelled" : l.changed || l.added ? "changed" : ""}`;
+  const cls = `tt-row ${state} ${l.cancelled ? "cancelled" : l.changed || l.added || replaced ? "changed" : ""}`;
+  if (!tag)
+    return (
+      <li ref={liRef}>
+        {l.meet ? (
+          <a className={cls} href={l.meet} target="_blank" rel="noreferrer" aria-label={`${l.subject}, otevřít Meet`}>
+            {body}
+          </a>
+        ) : (
+          <div className={cls}>{body}</div>
+        )}
+      </li>
+    );
   return (
     <li ref={liRef}>
-      {l.meet ? (
-        <a className={cls} href={l.meet} target="_blank" rel="noreferrer" aria-label={`${l.subject}, otevřít Meet`}>
-          {body}
-        </a>
-      ) : (
-        <div className={cls}>{body}</div>
-      )}
+      <button className={cls} aria-expanded={open} onClick={() => setOpen(!open)}>
+        {body}
+      </button>
+      <div className="collapse" data-open={open} aria-hidden={!open}>
+        <div className="collapse-inner">
+          <dl className="tt-change">
+            {changeLines(l, was).map((c, i) => (
+              <div key={i}>
+                <dt>{c.label}</dt>
+                <dd>
+                  {c.from !== undefined && (
+                    <>
+                      <s>{c.from || "–"}</s>
+                      <span aria-hidden="true"> → </span>
+                    </>
+                  )}
+                  {c.to || "–"}
+                </dd>
+              </div>
+            ))}
+            {l.meet && (
+              <a className="tt-change-link" href={l.meet} target="_blank" rel="noreferrer">
+                Otevřít Meet
+              </a>
+            )}
+          </dl>
+        </div>
+      </div>
     </li>
   );
 }
