@@ -62,7 +62,7 @@ export function GradeGoals({ subjects }: { subjects: Subject[] }) {
                   </span>
                   <Chevron dir={isOpen ? "down" : "right"} />
                 </button>
-                <div className="collapse" data-open={isOpen}>
+                <div className="collapse" data-open={isOpen} inert={!isOpen}>
                   <div className="collapse-inner">
                     <div className="goal-body">
                       <p className="goal-label">Výsledná známka</p>

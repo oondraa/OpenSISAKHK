@@ -102,7 +102,7 @@ function SubjectRow({ s, open, onToggle }: { s: Subject; open: boolean; onToggle
         </span>
         <Chevron dir={open ? "down" : "right"} />
       </button>
-      <div className="collapse" data-open={open}>
+      <div className="collapse" data-open={open} inert={!open}>
         <div className="collapse-inner">
           <ul className="grade-list">
             {[...s.grades].reverse().map((g, i) => (

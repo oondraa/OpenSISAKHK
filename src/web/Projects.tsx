@@ -152,7 +152,7 @@ function ProjectRow({ p, mine, open, onToggle }: { p: Project; mine: boolean; op
         )}
         <Chevron dir={open ? "down" : "right"} />
       </button>
-      <div className="collapse" data-open={open}>
+      <div className="collapse" data-open={open} inert={!open}>
         <div className="collapse-inner">
           <div className="project-detail">
             {p.goal && <p className="project-goal">{p.goal}</p>}

@@ -424,9 +424,9 @@ function StravaSection({ connected, onError }: { connected: boolean; onError: (e
           </button>
         </>
       ) : (
-        <form onSubmit={connect} className="login-form">
-          <input placeholder="Uživatel ve Stravě" autoComplete="off" autoCapitalize="none" value={jmeno} onChange={(e) => setJmeno(e.target.value)} />
-          <input type="password" placeholder="Heslo do Stravy" autoComplete="off" value={heslo} onChange={(e) => setHeslo(e.target.value)} />
+        <form onSubmit={connect} className="list-form">
+          <input placeholder="Uživatel ve Stravě" aria-label="Uživatel ve Stravě" autoComplete="off" autoCapitalize="none" value={jmeno} onChange={(e) => setJmeno(e.target.value)} />
+          <input type="password" placeholder="Heslo do Stravy" aria-label="Heslo do Stravy" autoComplete="off" value={heslo} onChange={(e) => setHeslo(e.target.value)} />
           <button className="row row-button" type="submit" disabled={busy || !jmeno || !heslo}>
             {busy ? "Propojuji…" : "Propojit"}
           </button>

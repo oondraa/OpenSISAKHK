@@ -348,7 +348,7 @@ function LessonRow({ lesson: l, state, was, liRef }: {
       <button className={cls} aria-expanded={open} onClick={() => setOpen(!open)}>
         {body}
       </button>
-      <div className="collapse" data-open={open} aria-hidden={!open}>
+      <div className="collapse" data-open={open} inert={!open}>
         <div className="collapse-inner">
           <dl className="tt-change">
             {changeLines(l, was).map((c, i) => (

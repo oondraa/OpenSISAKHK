@@ -115,7 +115,7 @@ export function DayPager({ index, onIndex, children }: { index: number; onIndex:
       }}
     >
       {children.map((child, i) => (
-        <div className="page" key={i} aria-hidden={i !== index}>
+        <div className="page" key={i} inert={i !== index}>
           {child}
         </div>
       ))}
