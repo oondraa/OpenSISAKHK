@@ -32,3 +32,13 @@ export async function sha256(buf: ArrayBuffer): Promise<string> {
   const h = await crypto.subtle.digest("SHA-256", buf);
   return [...new Uint8Array(h)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
+
+/** Every 10 minutes from 6:00 to 22:30 in Prague, the times the grades and absences are worth checking. */
+export function isTick(scheduledTime: number) {
+  const [h, m] = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Prague", hour: "2-digit", minute: "2-digit", hourCycle: "h23" })
+    .format(new Date(scheduledTime))
+    .split(":")
+    .map(Number);
+  const min = h * 60 + m;
+  return min % 10 < 5 && min >= 6 * 60 && min <= 22 * 60 + 30;
+}

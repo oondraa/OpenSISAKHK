@@ -2,10 +2,11 @@ import { Hono, type Context } from "hono";
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 import { absenceStudentId, parseAbsence, parseElections, parseFinance, parseGrades, parseProfile, parseProjectChoices, parseProjects, parseTimetable } from "./parse";
 import { CLASSES } from "../shared/schoolOcr";
-import { BadCredentials, SessionExpired, get, getBinary, login, post, timetablePath } from "./sis";
+import { BadCredentials, SessionExpired, get, getBinary, login, post, timetablePath, type Jar } from "./sis";
 import { seal, unseal, type Session } from "./session";
-import { SCHOOL_FILES, fetchSchoolImage, schoolWeeks, sha256 } from "./school";
+import { SCHOOL_FILES, fetchSchoolImage, isTick, schoolWeeks, sha256 } from "./school";
 import { isPushEndpoint, sendPush } from "./push";
+import { TEST_FLAGS_HIDE, TEST_DAILY_MAX, TEST_KINDS, cleanNote, type TestItem, type TestKind } from "../shared/tests";
 import { CANTEEN, StravaBadCredentials, StravaOrderRefused, changeOrder, checkLogin, fetchLunches, fetchMenu } from "./strava";
 
 type Bindings = {
@@ -192,13 +193,19 @@ internal.use("/*", async (c, next) => {
 
 type Cred = Session["cred"];
 
-/** Opted-in students with at least one push subscription, with their login unsealed for scripts/watch.ts. */
+/**
+ * Opted-in students with at least one push subscription, with their login and the SIS session of the last check
+ * (`jar`, null when there's none yet or it doesn't open) unsealed for scripts/watch.ts.
+ */
 internal.get("/watchers", async (c) => {
   const rows = await c.env.DB.prepare(
-    `SELECT w.user_id, w.cred, w.seen, s.endpoint, s.p256dh, s.auth FROM watchers w
+    `SELECT w.user_id, w.cred, w.seen, w.sis, s.endpoint, s.p256dh, s.auth FROM watchers w
      JOIN push_subscriptions s ON s.user_id = w.user_id WHERE s.p256dh IS NOT NULL`,
-  ).all<{ user_id: string; cred: string; seen: string | null; endpoint: string; p256dh: string; auth: string }>();
-  const byUser = new Map<string, { userId: string; cred: Cred | null; seen: unknown; subscriptions: { endpoint: string; p256dh: string; auth: string }[] }>();
+  ).all<{ user_id: string; cred: string; seen: string | null; sis: string | null; endpoint: string; p256dh: string; auth: string }>();
+  const byUser = new Map<
+    string,
+    { userId: string; cred: Cred | null; jar: Jar | null; seen: unknown; subscriptions: { endpoint: string; p256dh: string; auth: string }[] }
+  >();
   const resealed: D1PreparedStatement[] = [];
   for (const r of rows.results) {
     let w = byUser.get(r.user_id);
@@ -209,7 +216,8 @@ internal.get("/watchers", async (c) => {
         resealed.push(
           c.env.DB.prepare("UPDATE watchers SET cred = ? WHERE user_id = ?").bind(await seal(opened.value, c.env.SESSION_SECRET, "watcher-cred"), r.user_id),
         );
-      w = { userId: r.user_id, cred: opened?.value ?? null, seen: r.seen ? JSON.parse(r.seen) : null, subscriptions: [] };
+      const jar = r.sis ? ((await unseal<Jar>(r.sis, c.env.SESSION_SECRET, "watcher-session"))?.value ?? null) : null;
+      w = { userId: r.user_id, cred: opened?.value ?? null, jar, seen: r.seen ? JSON.parse(r.seen) : null, subscriptions: [] };
       byUser.set(r.user_id, w);
     }
     w.subscriptions.push({ endpoint: r.endpoint, p256dh: r.p256dh, auth: r.auth });
@@ -219,12 +227,22 @@ internal.get("/watchers", async (c) => {
 });
 
 internal.post("/watchers", async (c) => {
-  const { seen, drop, gone } = await c.req.json<{ seen?: Record<string, unknown>; drop?: string[]; gone?: string[] }>();
+  const { seen, jars, drop, gone } = await c.req.json<{
+    seen?: Record<string, unknown>;
+    jars?: Record<string, Jar>;
+    drop?: string[];
+    gone?: string[];
+  }>();
   const now = Date.now();
   const writes = [
-    ...Object.entries(seen ?? {}).map(([id, s]) =>
-      c.env.DB.prepare("UPDATE watchers SET seen = ?, checked = ? WHERE user_id = ?").bind(JSON.stringify(s), now, id),
-    ),
+    ...(await Promise.all(
+      Object.entries(seen ?? {}).map(async ([id, s]) => {
+        const jar = jars?.[id];
+        // No session sent (an older script): the stored one stays.
+        const sis = jar ? await seal(jar, c.env.SESSION_SECRET, "watcher-session") : null;
+        return c.env.DB.prepare("UPDATE watchers SET seen = ?, checked = ?, sis = COALESCE(?, sis) WHERE user_id = ?").bind(JSON.stringify(s), now, sis, id);
+      }),
+    )),
     ...(drop ?? []).map((id) => c.env.DB.prepare("DELETE FROM watchers WHERE user_id = ?").bind(id)),
     ...(gone ?? []).map((e) => c.env.DB.prepare("DELETE FROM push_subscriptions WHERE endpoint = ?").bind(e)),
   ];
@@ -387,6 +405,127 @@ app.get("/timetable", async (c) => {
     return { value: html, changed };
   });
   return c.json({ week, days: parseTimetable(html, week) });
+});
+
+// ---------- tests (shared with the class) ----------
+
+const isDate = (s: unknown): s is string => typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s);
+const pragueToday = () => new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Prague" }).format(new Date());
+
+async function classOf(db: D1Database, userId: string) {
+  return (await db.prepare("SELECT class, tests_blocked FROM users WHERE id = ?").bind(userId).first<{ class: string | null; tests_blocked: number }>()) ?? null;
+}
+
+/** The class's tests from `from` to `to` (dates), as this student sees them. */
+async function classTests(db: D1Database, cls: string, from: string, to: string, userId: string): Promise<TestItem[]> {
+  const rows = await db
+    .prepare(
+      `SELECT t.id, t.date, t.start, t.subject, t.grp, t.kind, t.note, t.author = ?1 AS mine, u.name AS author_name,
+              (SELECT COUNT(*) FROM test_flags f WHERE f.test_id = t.id) AS flags,
+              EXISTS (SELECT 1 FROM test_flags f WHERE f.test_id = t.id AND f.user_id = ?1) AS flagged
+       FROM tests t LEFT JOIN users u ON u.id = t.author WHERE t.class = ?2 AND t.date BETWEEN ?3 AND ?4 ORDER BY t.date, t.created`,
+    )
+    .bind(userId, cls, from, to)
+    .all<{ id: number; date: string; start: string; subject: string; grp: string; kind: TestKind; note: string; mine: number; author_name: string | null; flags: number; flagged: number }>();
+  return rows.results
+    .filter((r) => r.mine || r.flags < TEST_FLAGS_HIDE)
+    .map((r) => ({
+      id: r.id,
+      date: r.date,
+      start: r.start,
+      subject: r.subject,
+      group: r.grp,
+      kind: r.kind,
+      note: r.note,
+      mine: !!r.mine,
+      by: r.author_name,
+      flagged: !!r.flagged,
+      hidden: r.flags >= TEST_FLAGS_HIDE,
+    }));
+}
+
+app.get("/tests", async (c) => {
+  const { userId } = c.get("session");
+  const week = weekStart(c.req.query("week"));
+  const me = await classOf(c.env.DB, userId);
+  if (!me?.class) return c.json({ week, class: null, tests: [] });
+  return c.json({ week, class: me.class, tests: await classTests(c.env.DB, me.class, week, addDays(week, 6), userId) });
+});
+
+const UPCOMING_DAYS = 120;
+
+/** The class's tests from today on, for the Testy screen. */
+async function upcoming(db: D1Database, cls: string, userId: string) {
+  const today = pragueToday();
+  return { class: cls, tests: await classTests(db, cls, today, addDays(today, UPCOMING_DAYS), userId) };
+}
+
+app.get("/tests/upcoming", async (c) => {
+  const { userId } = c.get("session");
+  const me = await classOf(c.env.DB, userId);
+  if (!me?.class) return c.json({ class: null, tests: [] });
+  return c.json(await upcoming(c.env.DB, me.class, userId));
+});
+
+/**
+ * Adds a test to one of the student's own lessons. The lesson is looked up in their SIS timetable, so a test can only
+ * land where the author really has the lesson: nobody can fill another class's (or group's) timetable.
+ */
+app.post("/tests", async (c) => {
+  const { userId } = c.get("session");
+  const body = await c.req.json<{ date?: unknown; start?: unknown; subject?: unknown; group?: unknown; kind?: unknown; note?: unknown }>().catch(() => null);
+  const { date, start, subject, group, kind } = body ?? {};
+  if (!isDate(date) || typeof start !== "string" || typeof subject !== "string" || typeof group !== "string" || typeof kind !== "string" || !(kind in TEST_KINDS))
+    return c.json({ error: "bad_request" }, 400);
+  const today = pragueToday();
+  if (date < today || date > addDays(today, UPCOMING_DAYS)) return c.json({ error: "bad_date" }, 400);
+  const me = await classOf(c.env.DB, userId);
+  if (!me?.class) return c.json({ error: "no_class" }, 409);
+  if (me.tests_blocked) return c.json({ error: "blocked" }, 403);
+  const recent = await c.env.DB.prepare("SELECT COUNT(*) AS n FROM tests WHERE author = ? AND created > ?")
+    .bind(userId, Date.now() - 24 * 3600_000)
+    .first<{ n: number }>();
+  if ((recent?.n ?? 0) >= TEST_DAILY_MAX) return c.json({ error: "rate_limited" }, 429);
+
+  const html = await withSis(c, async (s) => {
+    const { html, changed } = await get(s.jar, timetablePath(s.userId, weekStart(date)));
+    return { value: html, changed };
+  });
+  const day = parseTimetable(html, weekStart(date)).find((d) => d.date === date);
+  const lesson = day?.lessons.find((l) => !l.cancelled && l.start === start && l.subject === subject && l.group === group);
+  if (!lesson) return c.json({ error: "no_lesson" }, 400);
+  const dup = await c.env.DB.prepare("SELECT 1 FROM tests WHERE class = ? AND date = ? AND start = ? AND subject = ? AND grp = ? AND kind = ?")
+    .bind(me.class, date, start, subject, group, kind)
+    .first();
+  if (!dup)
+    await c.env.DB.prepare("INSERT INTO tests (class, date, start, subject, grp, kind, note, author, created) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
+      .bind(me.class, date, start, subject, group, kind, cleanNote(body?.note), userId, Date.now())
+      .run();
+  return c.json(await upcoming(c.env.DB, me.class, userId));
+});
+
+/** The author takes their test back. */
+app.post("/tests/:id{[0-9]+}/delete", async (c) => {
+  const { userId } = c.get("session");
+  const row = await c.env.DB.prepare("SELECT date, class FROM tests WHERE id = ? AND author = ?").bind(Number(c.req.param("id")), userId).first<{ date: string; class: string }>();
+  if (!row) return c.json({ error: "not_found" }, 404);
+  await c.env.DB.prepare("DELETE FROM tests WHERE id = ?").bind(Number(c.req.param("id"))).run();
+  return c.json(await upcoming(c.env.DB, row.class, userId));
+});
+
+/** A classmate says the test doesn't hold (or takes that back). Enough of them hide it. */
+app.post("/tests/:id{[0-9]+}/flag", async (c) => {
+  const { userId } = c.get("session");
+  const id = Number(c.req.param("id"));
+  const { on } = await c.req.json<{ on?: unknown }>().catch(() => ({ on: undefined }));
+  const me = await classOf(c.env.DB, userId);
+  const row = await c.env.DB.prepare("SELECT date, class, author FROM tests WHERE id = ?").bind(id).first<{ date: string; class: string; author: string }>();
+  if (!row || !me?.class || row.class !== me.class || row.author === userId) return c.json({ error: "not_found" }, 404);
+  await (on === false
+    ? c.env.DB.prepare("DELETE FROM test_flags WHERE test_id = ? AND user_id = ?").bind(id, userId)
+    : c.env.DB.prepare("INSERT OR IGNORE INTO test_flags (test_id, user_id) VALUES (?, ?)").bind(id, userId)
+  ).run();
+  return c.json(await upcoming(c.env.DB, row.class, userId));
 });
 
 app.get("/grades", async (c) => {
@@ -556,7 +695,7 @@ async function notifyAll(env: Bindings, subs: { endpoint: string }[]) {
     await env.DB.batch(gone.map((e) => env.DB.prepare("DELETE FROM push_subscriptions WHERE endpoint = ?").bind(e)));
 }
 
-/** Cron: cheap check whether SIS rewrote any remaining day; if so, wake the GitHub Action (watch.yml) right away. */
+/** Cron: cheap check whether SIS rewrote any remaining day. True when it did. */
 async function checkSchoolImages(env: Bindings) {
   const prague = new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Prague" }).format(new Date());
   const weeks = await schoolWeeks();
@@ -582,18 +721,31 @@ async function checkSchoolImages(env: Bindings) {
     writes.push(env.DB.prepare("INSERT OR REPLACE INTO school_images (file, hash, checked) VALUES (?, ?, ?)").bind(file, hash, now));
   }
   if (writes.length) await env.DB.batch(writes);
-  if (changed && env.GITHUB_TOKEN) {
-    const res = await fetch(`https://api.github.com/repos/${env.GITHUB_REPO}/dispatches`, {
-      method: "POST",
-      headers: {
-        authorization: `Bearer ${env.GITHUB_TOKEN}`,
-        accept: "application/vnd.github+json",
-        "user-agent": "OpenSISAKHK",
-      },
-      body: JSON.stringify({ event_type: "school-changed" }),
-    });
-    if (!res.ok) console.error("dispatch failed", res.status, await res.text());
-  }
+  return changed;
+}
+
+/**
+ * Wakes the GitHub Action (watch.yml). GitHub's own schedule for it is throttled to a run every few hours, a
+ * repository_dispatch starts within seconds, so this cron is the Action's real clock.
+ */
+async function dispatchWatch(env: Bindings, event: "school-changed" | "tick") {
+  if (!env.GITHUB_TOKEN) return;
+  const res = await fetch(`https://api.github.com/repos/${env.GITHUB_REPO}/dispatches`, {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${env.GITHUB_TOKEN}`,
+      accept: "application/vnd.github+json",
+      "user-agent": "OpenSISAKHK",
+    },
+    body: JSON.stringify({ event_type: event }),
+  });
+  if (!res.ok) console.error("dispatch failed", res.status, await res.text());
+}
+
+async function cron(env: Bindings, scheduledTime: number) {
+  const changed = await checkSchoolImages(env).catch((e) => (console.error("school images", e), false));
+  if (changed) await dispatchWatch(env, "school-changed");
+  else if (isTick(scheduledTime)) await dispatchWatch(env, "tick");
 }
 
 function addDays(iso: string, days: number) {
@@ -604,7 +756,7 @@ function addDays(iso: string, days: number) {
 
 export default {
   fetch: app.fetch,
-  async scheduled(_event: ScheduledController, env: Bindings, ctx: ExecutionContext) {
-    ctx.waitUntil(checkSchoolImages(env));
+  async scheduled(event: ScheduledController, env: Bindings, ctx: ExecutionContext) {
+    ctx.waitUntil(cron(env, event.scheduledTime));
   },
 } satisfies ExportedHandler<Bindings>;

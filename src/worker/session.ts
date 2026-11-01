@@ -2,7 +2,8 @@ import type { Jar } from "./sis";
 import type { StravaCred } from "./strava";
 
 // The session lives only inside this encrypted cookie on the student's device; the server stores none of it
-// (except the sealed login of students who opt in to grade/absence notifications, see migrations/0003).
+// (except the sealed login and SIS session of students who opt in to grade/absence notifications, see migrations/0003
+// and 0005).
 // The credentials are kept so an expired SIS session can be renewed silently instead of logging the user out.
 export interface Session {
   jar: Jar;
@@ -13,7 +14,7 @@ export interface Session {
 }
 
 /** What a sealed value is for. Each purpose gets its own key, so a value sealed for one can't be opened as another. */
-export type Purpose = "session-cookie" | "watcher-cred";
+export type Purpose = "session-cookie" | "watcher-cred" | "watcher-session";
 
 const enc = new TextEncoder();
 const dec = new TextDecoder();

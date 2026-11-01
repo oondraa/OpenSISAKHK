@@ -1,5 +1,6 @@
 import type { Absence, Day, Finance, Project, ProjectChoice, Subject } from "../worker/parse";
 import type { LunchDay, Menu } from "../worker/strava";
+import type { TestItem, TestKind } from "../shared/tests";
 
 export type TimetableDay = Day;
 export interface TimetableResponse {
@@ -15,6 +16,15 @@ export interface LunchResponse {
   days: LunchDay[];
   error?: string;
 }
+
+/** The class's tests from today on (the Testy screen). */
+export interface UpcomingTests {
+  /** null = class not confirmed yet: no tests to show or add. */
+  class: string | null;
+  tests: TestItem[];
+}
+/** The class's tests in one week (the timetable). */
+export type TestsResponse = UpcomingTests & { week: string };
 
 export class Unauthorized extends Error {}
 
@@ -37,6 +47,13 @@ export const api = {
   timetable: (week?: string) => call<TimetableResponse>(`/timetable${week ? `?week=${week}` : ""}`),
   /** Permanent timetable (no substitutions or cancellations) of the week starting `week`. */
   permanentTimetable: (week: string) => call<TimetableResponse>(`/timetable?week=${week}&static=1`),
+  tests: (week: string) => call<TestsResponse>(`/tests?week=${week}`),
+  upcomingTests: () => call<UpcomingTests>("/tests/upcoming"),
+  addTest: (t: { date: string; start: string; subject: string; group: string; kind: TestKind; note: string }) =>
+    call<UpcomingTests>("/tests", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(t) }),
+  deleteTest: (id: number) => call<UpcomingTests>(`/tests/${id}/delete`, { method: "POST" }),
+  flagTest: (id: number, on: boolean) =>
+    call<UpcomingTests>(`/tests/${id}/flag`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ on }) }),
   grades: () => call<GradesResponse>("/grades"),
   absence: () => call<Absence>("/absence"),
   me: () => call<Me>("/me"),

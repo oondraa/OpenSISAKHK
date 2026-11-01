@@ -39,6 +39,14 @@ export const TeacherIcon = ({ size }: { size?: number }) => (
   </Icon>
 );
 
+/** A clipboard with a tick: tests and written exams. */
+export const TestIcon = ({ size }: { size?: number }) => (
+  <Icon size={size}>
+    <rect x="5" y="4.5" width="14" height="16.5" rx="2.5" />
+    <path d="M9 4.5V3.5h6v1M9 13l2 2 4-4.5" />
+  </Icon>
+);
+
 export const SearchIcon = ({ size }: { size?: number }) => (
   <Icon size={size}>
     <circle cx="10.5" cy="10.5" r="6.5" />
@@ -157,6 +165,7 @@ export const TAB_ICONS: Record<Tab, ReactNode> = {
   gym: <DumbbellIcon />,
   rooms: <DoorIcon />,
   teachers: <TeacherIcon />,
+  tests: <TestIcon />,
   grades: <GradesIcon />,
   absence: <AbsenceIcon />,
   projects: <ProjectIcon />,

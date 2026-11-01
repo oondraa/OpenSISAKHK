@@ -28,6 +28,7 @@
   --orange: #ff9500;
   --red: #ff3b30;
   --indigo: #5856d6;
+  --purple: #af52de;
   --graphite: #8e8e93;
   --hairline: rgba(14, 14, 16, 0.05);
   --ease-spring: cubic-bezier(0.32, 0.72, 0, 1); /* critically damped-ish, no overshoot */
@@ -67,6 +68,7 @@
     --orange: #ff9f0a;
     --red: #ff453a;
     --indigo: #5e5ce6;
+    --purple: #bf5af2;
     --hairline: rgba(246, 243, 238, 0.07);
     --glass-tint: rgba(52, 50, 58, 0.3);
     --glass-rim: rgba(255, 255, 255, 0.5);
@@ -100,6 +102,7 @@
   --orange: #ff9f0a;
   --red: #ff453a;
   --indigo: #5e5ce6;
+  --purple: #bf5af2;
   --hairline: rgba(246, 243, 238, 0.07);
   --glass-tint: rgba(52, 50, 58, 0.3);
   --glass-rim: rgba(255, 255, 255, 0.5);
@@ -230,6 +233,7 @@ p { margin: 0; }
 .tile-finance, .tint-finance { --tint: #0a84ff; }
 .tile-rooms, .tint-rooms { --tint: #af52de; }
 .tile-teachers, .tint-teachers { --tint: #30b0c7; }
+.tile-tests, .tint-tests { --tint: var(--purple); }
 .tint-timetable { --tint: var(--ember); }
 .tile-settings, .tint-settings { --tint: var(--graphite); }
 /* Settings: a slim full-width bar under the grid, nobody needs it at a glance. */
@@ -454,8 +458,81 @@ button.tt-row:active { background-color: var(--fill); transition-duration: 0ms; 
 .tt-change s { font-weight: 400; color: var(--text-2); }
 .tt-change span { color: var(--text-3); }
 .tt-change-link { align-self: flex-start; margin-top: 4px; font-weight: 600; }
-.week-day .tt-change { padding: 0 10px 10px calc(6px + 1.375rem + 8px); font-size: 0.75rem; }
+.week-day .tt-change { font-size: 0.75rem; }
 .week-day .tt-change > div { grid-template-columns: 1fr; gap: 0; }
+/* The class's tests on a lesson: a purple line under the time, and the row's leading edge in the same colour. */
+.tt-test {
+  align-self: flex-start; max-width: 100%; display: inline-flex; align-items: baseline; gap: 6px; margin-top: 5px; padding: 3px 8px;
+  border-radius: 8px; background: color-mix(in srgb, var(--purple) 14%, transparent); color: color-mix(in srgb, var(--purple) 78%, var(--text));
+  font-size: 0.8125rem; line-height: 1.3;
+}
+.tt-test-kind { flex: none; font-weight: 700; }
+.tt-test-note { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+.tt-row.has-test:not(.now)::before { content: ""; position: absolute; left: 0; top: 10px; bottom: 10px; width: 3px; border-radius: 0 3px 3px 0; background: var(--purple); }
+.tt-row.past .tt-test { background: var(--fill); color: var(--text-2); }
+.tt-row.past.has-test::before { background: var(--text-3); }
+.week-day .tt-test { margin-top: 4px; padding: 2px 6px; font-size: 0.6875rem; }
+/* The week view: a day starting later keeps an empty slot for each period it skips, so the lessons line up across
+   the days. Rows there are 54px and the gap under the slots is 6px, hence its height. */
+.tt-ghost {
+  display: flex; flex-direction: column; box-sizing: border-box; height: calc(var(--n) * 54px - 6px);
+  border: 1px dashed var(--separator); border-radius: 14px;
+}
+.tt-ghost span {
+  flex: 1; display: grid; grid-template-columns: 1.375rem; place-items: center; justify-content: start; padding-left: 5px;
+  font-family: var(--num); font-size: 1rem; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--text-3);
+}
+.tt-ghost span + span { border-top: 1px dashed var(--hairline); }
+[data-ui="new"] .tt-ghost { border-radius: 18px; }
+
+/* ---------- Testy ---------- */
+.header-action {
+  flex: none; margin-bottom: 4px; padding: 8px 14px; border-radius: 99px; background: var(--accent); color: var(--on-accent);
+  font-size: 0.9375rem; font-weight: 600;
+}
+.header-action.quiet { background: var(--fill); color: var(--text); }
+.header-action:active { opacity: 0.7; }
+.test-row { display: flex; align-items: flex-start; gap: 12px; padding: 12px 16px; }
+.test-kind {
+  flex: none; min-width: 5.25rem; margin-top: 1px; padding: 4px 8px; border-radius: 8px; text-align: center;
+  background: color-mix(in srgb, var(--purple) 14%, transparent); color: color-mix(in srgb, var(--purple) 78%, var(--text));
+  font-size: 0.8125rem; font-weight: 700;
+}
+.test-main { gap: 2px; }
+.test-subject { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 8px; font-size: 1.0625rem; font-weight: 600; letter-spacing: -0.01em; }
+.test-subject small { font-size: 0.8125rem; font-weight: 500; color: var(--text-2); font-variant-numeric: tabular-nums; }
+.test-note { font-size: 0.9375rem; line-height: 1.35; overflow-wrap: anywhere; }
+.test-by { font-size: 0.8125rem; color: var(--text-3); }
+.test-hidden { font-size: 0.8125rem; color: var(--text-3); }
+.test-error { font-size: 0.8125rem; color: var(--red); }
+.test-row.muted :is(.test-kind, .test-subject, .test-note) { opacity: 0.5; }
+.test-act { flex: none; margin: -2px -6px 0 0; padding: 6px 8px; border-radius: 8px; font-size: 0.875rem; font-weight: 600; color: var(--text-2); }
+.test-act.destructive { color: var(--danger); }
+.test-act[aria-pressed="true"] { color: var(--accent-text); }
+.test-act:active { background: var(--fill); }
+.test-act:disabled { opacity: 0.4; }
+/* Picking the lesson: the timetable's rows, with a check on the chosen one. */
+.pick-row { width: 100%; display: grid; grid-template-columns: 2rem minmax(0, 1fr) 22px; align-items: center; gap: 12px; min-height: 58px; padding: 8px 16px 8px 10px; text-align: left; position: relative; }
+.pick-row + .pick-row::before { content: ""; position: absolute; top: 0; left: calc(10px + 2rem + 12px); right: 0; height: 0.5px; background: var(--separator); }
+.pick-row:active { background: var(--fill); }
+.pick-row.on { background: color-mix(in srgb, var(--purple) 9%, transparent); }
+.pick-subject { font-size: 1.0625rem; font-weight: 600; letter-spacing: -0.01em; }
+.pick-row .row-main { gap: 1px; }
+.pick-check { width: 22px; height: 22px; border-radius: 11px; box-shadow: inset 0 0 0 1.5px var(--separator); transition: background-color 150ms ease, box-shadow 150ms ease; }
+.pick-row.on .pick-check {
+  box-shadow: none; background: var(--purple) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 12.5l4 4 8-9'/%3E%3C/svg%3E") center / 14px no-repeat;
+}
+.pick-row.on .tt-period { color: color-mix(in srgb, var(--purple) 78%, var(--text)); }
+.test-form { display: flex; flex-direction: column; gap: 12px; padding: 14px 16px; background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); }
+.test-kinds { display: grid; grid-template-columns: repeat(auto-fit, minmax(92px, 1fr)); gap: 6px; }
+.test-kinds button { padding: 9px 8px; border-radius: 10px; background: var(--fill); font-size: 0.9375rem; font-weight: 500; color: var(--text-2); transition: background-color 150ms ease, color 150ms ease; }
+.test-kinds button[aria-checked="true"] { background: color-mix(in srgb, var(--purple) 16%, transparent); color: color-mix(in srgb, var(--purple) 78%, var(--text)); font-weight: 650; }
+.test-note-input { width: 100%; min-width: 0; padding: 12px 14px; border: 0; border-radius: 12px; background: var(--fill); color: var(--text); font: inherit; font-size: 1rem; outline: none; }
+.test-note-input::placeholder { color: var(--text-3); }
+.test-note-input:focus { box-shadow: inset 0 0 0 2px var(--purple); }
+.tests-add { margin-top: 20px; }
+.test-form-error { margin: 12px 4px 0; }
+[data-ui="new"] .test-form { border-radius: 24px; box-shadow: var(--ring); }
 
 /* ---------- Lists (inset grouped) ---------- */
 .list-section { margin-top: 4px; }

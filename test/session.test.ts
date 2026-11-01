@@ -24,6 +24,9 @@ describe("seal / unseal", () => {
   it("keeps the purposes apart", async () => {
     const stored = await seal(cred, SECRET, "watcher-cred");
     expect(await unseal(stored, SECRET, "session-cookie")).toBeNull();
+    // A stored SIS session can't be passed off as a stored login, nor the other way round.
+    expect(await unseal(stored, SECRET, "watcher-session")).toBeNull();
+    expect(await unseal(await seal({ a: "b" }, SECRET, "watcher-session"), SECRET, "watcher-cred")).toBeNull();
   });
 
   it("rejects another secret, tampering and garbage", async () => {

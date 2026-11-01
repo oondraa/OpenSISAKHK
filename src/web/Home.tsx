@@ -1,6 +1,8 @@
 import { createContext, memo, useContext, type ReactNode, type Ref } from "react";
-import { api, cache, type CanteenResponse, type GradesResponse, type ProjectsResponse, type TimetableResponse } from "./api";
-import type { Absence } from "../worker/parse";
+import { api, cache, type CanteenResponse, type GradesResponse, type ProjectsResponse, type TimetableResponse, type UpcomingTests } from "./api";
+import { TEST_KINDS } from "../shared/tests";
+import { forMe, groupsOf, permanentKey } from "./Tests";
+import type { Absence, Day } from "../worker/parse";
 import { PERIODS, type Cell } from "../shared/schoolOcr";
 import { held, startDay } from "./Timetable";
 import { autoPeriod, roomsKey } from "./Rooms";
@@ -11,7 +13,7 @@ import { LIMIT } from "./absencePlan";
 import { WEEKDAYS, addDays, inMinutes, minutes, mondayOf, nowMinutesPrague, todayPrague, weekdayIndex } from "./time";
 import { useCachedFetch } from "./useFetch";
 import { useNow } from "./hooks";
-import { AbsenceIcon, CalendarIcon, DoorIcon, DumbbellIcon, GearIcon, TeacherIcon, GradesIcon, ProjectIcon, UtensilsIcon, WalletIcon } from "./icons";
+import { AbsenceIcon, CalendarIcon, DoorIcon, DumbbellIcon, GearIcon, TeacherIcon, TestIcon, GradesIcon, ProjectIcon, UtensilsIcon, WalletIcon } from "./icons";
 import { Chevron } from "./ui";
 
 import { homeOrder, type Part, type Tab } from "./sections";
@@ -39,6 +41,8 @@ export const Home = memo(function Home({ onOpen, onError, homeRef }: {
   const today = todayPrague();
   const day = startDay(cache.get<TimetableResponse>(`timetable:${mondayOf(today)}`)?.days);
   const week = useCachedFetch<TimetableResponse>(`timetable:${mondayOf(day)}`, () => api.timetable(mondayOf(day)), onError);
+  // Also the class's tests: a quick database read, and the one tile that tells about other people's news.
+  useCachedFetch<UpcomingTests>("tests:upcoming", api.upcomingTests, () => true);
   const me = cache.get<{ name: string | null }>("me");
   const ui = useUi();
   const order = homeOrder();
@@ -161,6 +165,7 @@ function PartTile({ part, now, onOpen }: { part: Part; now: number; onOpen: (tab
   if (part === "rooms") return <RoomsTile now={now} onOpen={onOpen} />;
   if (part === "teachers") return <Tile id="teachers" label="Učitelé" icon={<TeacherIcon />} sub="Kdo kde učí" onOpen={onOpen} />;
   if (part === "grades") return <GradesTile onOpen={onOpen} />;
+  if (part === "tests") return <TestsTile onOpen={onOpen} />;
   if (part === "absence") return <AbsenceTile onOpen={onOpen} />;
   if (part === "projects") return <ProjectsTile onOpen={onOpen} />;
   if (part === "lunch") return <LunchTile onOpen={onOpen} />;
@@ -318,6 +323,28 @@ function RoomsTile({ now, onOpen }: { now: number; onOpen: (tab: Tab) => void })
     }
   }
   return <Tile id="rooms" label="Volné učebny" icon={<DoorIcon />} value={value} valueClass="free" sub={sub} onOpen={onOpen} />;
+}
+
+/** The class's next test, and how many there are this coming week. */
+function TestsTile({ onOpen }: { onOpen: (tab: Tab) => void }) {
+  const today = todayPrague();
+  const groups = groupsOf(cache.get<Day[][]>(permanentKey(mondayOf(today))));
+  const tests = (cache.get<UpcomingTests>("tests:upcoming")?.tests ?? [])
+    .filter((t) => !t.hidden && t.date >= today && forMe(t, groups))
+    .sort((a, b) => a.date.localeCompare(b.date) || minutes(a.start) - minutes(b.start));
+  const week = tests.filter((t) => t.date <= addDays(today, 6)).length;
+  const next = tests[0];
+  const when = next && (next.date === today ? "dnes" : next.date === addDays(today, 1) ? "zítra" : WEEKDAYS[weekdayIndex(next.date)].toLowerCase());
+  return (
+    <Tile
+      id="tests"
+      label="Testy"
+      icon={<TestIcon />}
+      value={week ? String(week) : undefined}
+      sub={next ? `${TEST_KINDS[next.kind]} ${next.subject} ${when}` : "Co nás ve třídě čeká"}
+      onOpen={onOpen}
+    />
+  );
 }
 
 function GradesTile({ onOpen }: { onOpen: (tab: Tab) => void }) {

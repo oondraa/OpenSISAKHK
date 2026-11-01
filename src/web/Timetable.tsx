@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from "react";
-import { api, cache, type LunchResponse, type TimetableDay, type TimetableResponse } from "./api";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { api, cache, type LunchResponse, type TestsResponse, type TimetableDay, type TimetableResponse } from "./api";
+import { TEST_KINDS, sameLesson, type TestItem } from "../shared/tests";
 import type { Lesson } from "../worker/parse";
 import type { LunchDay } from "../worker/strava";
 import { Chevron, DayPager, DayStrip, Empty, LargeHeader, SkeletonList } from "./ui";
@@ -57,7 +58,14 @@ export function Timetable({ onError }: { onError: (e: unknown) => boolean }) {
   const shown = useRef<{ current?: Lesson; next?: Lesson } | null>(null);
   if (current || next) shown.current = { current, next };
 
+  // Tests the class marked on its lessons (added and changed on the Testy screen; here they're only shown).
+  const testsFetch = useCachedFetch<TestsResponse>(`tests:${monday}`, () => api.tests(monday), onError);
+  const tests = testsFetch.data?.week === monday ? testsFetch.data.tests.filter((t) => !t.hidden) : [];
+  // The week's earliest first period: a day starting later shows the periods it skips, so the days line up.
+  const from = Math.min(...days.map(firstPeriod).filter((p): p is number => p !== null));
+
   return (
+    <TestsContext.Provider value={tests}>
     <div className="screen">
       <LargeHeader title="Rozvrh" subtitle={longDate(selected)} loading={loading}>
         <DayStrip monday={monday} selected={selected} onSelect={setSelected} />
@@ -81,7 +89,7 @@ export function Timetable({ onError }: { onError: (e: unknown) => boolean }) {
                     {WEEKDAYS[i]} <span>{Number(date.slice(8))}. {Number(date.slice(5, 7))}.</span>
                   </button>
                   {day ? (
-                    <DayView day={day} live={date === today} now={now} meal={lunchFor(date)} scroll={false} />
+                    <DayView day={day} live={date === today} now={now} meal={lunchFor(date)} from={from} grid scroll={false} />
                   ) : loading ? (
                     <SkeletonList count={6} />
                   ) : (
@@ -96,13 +104,29 @@ export function Timetable({ onError }: { onError: (e: unknown) => boolean }) {
         <DayPager index={weekdayIndex(selected)} onIndex={(i) => setSelected(addDays(monday, i))}>
           {[0, 1, 2, 3, 4].map((i) => {
             const day = days.find((d) => d.date === addDays(monday, i));
-            if (day) return <DayView key={day.date} day={day} live={day.date === today} now={now} meal={lunchFor(day.date)} />;
+            if (day) return <DayView key={day.date} day={day} live={day.date === today} now={now} meal={lunchFor(day.date)} from={from} />;
             return loading ? <SkeletonList key={i} count={7} side /> : <Empty key={i} icon={<CalendarOffIcon size={40} />} title="Žádná data" />;
           })}
         </DayPager>
       )}
     </div>
+    </TestsContext.Provider>
   );
+}
+
+/** The week's tests the classmates haven't hidden, for the lessons to show. */
+const TestsContext = createContext<TestItem[]>([]);
+
+/** Number of the school period a lesson starts in ("1–2" → 1), null when it fits none. */
+function periodNumber(l: { start: string; end: string }) {
+  const p = periodOf(l);
+  return p ? Number(p.split("–")[0]) : null;
+}
+
+/** The period the day's first lesson (a cancelled one with nothing in its place too) starts in. */
+function firstPeriod(day: TimetableDay) {
+  const first = dayItems(day).find((it) => it.kind === "lesson");
+  return first ? periodNumber(first) : null;
 }
 
 type Item =
@@ -177,9 +201,24 @@ export function periodOf(l: { start: string; end: string }) {
 
 type State = "past" | "now" | "future";
 
-/** `scroll`: today's list jumps to what's on now. Off in the week view, where it would shift the other days too. */
-function DayView({ day, live, now, meal, scroll = true }: { day: TimetableDay; live: boolean; now: number; meal?: LunchDay; scroll?: boolean }) {
+/**
+ * `scroll`: today's list jumps to what's on now. Off in the week view, where it would shift the other days too.
+ * `from`: the week's earliest first period. A day starting later says so: in the week view (`grid`) with an empty
+ * slot for each period it skips, so its lessons sit level with the other days', on a phone with one quiet line.
+ */
+function DayView({ day, live, now, meal, from, grid = false, scroll = true }: {
+  day: TimetableDay;
+  live: boolean;
+  now: number;
+  meal?: LunchDay;
+  from: number;
+  grid?: boolean;
+  scroll?: boolean;
+}) {
   const items = dayItems(day);
+  const firstLesson = items.find((it) => it.kind === "lesson");
+  const first = firstLesson ? periodNumber(firstLesson) : null;
+  const skipped = first !== null && first > from ? first - from : 0;
 
   // First item that hasn't ended yet = what's on now, or next.
   const focus = live ? items.findIndex((it) => now < minutes(it.end)) : -1;
@@ -201,6 +240,19 @@ function DayView({ day, live, now, meal, scroll = true }: { day: TimetableDay; l
 
   return (
     <ol className="tt stagger">
+      {skipped > 0 &&
+        (grid ? (
+          <li className="tt-ghost" style={{ "--n": skipped } as React.CSSProperties} aria-label={`Začíná ${first}. hodinou`}>
+            {Array.from({ length: skipped }, (_, k) => (
+              <span key={k}>{from + k}</span>
+            ))}
+          </li>
+        ) : (
+          <li className={`tt-free tt-late ${live && now >= minutes(firstLesson!.start) ? "past" : ""}`}>
+            Začínáš {first}. hodinou
+            <small>od {firstLesson!.start}</small>
+          </li>
+        ))}
       {groups.map((g) => {
         if ("free" in g) {
           const it = g.free;
@@ -223,6 +275,7 @@ function DayView({ day, live, now, meal, scroll = true }: { day: TimetableDay; l
                   <LessonRow
                     key={`${it.start}-${it.lesson.subject}-${it.lesson.group}-${it.lesson.cancelled ? "x" : ""}`}
                     liRef={refAt(i)}
+                    date={day.date}
                     lesson={it.lesson}
                     was={it.was}
                     state={state(it)}
@@ -297,14 +350,19 @@ function changeLines(l: Lesson, was?: Lesson[]): { label: string; from?: string;
   return [{ label: "Změna", to: "SIS u hodiny hlásí změnu, ale neuvádí, co bylo původně" }];
 }
 
-/** `was`: the cancelled lessons whose slot this one took. A changed row opens to show what's different. */
-function LessonRow({ lesson: l, state, was, liRef }: {
+/**
+ * `was`: the cancelled lessons whose slot this one took. A changed row opens to show what's different. The class's
+ * tests on the lesson show under it, in their own colour.
+ */
+function LessonRow({ lesson: l, date, state, was, liRef }: {
   lesson: Lesson;
+  date: string;
   was?: Lesson[];
   state: State;
   liRef?: (el: HTMLLIElement | null) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const tests = useContext(TestsContext).filter((t) => !l.cancelled && sameLesson(t, date, l));
   const period = periodOf(l);
   const replaced = !!was?.length;
   const tag = l.cancelled ? "odpadá" : replaced ? (was!.some((o) => o.subject === l.subject) ? "změna" : "náhrada") : l.added ? "přidaná" : l.changed ? "změna" : "";
@@ -326,11 +384,17 @@ function LessonRow({ lesson: l, state, was, liRef }: {
           {l.teacher && ` · ${l.teacher}`}
           {l.group && ` · sk. ${l.group}`}
         </span>
+        {tests.map((t) => (
+          <span key={t.id} className="tt-test">
+            <span className="tt-test-kind">{TEST_KINDS[t.kind]}</span>
+            {t.note && <span className="tt-test-note">{t.note}</span>}
+          </span>
+        ))}
       </span>
       <span className="tt-room">{l.room}</span>
     </>
   );
-  const cls = `tt-row ${state} ${l.cancelled ? "cancelled" : l.changed || l.added || replaced ? "changed" : ""}`;
+  const cls = `tt-row ${state} ${l.cancelled ? "cancelled" : l.changed || l.added || replaced ? "changed" : ""} ${tests.length ? "has-test" : ""}`;
   if (!tag)
     return (
       <li ref={liRef}>
