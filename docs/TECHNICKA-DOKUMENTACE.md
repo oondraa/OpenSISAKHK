@@ -15,6 +15,7 @@ Aplikace bere data ze školního systému [SIS (KybernaIS)](https://sis.ssakhk.c
 | **Gym** | Jestli je **posilovna (P0)** teď volná, a po hodinách, která třída tam je. |
 | **Známky** | Známky po předmětech s váhou, typem a komentářem a průměr, který počítá SIS. |
 | **Absence** | Zameškané hodiny po předmětech proti hranici 30–35 % a kolik hodin ještě musíš odchodit (nebo můžeš vynechat) do konce pololetí. |
+| **SideQuesty** | Cesta kamkoliv po Hradci (obchod, OC nebo bod v mapě) MHD, nextbikem nebo pěšky a jestli to stihneš: před školou, o volné hodině, o obědě nebo po škole, podle rozvrhu a otevírací doby. |
 | **Nastavení** | Push notifikace o změnách rozvrhu, nových známkách a absenci, světlý/tmavý režim, informace o tom, co se ukládá, verze a odhlášení. |
 
 Je to PWA: na telefonu ji přidáš na plochu (Android: *Nainstalovat aplikaci*, iPhone: *Sdílet → Přidat na plochu*)
@@ -54,6 +55,28 @@ Celé je to v [`src/worker/sis.ts`](../src/worker/sis.ts), [`src/worker/session.
 | Kdy ses poprvé a naposledy přihlásil | Známky, rozvrh, absence, finance (ani v zařízení) |
 | Otisky obrázků veřejného rozvrhu školy (aby se poznalo, že ho škola přepsala) | Cookies SIS relace |
 | **Jen u zapnutých notifikací:** adresa pro doručení, přihlášení do SIS zašifrované AES-GCM a krátké hashe známek, absencí a hodin rozvrhu (z nich se nic vyčíst nedá) | Přihlášení do Stravy |
+
+## Jak fungují SideQuesty
+
+Všechno se počítá v telefonu, na server nejde ani poloha, ani cíl.
+
+- **Jízdní řády MHD:** `scripts/transit.ts` stáhne celostátní GTFS z CIS JŘ
+  ([Spojenka, MFF UK](https://www.spojenka.cz/jrdata)), vybere jen Dopravní podnik města Hradce Králové
+  (`agency_id` A173) a uloží kompaktní `public/data/transit.json` (asi 460 kB, 42 kB gzip). Data jsou platná
+  do příští změny jízdních řádů (prosinec), skript je potřeba spustit znovu (`npm run data`) a nasadit.
+- **Hledání spojení:** Connection Scan Algorithm v `src/shared/transit.ts`, nejrychlejší příjezd s přestupy pěšky
+  mezi zastávkami do 400 m. Nejpozdější odjezd zpátky do školy hledá binárně přes čas odjezdu.
+- **Nextbike:** živý GBFS feed nextbike Hradec Králové (region 682), obnovuje se každou minutu. Kola se počítají
+  jen pro dnešek.
+- **Obchody:** `scripts/places.ts` je stáhne z OpenStreetMap (Overpass) do `public/data/places.json` i s otevírací
+  dobou. Ta se čte v běžných tvarech (`Mo-Fr 08:00-20:00; Su off`), složitější tvary se ukážou jako nejasné.
+- **Chůze a nextbike:** po skutečných ulicích a chodnících z OpenStreetMap (`scripts/walk.ts` → `public/data/walk.json`, `src/shared/walkgraph.ts`: start i cíl se přichytí na nejbližší ulici, pak Dijkstra; schody se počítají dvojnásob). Chůze 4,5 km/h. Bez těch dat odhad vzdušná vzdálenost × 1,3.
+- **Okna z rozvrhu** (`src/shared/trips.ts`): před školou (od polohy), mezery mezi hodinami nejméně 20 min a oběd
+  (od školy a zpátky na další hodinu), po škole. Verdikt: aspoň 15 min na místě, kdy je otevřeno, „stihneš“;
+  5–15 min „těsně“; jinak „nestihneš“.
+- **Poloha:** GPS, a když ji telefon nemá, škola. Když ji uživatel odmítne, SideQuesty se zeptají ještě jednou;
+  po druhém odmítnutí se vypnou, dokud polohu nepovolí v nastavení prohlížeče.
+- **Mapa:** [Leaflet](https://leafletjs.com) s dlaždicemi OpenStreetMap (v tmavém režimu přebarvenými filtrem).
 
 ## Jak funguje rozvrh a Gym
 
@@ -97,6 +120,7 @@ Cloudflare skoro nezatěžuje. Logy Action jsou veřejné, proto skript nikdy ne
 - [Hono](https://hono.dev) v API, [node-html-parser](https://github.com/taoqf/node-html-parser) na parsování SIS
 - [React](https://react.dev) + [Vite](https://vite.dev) + [vite-plugin-pwa](https://vite-pwa-org.netlify.app)
 - Web Push s VAPID bez knihoven (WebCrypto)
+- [Leaflet](https://leafletjs.com) a dlaždice [OpenStreetMap](https://www.openstreetmap.org/copyright) v SideQuestech
 
 ## Vývoj
 

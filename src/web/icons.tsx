@@ -47,6 +47,15 @@ export const TestIcon = ({ size }: { size?: number }) => (
   </Icon>
 );
 
+/** A route between two pins: trips around town. */
+export const RouteIcon = ({ size }: { size?: number }) => (
+  <Icon size={size}>
+    <circle cx="6" cy="18" r="2.5" />
+    <path d="M18 10.5c-2.2-2.4-3.5-4.2-3.5-5.6a3.5 3.5 0 0 1 7 0c0 1.4-1.3 3.2-3.5 5.6zM18 5h.01" />
+    <path d="M8.5 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h2" />
+  </Icon>
+);
+
 export const SearchIcon = ({ size }: { size?: number }) => (
   <Icon size={size}>
     <circle cx="10.5" cy="10.5" r="6.5" />
@@ -170,6 +179,7 @@ export const TAB_ICONS: Record<Tab, ReactNode> = {
   absence: <AbsenceIcon />,
   projects: <ProjectIcon />,
   finance: <WalletIcon />,
+  trips: <RouteIcon />,
   settings: <GearIcon />,
   more: <MoreIcon />,
 };

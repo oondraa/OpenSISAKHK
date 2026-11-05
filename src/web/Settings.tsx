@@ -11,6 +11,7 @@ import type { Layout } from "./App";
 import { LABELS, TAB_SLOTS, homeOrder, saveHomeOrder, saveTabOrder, tabOrder, type Part } from "./sections";
 import { BugIcon, CoffeeIcon, TAB_ICONS } from "./icons";
 import { ReportSheet } from "./Report";
+import { SqPlaces } from "./SqPlaces";
 import { currentSubscription, disableNotifications, enableNotifications } from "./pushState";
 
 type PushState = "unsupported" | "denied" | "off" | "on" | "busy";
@@ -227,6 +228,8 @@ export function Settings({ onError, onLogout, layout, onLayout, onOrder }: {
         </Section>
 
         <StravaSection connected={me.data?.strava ?? false} onError={onError} />
+
+        <SqPlaces />
 
         <Section title="Soukromí">
           <div className="privacy">

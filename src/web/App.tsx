@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { api, cache, Unauthorized } from "./api";
 import { Login, Welcome } from "./Login";
 import { Timetable } from "./Timetable";
@@ -13,6 +13,8 @@ import { Projects } from "./Projects";
 import { Lunch } from "./Lunch";
 import { Finance } from "./Finance";
 import { More } from "./More";
+// SideQuesty carry a map library and the bus timetables: loaded only when opened.
+const Trips = lazy(() => import("./Trips").then((m) => ({ default: m.Trips })));
 import { Home } from "./Home";
 import { LABELS, LINKABLE, TAB_SLOTS, tabOrder, type Tab } from "./sections";
 import { ClassPrompt } from "./ClassPrompt";
@@ -160,6 +162,11 @@ export function App() {
       {t === "projects" && <Projects onError={onError} />}
       {t === "lunch" && <Lunch onError={onError} />}
       {t === "finance" && <Finance onError={onError} />}
+      {t === "trips" && (
+        <Suspense fallback={<div className="screen" />}>
+          <Trips onError={onError} />
+        </Suspense>
+      )}
       {t === "more" && <More items={tabOrder().slice(TAB_SLOTS)} onOpen={setTab} />}
       {t === "settings" && (
         <Settings

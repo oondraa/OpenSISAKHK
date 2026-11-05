@@ -21,7 +21,17 @@ the font licenses are also in `brand/fonts/`.
 | boolbase | 1.0.0 | ISC | https://github.com/fb55/boolbase |
 | react, react-dom | 19.3.0 | MIT | https://github.com/facebook/react |
 | scheduler | 0.28.0 | MIT | https://github.com/facebook/react |
+| leaflet | 1.9.4 | BSD-2-Clause | https://github.com/Leaflet/Leaflet |
 | workbox (window, core, precaching, routing, strategies, expiration) | 7.4.1 | MIT | https://github.com/GoogleChrome/workbox |
+
+## Data
+
+| Data | License / terms | Source |
+|---|---|---|
+| Map tiles, places, opening hours and the walking network (SideQuesty) | © OpenStreetMap contributors, ODbL 1.0 | https://www.openstreetmap.org/copyright |
+| Logos of Aupark, Futurum, OC Atrium and Restaurace Na Hradě (`public/brands`) | Trademarks of their owners, shown only to identify the place; taken from their own websites | aupark.cz, futurumhradec.cz, ocatrium.cz, na-hrade.cz |
+| Public transport timetables around Hradec Králové (DPMHK, regional buses, trains) | Public timetable data of CIS JŘ, GTFS by Spojenka (MFF UK) | https://www.spojenka.cz/jrdata |
+| nextbike stations and bike counts | nextbike GBFS feed | https://gbfs.nextbike.net/maps/gbfs/v2/nextbike_tl/gbfs.json |
 
 ## Fonts and icons
 

@@ -24,9 +24,10 @@ function securityHeaders(): Plugin {
         "default-src 'self'",
         `script-src 'self' ${hashes.join(" ")}`,
         "style-src 'self' 'unsafe-inline'",
-        "img-src 'self' data: blob:",
+        // Výlety: OpenStreetMap map tiles and live nextbike stations (GBFS).
+        "img-src 'self' data: blob: https://tile.openstreetmap.org",
         "font-src 'self' data:",
-        "connect-src 'self'",
+        "connect-src 'self' https://gbfs.nextbike.net",
         "object-src 'none'",
         "base-uri 'none'",
         "form-action 'self'",
@@ -37,7 +38,7 @@ function securityHeaders(): Plugin {
         "X-Frame-Options": "DENY",
         "X-Content-Type-Options": "nosniff",
         "Referrer-Policy": "no-referrer",
-        "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+        "Permissions-Policy": "camera=(), microphone=(), geolocation=(self)",
         "Strict-Transport-Security": "max-age=31536000",
       };
       const source = `/*\n${Object.entries(headers).map(([k, v]) => `  ${k}: ${v}\n`).join("")}`;

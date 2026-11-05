@@ -4,6 +4,7 @@ import { useBack } from "./layer";
 import { lift } from "./glass";
 
 export function LargeHeader({ title, subtitle, accessory, loading, children }: {
+  /** Empty: no title row (the screen says what it is by itself). */
   title: string;
   subtitle?: string;
   accessory?: ReactNode;
@@ -19,13 +20,15 @@ export function LargeHeader({ title, subtitle, accessory, loading, children }: {
           {back.label}
         </button>
       )}
-      <div className="large-header-row">
-        <div>
-          {subtitle && <p className="eyebrow">{subtitle}</p>}
-          <h1 className="large-title">{title}</h1>
+      {(title || accessory) && (
+        <div className="large-header-row">
+          <div>
+            {subtitle && <p className="eyebrow">{subtitle}</p>}
+            {title && <h1 className="large-title">{title}</h1>}
+          </div>
+          {accessory}
         </div>
-        {accessory}
-      </div>
+      )}
       {children}
       {loading && <div className="progress" role="progressbar" aria-label="Načítání" />}
     </header>

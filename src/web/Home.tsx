@@ -13,7 +13,7 @@ import { LIMIT } from "./absencePlan";
 import { WEEKDAYS, addDays, inMinutes, minutes, mondayOf, nowMinutesPrague, todayPrague, weekdayIndex } from "./time";
 import { useCachedFetch } from "./useFetch";
 import { useNow } from "./hooks";
-import { AbsenceIcon, CalendarIcon, DoorIcon, DumbbellIcon, GearIcon, TeacherIcon, TestIcon, GradesIcon, ProjectIcon, UtensilsIcon, WalletIcon } from "./icons";
+import { AbsenceIcon, CalendarIcon, DoorIcon, DumbbellIcon, GearIcon, TeacherIcon, TestIcon, GradesIcon, ProjectIcon, RouteIcon, UtensilsIcon, WalletIcon } from "./icons";
 import { Chevron } from "./ui";
 
 import { homeOrder, type Part, type Tab } from "./sections";
@@ -164,6 +164,7 @@ function PartTile({ part, now, onOpen }: { part: Part; now: number; onOpen: (tab
   if (part === "gym") return <GymTile now={now} onOpen={onOpen} />;
   if (part === "rooms") return <RoomsTile now={now} onOpen={onOpen} />;
   if (part === "teachers") return <Tile id="teachers" label="Učitelé" icon={<TeacherIcon />} sub="Kdo kde učí" onOpen={onOpen} />;
+  if (part === "trips") return <Tile id="trips" label="SideQuesty" icon={<RouteIcon />} sub="Stihneš to?" onOpen={onOpen} />;
   if (part === "grades") return <GradesTile onOpen={onOpen} />;
   if (part === "tests") return <TestsTile onOpen={onOpen} />;
   if (part === "absence") return <AbsenceTile onOpen={onOpen} />;
