@@ -6,6 +6,7 @@ import { kindLabel, matchesPlace, openAt, parseHours, type Place } from "../shar
 import { clock, verdict, windows, type Window } from "../shared/trips";
 import { SCHOOL, loadPlaces, loadTransit, loadWalker, useBikes, useShortcuts, useStatic } from "./tripsData";
 import { PlaceIcon } from "./PlaceIcon";
+import { rideKey, useLiveDelays } from "./live";
 import { useLocation, type Where } from "./useLocation";
 import { TripMap } from "./TripMap";
 import { Empty, LargeHeader, Section } from "./ui";
@@ -102,6 +103,8 @@ function Planner({ where, onError }: { where: Where; onError: (e: unknown) => bo
     : shortcuts.list(placeList).map((s) => s.place);
 
   const dataError = transit instanceof Error;
+  const delays = useLiveDelays([chosen, back[0]], live, now);
+  const starred = !!target?.place && shortcuts.has(target.place, placeList);
   const pickWindow = (i: number) => {
     setPicked(i);
     setCustom(null);
@@ -213,18 +216,21 @@ function Planner({ where, onError }: { where: Where; onError: (e: unknown) => bo
               {target.place && <PlaceIcon place={target.place} />}
               <span className="sq-target-text">
                 <b>{target.name}</b>
-                <small>{target.place ? `${target.name !== target.place[0] ? `${target.place[0]} · ` : ""}${kindLabel(target.place[1])} · ${hoursToday(target.place, weekdayIndex(selected))}` : "Vybráno v mapě"}</small>
+                <small>{targetSub(target, weekdayIndex(selected))}</small>
               </span>
-              {target.place && (
-                <button
-                  className={`sq-star ${shortcuts.has(target.place, placeList) ? "on" : ""}`}
-                  aria-pressed={shortcuts.has(target.place, placeList)}
-                  aria-label="Mezi moje místa"
-                  onClick={() => shortcuts.toggle(target.place!, placeList)}
-                >
-                  {shortcuts.has(target.place, placeList) ? "★" : "☆"}
-                </button>
-              )}
+              <button
+                className={`sq-star ${starred ? "on" : ""}`}
+                aria-pressed={starred}
+                aria-label="Mezi moje místa"
+                onClick={() => {
+                  // A point on the map becomes a place of its own, renamed in Nastavení.
+                  const place: Place = target.place ?? [CUSTOM_NAME, "custom", Math.round(target.lat * 1e6) / 1e6, Math.round(target.lon * 1e6) / 1e6, null];
+                  shortcuts.toggle(place, placeList);
+                  if (!target.place) setTarget({ ...target, name: CUSTOM_NAME, place });
+                }}
+              >
+                {starred ? "★" : "☆"}
+              </button>
               <button className="sq-close" aria-label="Zrušit cíl" onClick={() => setTarget(null)}>
                 ×
               </button>
@@ -258,7 +264,7 @@ function Planner({ where, onError }: { where: Where; onError: (e: unknown) => bo
                 <p className="sq-sub">
                   {win.fromSchool ? "Ze školy" : where.kind === "gps" ? "Odsud" : "Od školy"} · vyraz v <b>{clock(chosen.start)}</b>
                 </p>
-                <Legs journey={chosen} />
+                <Legs journey={chosen} delays={delays} />
 
                 {win.end !== null && (
                   <div className="sq-back">
@@ -274,7 +280,7 @@ function Planner({ where, onError }: { where: Where; onError: (e: unknown) => bo
                         </div>
                         <details className="sq-details">
                           <summary>Cesta zpátky ({MODE_LABELS[back[0].mode]})</summary>
-                          <Legs journey={back[0]} />
+                          <Legs journey={back[0]} delays={delays} />
                         </details>
                       </>
                     ) : (
@@ -288,7 +294,7 @@ function Planner({ where, onError }: { where: Where; onError: (e: unknown) => bo
         )}
 
         <p className="list-footer trip-credits">
-          Jízdní řády MHD, regionálních autobusů a vlaků z celostátního systému CIS JŘ (data platná k {transit && !(transit instanceof Error) ? new Date(transit.generated).toLocaleDateString("cs-CZ") : "…"}), bez zpoždění.
+          Jízdní řády MHD, regionálních autobusů a vlaků z celostátního systému CIS JŘ (data platná k {transit && !(transit instanceof Error) ? new Date(transit.generated).toLocaleDateString("cs-CZ") : "…"}). Zpoždění živě z map DPMHK a IREDO, jen pro dnešek.
           Kola nextbike živě{live ? "" : " (jen pro dnešek)"}. Obchody, otevírací doby a pěší trasy po ulicích a chodnících z OpenStreetMap.
         </p>
       </div>
@@ -347,10 +353,17 @@ function km(m: number) {
   return m < 1000 ? `${Math.round(m / 10) * 10} m` : `${(m / 1000).toFixed(1).replace(".", ",")} km`;
 }
 
+/** "+3 min" from the live map, "včas" when on time; nothing when unknown. */
+function Delay({ min }: { min: number | undefined }) {
+  if (min === undefined) return null;
+  if (min <= 0) return <span className="sq-delay ok">{min < 0 ? `${min} min` : "včas"}</span>;
+  return <span className={`sq-delay ${min >= 3 ? "late" : "slight"}`}>+{min} min</span>;
+}
+
 const stopsWord = (n: number) => (n === 1 ? "zastávka" : n < 5 ? "zastávky" : "zastávek");
 
 /** The journey step by step: a time, a coloured line (dotted on foot) and what to do. */
-function Legs({ journey }: { journey: Journey }) {
+function Legs({ journey, delays }: { journey: Journey; delays: Record<string, number> }) {
   return (
     <ol className="sq-legs">
       {journey.legs.map((l, i) => (
@@ -371,6 +384,7 @@ function Legs({ journey }: { journey: Journey }) {
               <>
                 <span>
                   <span className={`trip-line ${l.vehicle}`}>{lineLabel(l)}</span> směr {l.headsign}
+                  <Delay min={delays[rideKey(l)]} />
                 </span>
                 <small>
                   Nastup na <b>{l.from.name}</b>, vystup na <b>{l.to.name}</b> v {clock(l.end)} · {l.stops.length - 1} {stopsWord(l.stops.length - 1)}
@@ -408,6 +422,15 @@ function Legs({ journey }: { journey: Journey }) {
       </li>
     </ol>
   );
+}
+
+const CUSTOM_NAME = "Vlastní místo";
+
+/** Under the target's name: its real name (when nicknamed), kind and today's hours. */
+function targetSub(t: Target, weekday: number) {
+  if (!t.place) return "Vybráno v mapě";
+  if (t.place[1] === "custom") return t.name !== t.place[0] ? "Vlastní místo" : "Přejmenuješ v Nastavení → Moje místa";
+  return `${t.name !== t.place[0] ? `${t.place[0]} · ` : ""}${kindLabel(t.place[1])} · ${hoursToday(t.place, weekday)}`;
 }
 
 function hoursToday(place: Place, weekday: number) {

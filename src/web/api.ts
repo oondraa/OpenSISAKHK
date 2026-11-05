@@ -55,6 +55,10 @@ export const api = {
   flagTest: (id: number, on: boolean) =>
     call<UpcomingTests>(`/tests/${id}/flag`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ on }) }),
   grades: () => call<GradesResponse>("/grades"),
+  /** SideQuesty: delays (minutes) of the regional buses and trains running now, by IREDO id. */
+  liveIredo: () => call<{ delays: Record<string, number> }>("/live/iredo"),
+  /** SideQuesty: live departures from the city transport stop at a place (delay in seconds). */
+  liveMhd: (lat: number, lon: number) => call<{ departures: { line: string; plan: number; delay: number }[] }>(`/live/mhd?lat=${lat.toFixed(5)}&lon=${lon.toFixed(5)}`),
   absence: () => call<Absence>("/absence"),
   me: () => call<Me>("/me"),
   setClass: (cls: string) => post("/me/class", { cls }),

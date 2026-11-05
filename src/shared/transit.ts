@@ -6,8 +6,8 @@ import { haversine, straightWalker, type Walker } from "./walkgraph";
 export interface TransitData {
   generated: string;
   source: string;
-  /** [public line ("11R", "Os 5180"), what runs it] */
-  routes: [string, Vehicle][];
+  /** [public line ("11R", "Os 5180"), what runs it, CIS JŘ line number (regional buses)] */
+  routes: ([string, Vehicle] | [string, Vehicle, number])[];
   /** [name, lat, lon] */
   stops: [string, number, number][];
   /** days: Mo…Su as "1111100"; from/to ISO dates; add/remove: exceptions */
@@ -16,7 +16,7 @@ export interface TransitData {
   patterns: number[][];
   headsigns: string[];
   /** [route, service, pattern, headsign, times]; times = [first departure, then per next stop: Δ arrival, dwell] */
-  trips: [number, number, number, number, number[]][];
+  trips: ([number, number, number, number, number[]] | [number, number, number, number, number[], number])[];
 }
 
 /** City bus and trolleybus (DPMHK), regional bus (IREDO, long-distance), train. */
@@ -30,7 +30,7 @@ export interface Point {
 
 export type Leg =
   | { kind: "walk"; from: Point; to: Point; start: number; end: number; meters: number; path?: [number, number][] }
-  | { kind: "ride"; line: string; vehicle: Vehicle; headsign: string; from: Point; to: Point; start: number; end: number; stops: Point[] }
+  | { kind: "ride"; line: string; vehicle: Vehicle; /** IREDO's id of the trip ("S-661115-12", "K-5180"), for live delays */ liveId?: string; headsign: string; from: Point; to: Point; start: number; end: number; stops: Point[] }
   | { kind: "bike"; from: Point; to: Point; start: number; end: number; meters: number; rentUrl?: string; path?: [number, number][] };
 
 export type Mode = "walk" | "transit" | "bike";
@@ -88,7 +88,7 @@ interface Connection {
 export class Network {
   readonly stops: Point[];
   private readonly conns: Connection[] = [];
-  private readonly trips: { route: number; headsign: number; pattern: number }[] = [];
+  private readonly trips: { route: number; headsign: number; pattern: number; cis?: number }[] = [];
   /** Walks between nearby stops (changing from one platform to another). */
   private readonly foot: { to: number; min: number }[][];
 
@@ -99,10 +99,10 @@ export class Network {
   ) {
     this.stops = data.stops.map(([name, lat, lon]) => ({ name, lat, lon }));
     const active = data.services.map((s) => runsOn(s, date));
-    for (const [route, service, pattern, headsign, t] of data.trips) {
+    for (const [route, service, pattern, headsign, t, cis] of data.trips) {
       if (!active[service]) continue;
       const trip = this.trips.length;
-      this.trips.push({ route, headsign, pattern });
+      this.trips.push({ route, headsign, pattern, cis });
       const seq = data.patterns[pattern];
       let dep = t[0];
       for (let i = 1; i < seq.length; i++) {
@@ -236,7 +236,8 @@ export class Network {
   /** The leg of one trip from boarding at `enter` to getting off at the end of `exit`. */
   private ride(enter: Connection, exit: Connection): Leg {
     const trip = this.trips[enter.trip];
-    const [line, vehicle] = this.data.routes[trip.route];
+    const [line, vehicle, cisLine] = this.data.routes[trip.route];
+    const liveId = vehicle === "train" ? `K-${line}` : vehicle === "regional" && cisLine && trip.cis ? `S-${cisLine}-${trip.cis}` : undefined;
     const seq = this.data.patterns[trip.pattern];
     const a = enter.pos;
     const b = exit.pos + 1;
@@ -244,6 +245,7 @@ export class Network {
       kind: "ride",
       line,
       vehicle,
+      liveId,
       headsign: this.data.headsigns[trip.headsign],
       from: this.stops[enter.from],
       to: this.stops[exit.to],

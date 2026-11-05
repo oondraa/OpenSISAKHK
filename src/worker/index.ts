@@ -7,6 +7,7 @@ import { seal, unseal, type Session } from "./session";
 import { SCHOOL_FILES, fetchSchoolImage, isTick, schoolWeeks, sha256 } from "./school";
 import { isPushEndpoint, sendPush } from "./push";
 import { TEST_FLAGS_HIDE, TEST_DAILY_MAX, TEST_KINDS, cleanNote, type TestItem, type TestKind } from "../shared/tests";
+import { iredoDelays, mhdDepartures } from "./live";
 import { CANTEEN, StravaBadCredentials, StravaOrderRefused, changeOrder, checkLogin, fetchLunches, fetchMenu } from "./strava";
 
 type Bindings = {
@@ -259,6 +260,15 @@ app.use("/*", async (c, next) => {
   if (!s?.cred) return c.json({ error: "unauthenticated" }, 401);
   c.set("session", s);
   await next();
+});
+
+// SideQuesty: live delays (live.ts). Logged-in students only, so the operators' maps aren't an open proxy.
+app.get("/live/iredo", async (c) => c.json({ delays: await iredoDelays() }, 200, { "cache-control": "private, max-age=15" }));
+app.get("/live/mhd", async (c) => {
+  const lat = Number(c.req.query("lat"));
+  const lon = Number(c.req.query("lon"));
+  if (!Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat - 50.2) > 0.2 || Math.abs(lon - 15.83) > 0.3) return c.json({ error: "bad_place" }, 400);
+  return c.json({ departures: await mhdDepartures(lat, lon) }, 200, { "cache-control": "private, max-age=15" });
 });
 
 app.get("/me", async (c) => {

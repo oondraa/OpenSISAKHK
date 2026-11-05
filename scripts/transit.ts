@@ -149,14 +149,16 @@ async function main() {
   }
   for (const [id, list] of times) if (list.length < 2) times.delete(id);
 
-  const trips = new Map<string, { route: string; service: string; headsign: string; short: string }>();
+  // CIS JŘ numbers (relations "CISJR:661115", trips "CISJR:12"): IREDO's live map names a bus "S-661115-12".
+  const cisOf = (rel: string | undefined) => Number(rel?.split("|").find((r) => r.startsWith("CISJR:"))?.slice(6)) || 0;
+  const trips = new Map<string, { route: string; service: string; headsign: string; short: string; cis: number }>();
   for await (const t of rows(zip, entries, "trips.txt"))
-    if (times.has(t.trip_id)) trips.set(t.trip_id, { route: t.route_id, service: t.service_id, headsign: t.trip_headsign, short: t.trip_short_name });
+    if (times.has(t.trip_id)) trips.set(t.trip_id, { route: t.route_id, service: t.service_id, headsign: t.trip_headsign, short: t.trip_short_name, cis: cisOf(t.relations) });
   const services = new Set([...trips.values()].map((t) => t.service));
 
   // Routes. City lines: the public number is in the long name ("MHD HRADEC KRÁLOVÉ linka: 11R …"), the short name
   // is the licence number (615311). Trains: each train has its own number ("Os 5180"), so a train is its own route.
-  const routeRows = new Map<string, { line: string; kind: Vehicle }>();
+  const routeRows = new Map<string, { line: string; kind: Vehicle; cis: number }>();
   const usedRoutes = new Set([...trips.values()].map((t) => t.route));
   for await (const r of rows(zip, entries, "routes.txt")) {
     if (!usedRoutes.has(r.route_id)) continue;
@@ -165,15 +167,15 @@ async function main() {
       r.agency_id === MHD
         ? (r.route_long_name.match(/linka\s*:\s*(\S+)/i)?.[1] ?? r.route_short_name.replace(/^615(0)?/, ""))
         : r.route_short_name || r.route_long_name.slice(0, 12);
-    routeRows.set(r.route_id, { line, kind });
+    routeRows.set(r.route_id, { line, kind, cis: cisOf(r.relations) });
   }
-  const routes = new Map<string, { line: string; kind: Vehicle }>();
+  const routes = new Map<string, { line: string; kind: Vehicle; cis: number }>();
   for (const t of trips.values()) {
     const r = routeRows.get(t.route);
     if (!r) continue;
     if (r.kind === "train" && t.short) {
       t.route = `${t.route}|${t.short}`;
-      routes.set(t.route, { line: t.short, kind: "train" });
+      routes.set(t.route, { line: t.short, kind: "train", cis: 0 });
     } else routes.set(t.route, r);
   }
   const kinds = [...routes.values()].reduce<Record<string, number>>((acc, r) => ((acc[r.kind] = (acc[r.kind] ?? 0) + 1), acc), {});
@@ -249,14 +251,20 @@ async function main() {
     // Times as a start plus deltas: [first departure, Δ to next arrival, dwell, Δ, dwell, …]. Dwell is almost always 0.
     const t: number[] = [st[0].dep];
     for (let i = 1; i < st.length; i++) t.push(st[i].arr - st[i - 1].dep, st[i].dep - st[i].arr);
-    out.push([routeIndex.get(trip.route)!, serviceIndex.get(trip.service)!, p, h, t]);
+    const route = routes.get(trip.route)!;
+    // Regional buses carry their CIS trip number, for matching the live delays (src/web/live.ts).
+    if (route.kind === "regional" && route.cis && trip.cis) out.push([routeIndex.get(trip.route)!, serviceIndex.get(trip.service)!, p, h, t, trip.cis]);
+    else out.push([routeIndex.get(trip.route)!, serviceIndex.get(trip.service)!, p, h, t]);
   }
   out.sort((a, b) => a[4][0] - b[4][0]);
 
   const data: TransitData = {
     generated: new Date().toISOString(),
     source: "CIS JŘ (GTFS, Spojenka MFF UK)",
-    routes: routeIds.map((r) => [routes.get(r)!.line, routes.get(r)!.kind]),
+    routes: routeIds.map((r) => {
+      const x = routes.get(r)!;
+      return x.kind === "regional" && x.cis ? [x.line, x.kind, x.cis] : [x.line, x.kind];
+    }),
     stops,
     services: svc,
     patterns,

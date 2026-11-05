@@ -60,12 +60,17 @@ Celé je to v [`src/worker/sis.ts`](../src/worker/sis.ts), [`src/worker/session.
 
 Všechno se počítá v telefonu, na server nejde ani poloha, ani cíl.
 
-- **Jízdní řády MHD:** `scripts/transit.ts` stáhne celostátní GTFS z CIS JŘ
-  ([Spojenka, MFF UK](https://www.spojenka.cz/jrdata)), vybere jen Dopravní podnik města Hradce Králové
-  (`agency_id` A173) a uloží kompaktní `public/data/transit.json` (asi 460 kB, 42 kB gzip). Data jsou platná
-  do příští změny jízdních řádů (prosinec), skript je potřeba spustit znovu (`npm run data`) a nasadit.
+- **Jízdní řády:** `scripts/transit.ts` stáhne celostátní GTFS z CIS JŘ
+  ([Spojenka, MFF UK](https://www.spojenka.cz/jrdata)), nechá všechny dopravce se zastávkami v okolí Hradce
+  (MHD DPMHK, regionální autobusy, vlaky) a uloží kompaktní `public/data/transit.json` (asi 590 kB). Data jsou
+  platná do příští změny jízdních řádů (prosinec), skript je potřeba spustit znovu (`npm run data`) a nasadit.
 - **Hledání spojení:** Connection Scan Algorithm v `src/shared/transit.ts`, nejrychlejší příjezd s přestupy pěšky
-  mezi zastávkami do 400 m. Nejpozdější odjezd zpátky do školy hledá binárně přes čas odjezdu.
+  mezi zastávkami do 450 m (po ulicích). Nejpozdější odjezd zpátky do školy hledá binárně přes čas odjezdu.
+- **Živá zpoždění** (`src/worker/live.ts`, `src/web/live.ts`): jen pro dnešní jízdy v příštích dvou hodinách.
+  Regionální autobusy a vlaky z mapy [IREDO](https://iredo.online) podle čísla spoje z CIS JŘ („S-661115-12“,
+  „K-5180“), MHD z živé odjezdové tabule nástupní zastávky na [mapě DPMHK](https://dpmhk.qrbus.me) podle linky
+  a plánovaného času. Obě rozhraní jsou neoficiální a bez CORS, ptá se Worker (jen pro přihlášené) a odpovědi
+  drží 15 s v edge cache. Zpoždění se jen zobrazuje, výpočet „stihneš to?“ jede podle jízdního řádu.
 - **Nextbike:** živý GBFS feed nextbike Hradec Králové (region 682), obnovuje se každou minutu. Kola se počítají
   jen pro dnešek.
 - **Obchody:** `scripts/places.ts` je stáhne z OpenStreetMap (Overpass) do `public/data/places.json` i s otevírací

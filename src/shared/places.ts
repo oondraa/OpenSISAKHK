@@ -141,6 +141,7 @@ export const KIND_LABELS: Record<string, string> = {
   cafe: "Kavárna",
   fast_food: "Rychlé občerstvení",
   pub: "Hospoda",
+  custom: "Vlastní místo",
   restaurant: "Restaurace",
   bar: "Bar",
   biergarten: "Pivní zahrádka",

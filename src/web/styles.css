@@ -1424,3 +1424,7 @@ img.sq-icon { background: #fff; }
 .sq-icon-sport { --tint: #0a84ff; }
 .sq-icon-other { --tint: #8e8e93; }
 .sq-target .sq-icon svg { width: 24px; height: 24px; }
+.sq-delay { display: inline-block; margin-left: 6px; padding: 1px 6px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; font-variant-numeric: tabular-nums; vertical-align: 1px; }
+.sq-delay.ok { color: var(--green); background: color-mix(in srgb, var(--green) 15%, transparent); }
+.sq-delay.slight { color: var(--orange); background: color-mix(in srgb, var(--orange) 16%, transparent); }
+.sq-delay.late { color: var(--red); background: color-mix(in srgb, var(--red) 15%, transparent); }
