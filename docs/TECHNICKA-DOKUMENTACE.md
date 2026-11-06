@@ -78,7 +78,8 @@ Všechno se počítá v telefonu, na server nejde ani poloha, ani cíl.
 - **Chůze a nextbike:** po skutečných ulicích a chodnících z OpenStreetMap (`scripts/walk.ts` → `public/data/walk.json`, `src/shared/walkgraph.ts`: start i cíl se přichytí na nejbližší ulici, pak Dijkstra; schody se počítají dvojnásob). Chůze 4,5 km/h. Bez těch dat odhad vzdušná vzdálenost × 1,3.
 - **Okna z rozvrhu** (`src/shared/trips.ts`): před školou (od polohy), mezery mezi hodinami nejméně 20 min a oběd
   (od školy a zpátky na další hodinu), po škole. Verdikt: aspoň 15 min na místě, kdy je otevřeno, „stihneš“;
-  5–15 min „těsně“; jinak „nestihneš“.
+  5–15 min „těsně“; jinak „nestihneš“. Během hodiny „Teď“ nikdy neříká „stihneš“: napíše, že máš hodinu, a kdyby ses
+  ulil, na kterou hodinu se vrátíš (první, kde zbude aspoň 15 min na místě, jinak aspoň 5) a kolik jich zameškáš.
 - **Poloha:** GPS, a když ji telefon nemá, škola. Když ji uživatel odmítne, SideQuesty se zeptají ještě jednou;
   po druhém odmítnutí se vypnou, dokud polohu nepovolí v nastavení prohlížeče.
 - **Mapa:** [Leaflet](https://leafletjs.com) s dlaždicemi OpenStreetMap (v tmavém režimu přebarvenými filtrem).

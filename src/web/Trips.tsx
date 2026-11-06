@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { api, type TimetableResponse } from "./api";
 import { Network, options, returnOptions, distance, type BikeStation, type Journey, type Leg, type Mode, type Point } from "../shared/transit";
 import { kindLabel, matchesPlace, openAt, parseHours, type Place } from "../shared/places";
-import { clock, verdict, windows, type Window } from "../shared/trips";
+import { clock, pickReturn, verdict, windows, type Window } from "../shared/trips";
 import { SCHOOL, loadPlaces, loadTransit, loadWalker, useBikes, useShortcuts, useStatic } from "./tripsData";
 import { PlaceIcon } from "./PlaceIcon";
 import { rideKey, useLiveDelays } from "./live";
@@ -66,12 +66,21 @@ function Planner({ where, onError }: { where: Where; onError: (e: unknown) => bo
     [net, walker, origin, target, win?.start, bikes],
   );
   const chosen = there.find((j) => j.mode === mode) ?? there.find((j) => j.mode !== "bike") ?? null;
-  const back = useMemo(
-    () => (chosen && target && win?.end != null ? returnOptions(net, target, SCHOOL, chosen.end, win.end, bikes, walker ?? undefined) : []),
-    [net, walker, chosen, target, win?.end, bikes],
+  const hours = useMemo(() => (target?.place ? parseHours(target.place[4]) : null), [target]);
+  const weekday = weekdayIndex(selected);
+  // During a lesson the way back isn't fixed: come back for the first lesson the trip allows.
+  const backBy = useMemo(
+    () =>
+      chosen && target && win
+        ? pickReturn(win, chosen, (t) => returnOptions(net, target, SCHOOL, chosen.end, t, bikes, walker ?? undefined)[0] ?? null, hours, weekday)
+        : (win?.end ?? null),
+    [net, walker, chosen, target, win?.start, win?.end, win?.skip, bikes, hours, weekday],
   );
-  const hours = target?.place ? parseHours(target.place[4]) : null;
-  const v = chosen && win ? verdict(win, chosen, back[0] ?? null, hours, weekdayIndex(selected)) : null;
+  const back = useMemo(
+    () => (chosen && target && backBy !== null ? returnOptions(net, target, SCHOOL, chosen.end, backBy, bikes, walker ?? undefined) : []),
+    [net, walker, chosen, target, backBy, bikes],
+  );
+  const v = chosen && win ? verdict({ ...win, end: backBy }, chosen, back[0] ?? null, hours, weekday) : null;
 
   const placeList = places && !(places instanceof Error) ? places.places : [];
   // A tap on the full map only marks a point; "Jet sem" makes it the target (no trip from a stray tap).
@@ -266,9 +275,9 @@ function Planner({ where, onError }: { where: Where; onError: (e: unknown) => bo
                 </p>
                 <Legs journey={chosen} delays={delays} />
 
-                {win.end !== null && (
+                {backBy !== null && (
                   <div className="sq-back">
-                    <p className="sq-back-title">Zpátky do školy do {clock(win.end)}</p>
+                    <p className="sq-back-title">Zpátky do školy do {clock(backBy)}</p>
                     {back.length ? (
                       <>
                         <div className="sq-back-list">

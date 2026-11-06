@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { WalkGraph, haversine, type WalkData } from "../src/shared/walkgraph";
 import { Network, bikeJourney, returnOptions, runsOn, walkJourney, type TransitData } from "../src/shared/transit";
 import { matchesPlace, openAt, parseHours, type Place } from "../src/shared/places";
-import { verdict, windows, type Window } from "../src/shared/trips";
+import { pickReturn, verdict, windows, type Window } from "../src/shared/trips";
 
 // A straight street running east: stops A, B, C about 1.4 km apart, one line A → B → C every 10 minutes.
 const A = { name: "A", lat: 50.2, lon: 15.8 };
@@ -143,8 +143,12 @@ describe("windows", () => {
     ]);
   });
 
-  it("during a lesson offers going now and back for the next one", () => {
-    expect(windows(day, 8 * 60 + 20)[0]).toMatchObject({ kind: "now", end: 8 * 60 + 55, fromSchool: false });
+  it("during a lesson offers going now as skipping, back for the next lesson at the earliest", () => {
+    const now = windows(day, 8 * 60 + 20)[0];
+    expect(now).toMatchObject({ kind: "now", end: 8 * 60 + 55, fromSchool: false });
+    expect(now.skip?.lessons[0]).toEqual({ start: 480, end: 525 });
+    // Even with the next lesson 10 minutes away it's offered: you could come back for a later one.
+    expect(windows(day, 9 * 60 + 30)[0]).toMatchObject({ kind: "now", end: 10 * 60 + 35 });
   });
 
   it("after school or without lessons it's just now, from where the phone is", () => {
@@ -168,6 +172,28 @@ describe("verdict", () => {
   it("counts only the open part of the stay", () => {
     const hours = parseHours("Mo-Fr 10:00-18:00");
     expect(verdict(gap, go(580, 590), go(610, 630), hours, 0)).toMatchObject({ level: "tight", stay: 10 });
+  });
+
+  it("during a lesson never says stihneš, but finds the lesson to come back for", () => {
+    const now = windows(
+      { lessons: [lesson("08:00", "08:45"), lesson("08:55", "09:40"), lesson("09:50", "10:35"), lesson("10:45", "11:30")], lunch: null },
+      8 * 60 + 20,
+    )[0];
+    const there = go(500, 505);
+    // Back takes 15 minutes: 15 min there and back for 8:55; the trip is fine, but you are skipping.
+    const backFor = (t: number) => go(t - 15, t);
+    expect(pickReturn(now, there, backFor, null, 0)).toBe(535);
+    const v = verdict({ ...now, end: 535 }, there, backFor(535), null, 0);
+    expect(v).toMatchObject({ level: "tight", title: "Teď máš hodinu (do 8:45)" });
+    expect(v.text).toContain("vrátíš se na hodinu v 8:55 (zameškáš hodinu)");
+    expect(v.text).not.toContain("Stihneš");
+    // A long way back: 8:55 doesn't work, 9:50 does (two lessons missed).
+    const far = (t: number) => go(t - 45, t);
+    expect(pickReturn(now, there, far, null, 0)).toBe(590);
+    expect(verdict({ ...now, end: 590 }, there, far(590), null, 0).text).toContain("v 9:50 (zameškáš 2 hodiny)");
+    // No way back for any lesson.
+    expect(pickReturn(now, there, () => null, null, 0)).toBeNull();
+    expect(verdict({ ...now, end: null }, there, null, null, 0)).toMatchObject({ level: "no" });
   });
 
   it("without a way back looks at closing time", () => {
